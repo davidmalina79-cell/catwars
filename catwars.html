@@ -244,7 +244,15 @@
         .upgrade-btn.legendary-btn { background: linear-gradient(135deg, #f59e0b 0%, #fde047 50%, #f59e0b 100%); color: #1a0f00; box-shadow: 0 0 12px rgba(253, 224, 71, 0.7), inset 0 0 4px rgba(255,255,255,0.6); animation: legendaryPulse 1.6s ease-in-out infinite; }
         .upgrade-btn.legendary-btn:disabled { background: #2d2d2d; color: #777; box-shadow: none; animation: none; cursor: not-allowed; }
         @keyframes legendaryPulse { 0%, 100% { box-shadow: 0 0 8px rgba(253, 224, 71, 0.5), inset 0 0 4px rgba(255,255,255,0.4); } 50% { box-shadow: 0 0 18px rgba(253, 224, 71, 0.95), inset 0 0 6px rgba(255,255,255,0.7); } }
-        .card.upgraded { border-color: #f1c40f; box-shadow: inset 0 0 15px rgba(241, 196, 15, 0.3); }
+        /* Fully equipped boosts (equipment tab only). */
+        .card.boost-equipped { border-color: #f1c40f; box-shadow: inset 0 0 15px rgba(241, 196, 15, 0.3); }
+        /* Cats tab: Forge is unlocked (Diamond weapon+) — visually distinct from full loadout accent. */
+        .card.legendary-eligible {
+            border-color: rgba(253, 224, 71, 0.92);
+            box-shadow:
+                inset 0 0 18px rgba(253, 224, 71, 0.22),
+                0 0 14px rgba(245, 158, 11, 0.35);
+        }
 
         .quest-item { background: #2c3e50; border: 2px solid #34495e; border-radius: 10px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; font-size: 16px; }
         .quest-item.done { border-color: var(--success); background: #1e3a2a; }
@@ -908,6 +916,11 @@
                         <span style="font-size: 40px; line-height: 1; filter: drop-shadow(2px 4px 4px rgba(0,0,0,0.4)); width: 50px; text-align: center;">💎</span>
                         <span style="font-size: 20px; font-weight: 900; letter-spacing: 1px;">QUESTS</span>
                     </button>
+                    
+                    <button class="btn-main" onclick="openEncyclopedia('ranks')" style="background: #1abc9c; color: #fff; box-shadow: 0 8px 0 #16a085; width: 100%; padding: 18px 15px; margin: 0; display: flex; align-items: center; justify-content: flex-start; gap: 15px; border-radius: 16px;">
+                        <span style="font-size: 40px; line-height: 1; filter: drop-shadow(2px 4px 4px rgba(0,0,0,0.4)); width: 50px; text-align: center;">⭐</span>
+                        <span style="font-size: 20px; font-weight: 900; letter-spacing: 1px;">GLOBAL RANKS</span>
+                    </button>
                 </div>
 
                 <div style="border-top: 2px solid rgba(255,255,255,0.1); padding-top: 12px; margin-top: auto;">
@@ -986,6 +999,7 @@
                 <button class="enc-tab" onclick="switchTab('armory')">Armory</button>
                 <button class="enc-tab" onclick="switchTab('boosts')">Boosts</button>
                 <button class="enc-tab" onclick="switchTab('quests')">Quests</button>
+                <button class="enc-tab" onclick="switchTab('ranks')">Global ranks</button>
             </div>
             <div class="stat-box gem-text">💎 <span id="enc-gems">0</span></div>
             <button class="close-btn" onclick="closeEncyclopedia()">✕ Close</button>
@@ -1386,6 +1400,20 @@
         let isRightMouseDown = false;
         let dashRequested = false;
 
+        let rankStarsGradientSeq = 0;
+        /** SVG gradient fill — works across browsers vs. background-clip:text on punctuation glyphs. */
+        function htmlGradientRankStars(rawStars, stops) {
+            if (!stops || stops.length === 0 || !rawStars) return rawStars;
+            let gid = 'rank-star-grad-' + (++rankStarsGradientSeq);
+            let stopsHtml = stops.map((hex, i) => {
+                let pct = stops.length === 1 ? 100 : (i / (stops.length - 1)) * 100;
+                return `<stop offset="${pct.toFixed(2)}%" stop-color="${hex}"/>`;
+            }).join('');
+            let n = rawStars.length;
+            let w = Math.max(40, Math.ceil(n * 19 + 8));
+            return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="22" role="presentation" aria-hidden="true" style="vertical-align:-4px;display:inline-block;overflow:visible"><defs><linearGradient id="${gid}" x1="0%" y1="0%" x2="100%" y2="0%">${stopsHtml}</linearGradient></defs><text x="1" y="17.5" fill="url(#${gid})" font-size="17" font-weight="800" font-family="Georgia,Times New Roman,serif,Apple Color Emoji,sans-serif">${rawStars}</text></svg>`;
+        }
+
         function getGlobalRankInfo(level) {
             const tiers = [
                 { name: "Stray Recruit",          color: "#7f8c8d" },
@@ -1398,16 +1426,16 @@
                 { name: "Purr-onel",              color: "#00d4ff" },
                 { name: "Gen-furball",            color: "#e74c3c" },
                 { name: "Supreme Comm-meow-nder", color: "#ff00ff" },
-                { name: "Omni-purrr-tent",        color: "#ffd700", gradient: "linear-gradient(90deg, #ffd700, #ffffff, #00d4ff)" },
-                { name: "The One True Meow",      color: "#ff3300", gradient: "linear-gradient(90deg, #ff0000, #ff8800, #ffff00, #00cc44, #0088ff, #cc00ff)" }
+                { name: "Omni-purrr-tent",        color: "#ffd700", gradientStops: ["#ffd700", "#ffffff", "#00d4ff"] },
+                { name: "The One True Meow",      color: "#ff3300", gradientStops: ["#ff0000", "#ff8800", "#ffff00", "#00cc44", "#0088ff", "#cc00ff"] }
             ];
             let safeLevel = Math.max(1, Math.min(60, level));
             let tierIndex = Math.floor((safeLevel - 1) / 5);
             let starsCount = ((safeLevel - 1) % 5) + 1;
             let rawStars = "★".repeat(starsCount);
             let tier = tiers[tierIndex];
-            let starsStr = tier.gradient
-                ? `<span style="background:${tier.gradient};-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">${rawStars}</span>`
+            let starsStr = tier.gradientStops && tier.gradientStops.length
+                ? htmlGradientRankStars(rawStars, tier.gradientStops)
                 : rawStars;
 
             return {
@@ -1951,7 +1979,7 @@
                 let isEquipped = prog.equippedBoosts.includes(id);
                 let canAfford = prog.gems >= b.cost;
                 let card = document.createElement('div');
-                card.className = 'card' + (isEquipped ? ' upgraded' : '');
+                card.className = 'card' + (isEquipped ? ' boost-equipped' : '');
                 card.innerHTML = `
                     <div style="font-size:50px; line-height:1; margin: 6px 0 10px 0; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5));">${b.icon}</div>
                     <h3 style="margin: 0 0 6px 0; font-size: 16px;">${b.name}</h3>
@@ -3343,6 +3371,56 @@
                 return;
             }
 
+            if (tab === 'ranks') {
+                let curLv = prog.globalLevel || 1;
+                content.innerHTML = `
+                    <h3 style="margin-top:0; color:#fff;">⭐ Global ranks (preview)</h3>
+                    <p style="color:#aaa;font-size:14px; margin-bottom: 14px;line-height:1.45;">
+                        Same as the HUD: solid <b style="color:#fff;">★</b> stars for lower tiers; the top two tiers use horizontal <b style="color:#fff;">SVG</b> gradients on the glyphs (shows in any browser — not visible in plain chat).
+                    </p>
+                    <div id="enc-ranks-list" style="display:flex;flex-direction:column;gap:6px;max-height:calc(85vh - 200px);overflow-y:auto;padding:4px 8px 16px 0;box-sizing:border-box;"></div>
+                `;
+                let listEl = document.getElementById('enc-ranks-list');
+                for (let L = 1; L <= 60; L++) {
+                    let r = getGlobalRankInfo(L);
+                    let row = document.createElement('div');
+                    row.style.display = 'grid';
+                    row.style.gridTemplateColumns = '54px minmax(0,1fr) auto';
+                    row.style.alignItems = 'center';
+                    row.style.columnGap = '12px';
+                    row.style.padding = '8px 12px';
+                    row.style.borderRadius = '10px';
+                    row.style.background = L === curLv ? 'rgba(46,204,113,0.22)' : 'rgba(0,0,0,0.28)';
+                    row.style.border = `2px solid ${r.color}`;
+                    row.style.boxShadow = L === curLv ? `0 0 12px ${r.color}66` : 'none';
+
+                    let lv = document.createElement('span');
+                    lv.style.fontWeight = '900';
+                    lv.style.color = L === curLv ? '#2ecc71' : '#95a5a6';
+                    lv.style.fontSize = '14px';
+                    lv.innerText = L === curLv ? `Lv.${L} ▶` : `Lv.${L}`;
+
+                    let title = document.createElement('span');
+                    title.style.fontWeight = 'bold';
+                    title.style.color = r.color;
+                    title.style.fontSize = '15px';
+                    title.style.lineHeight = '1.25';
+                    title.innerText = r.title;
+
+                    let starsWrap = document.createElement('span');
+                    starsWrap.style.fontSize = '20px';
+                    starsWrap.style.letterSpacing = '3px';
+                    starsWrap.style.lineHeight = '1';
+                    starsWrap.innerHTML = r.stars;
+
+                    row.appendChild(lv);
+                    row.appendChild(title);
+                    row.appendChild(starsWrap);
+                    listEl.appendChild(row);
+                }
+                return;
+            }
+
             if (tab === 'quests') {
                 rollDailyQuestsIfNeeded();
                 content.innerHTML = '<h3 style="margin-top:0; color:#fff;">📜 Daily Quests</h3><p style="color:#aaa;font-size:14px; margin-bottom: 20px;">Complete quests to earn gems.</p>';
@@ -3415,9 +3493,13 @@
             if (tab === 'cats') {
                 for(let i=1; i<=50; i++) {
                     let stats = evolutions[i-1]; let locked = i > prog.maxCatLevel; 
-                    let wTier = prog.weaponUpgrades[i] || 0; let hTier = prog.helmetUpgrades[i] || 0;
+                    let wTier = Number(prog.weaponUpgrades[i] || 0);
+                    let hTier = Number(prog.helmetUpgrades[i] || 0);
                     let legKey = getEquippedLegendary(i);
-                    let card = document.createElement('div'); card.className = `card ${locked ? 'locked' : ''} ${(wTier === 4 || legKey) && hTier === 5 ? 'upgraded' : ''}`;
+                    // Legendary forge unlocks at Diamond weapon (tier index 4+). Match card glow to that, not helmet progress.
+                    let legendaryForgeOpen = !locked && (wTier >= 4 || !!legKey);
+                    let card = document.createElement('div');
+                    card.className = `card ${locked ? 'locked' : ''}${legendaryForgeOpen ? ' legendary-eligible' : ''}`;
                     
                     let effArchKey = legKey ? LEGENDARY_WEAPONS[legKey].arch : getWeaponArchetype(stats.weaponType);
                     let archLabel = { fast:'⚡ Fast', heavy:'🔨 Heavy', wide:'🌀 Wide', reach:'➡️ Reach', balanced:'⚔️ Balanced' }[effArchKey];
