@@ -944,7 +944,7 @@
             Play as a cat, hunt food, evolve through <b>50 levels</b> and survive endless dog hordes.
             Solo, Hardcore and Co‑Op modes · public leaderboards · permanent upgrades.
             Built as a hobby project — no install, no pay‑to‑win.
-            <span style="margin-left: 10px; color: #555;">v1.1.16</span>
+            <span style="margin-left: 10px; color: #555;">v1.1.18</span>
         </footer>
     </div>
 
@@ -1302,18 +1302,31 @@
         ];
         
         const QUEST_POOL = [
+            { id: 'kill10', text: 'Defeat 10 dogs', goal: 10, reward: 15, type: 'kills' },
             { id: 'kill20', text: 'Defeat 20 dogs', goal: 20, reward: 30, type: 'kills' },
             { id: 'kill50', text: 'Defeat 50 dogs', goal: 50, reward: 80, type: 'kills' },
+            { id: 'kill100', text: 'Defeat 100 dogs', goal: 100, reward: 140, type: 'kills' },
+            { id: 'reach10', text: 'Reach Level 10', goal: 10, reward: 25, type: 'level' },
             { id: 'reach20', text: 'Reach Level 20', goal: 20, reward: 60, type: 'level' },
+            { id: 'reach30', text: 'Reach Level 30', goal: 30, reward: 110, type: 'level' },
             { id: 'reach40', text: 'Reach Level 40', goal: 40, reward: 150, type: 'level' },
+            { id: 'chest3', text: 'Open 3 chests', goal: 3, reward: 25, type: 'chests' },
             { id: 'chest5', text: 'Open 5 chests', goal: 5, reward: 40, type: 'chests' },
+            { id: 'chest10', text: 'Open 10 chests', goal: 10, reward: 70, type: 'chests' },
             { id: 'chest15', text: 'Open 15 chests', goal: 15, reward: 100, type: 'chests' },
+            { id: 'combo5', text: 'Reach a 5x combo', goal: 5, reward: 30, type: 'combo' },
             { id: 'combo10', text: 'Reach a 10x combo', goal: 10, reward: 60, type: 'combo' },
             { id: 'combo25', text: 'Reach a 25x combo', goal: 25, reward: 200, type: 'combo' },
-            { id: 'boss1', text: 'Defeat 1 boss', goal: 1, reward: 150, type: 'boss' },
+            { id: 'combo40', text: 'Reach a 40x combo', goal: 40, reward: 320, type: 'combo' },
+            { id: 'elite2', text: 'Defeat 2 Elite dogs', goal: 2, reward: 55, type: 'elite' },
             { id: 'elite5', text: 'Defeat 5 Elite dogs', goal: 5, reward: 120, type: 'elite' },
+            { id: 'elite10', text: 'Defeat 10 Elite dogs', goal: 10, reward: 240, type: 'elite' },
+            { id: 'boss1', text: 'Defeat 1 boss', goal: 1, reward: 150, type: 'boss' },
+            { id: 'boss2', text: 'Defeat 2 bosses', goal: 2, reward: 280, type: 'boss' },
             { id: 'diamond1', text: 'Open a Diamond Chest', goal: 1, reward: 250, type: 'diamond_chest' },
-            { id: 'hardcoreWin1', text: 'Win a Hardcore run', goal: 1, reward: 500, type: 'hardcore_win' }
+            { id: 'hardcoreWin1', text: 'Win a Hardcore run', goal: 1, reward: 500, type: 'hardcore_win' },
+            { id: 'career500', text: 'Reach 500 total career defeats', goal: 500, reward: 90, type: 'total_kills' },
+            { id: 'career2000', text: 'Reach 2,000 total career defeats', goal: 2000, reward: 200, type: 'total_kills' }
         ];
 
         const BOT_NAMES = ['ShadowPaws', 'KittySlayer99', 'xX_Meow_Xx', 'ProGamerCat', 'CatZilla', 'PawsOfFury', 'Meowster', 'FelineGood', 'Scratchy', 'Purrfect', 'SirMeows', 'CatnipLover', 'NinjaClaw', 'DogeHater', 'FluffDemon'];
@@ -1693,10 +1706,20 @@
 
         function rollDailyQuestsIfNeeded() {
             const today = new Date().toLocaleDateString('sv-SE');
+            const ACTIVE_DAILY_QUESTS = 5;
             if (prog.questDate !== today || !prog.quests || !prog.quests.length) {
                 prog.questDate = today;
                 const shuffled = [...QUEST_POOL].sort(() => Math.random() - 0.5);
-                prog.quests = shuffled.slice(0, 3).map(q => ({ ...q, progress: 0, claimed: false }));
+                prog.quests = shuffled.slice(0, ACTIVE_DAILY_QUESTS).map(q => ({ ...q, progress: 0, claimed: false }));
+                saveProgress();
+            } else if (prog.quests.length < ACTIVE_DAILY_QUESTS) {
+                const usedIds = new Set(prog.quests.map(q => q.id));
+                const rest = QUEST_POOL.filter(q => !usedIds.has(q.id));
+                const shuffled = [...rest].sort(() => Math.random() - 0.5);
+                const need = ACTIVE_DAILY_QUESTS - prog.quests.length;
+                for (let i = 0; i < need && i < shuffled.length; i++) {
+                    prog.quests.push({ ...shuffled[i], progress: 0, claimed: false });
+                }
                 saveProgress();
             }
         }
@@ -1707,7 +1730,7 @@
             for (const q of prog.quests) {
                 if (q.claimed) continue;
                 if (q.type === type) {
-                    if (type === 'level') q.progress = Math.max(q.progress, amount);
+                    if (type === 'level' || type === 'total_kills') q.progress = Math.max(q.progress, amount);
                     else q.progress = Math.min(q.goal, q.progress + amount);
                     updated = true;
                 }
@@ -3423,6 +3446,21 @@
 
             if (tab === 'quests') {
                 rollDailyQuestsIfNeeded();
+                let synced = false;
+                for (const q of prog.quests) {
+                    if (q.claimed) continue;
+                    if (q.type === 'total_kills') {
+                        q.progress = Math.max(q.progress, prog.totalKills || 0);
+                        synced = true;
+                    } else if (q.type === 'level') {
+                        q.progress = Math.max(q.progress, prog.maxCatLevel || 1);
+                        synced = true;
+                    } else if (q.type === 'combo') {
+                        q.progress = Math.max(q.progress, Math.min(q.goal, prog.bestCombo || 0));
+                        synced = true;
+                    }
+                }
+                if (synced) saveProgress();
                 content.innerHTML = '<h3 style="margin-top:0; color:#fff;">📜 Daily Quests</h3><p style="color:#aaa;font-size:14px; margin-bottom: 20px;">Complete quests to earn gems.</p>';
                 for (const q of prog.quests) {
                     let div = document.createElement('div');
@@ -4160,7 +4198,7 @@
             playerRunData.kills++; prog.totalKills++;
             if (!enemy.isBoss && !enemy.isMiniBoss) prog.dogKills[enemy.name] = (prog.dogKills[enemy.name] || 0) + 1;
             combo++; comboTimer = COMBO_WINDOW; if (combo > playerRunData.bestCombo) playerRunData.bestCombo = combo; if (combo > prog.bestCombo) prog.bestCombo = combo;
-            questProgress('combo', combo); questProgress('kills', 1);
+            questProgress('combo', combo); questProgress('kills', 1); questProgress('total_kills', prog.totalKills);
             if (enemy.isElite) questProgress('elite', 1);
             let tierMsg = comboTierPopupLines(combo);
             if (tierMsg) {
@@ -4387,6 +4425,7 @@
                                         
                                         if (targetDog.playerDamaged) {
                                             prog.totalKills++; 
+                                            questProgress('total_kills', prog.totalKills);
                                             if (!targetDog.isBoss && !targetDog.isMiniBoss) {
                                                 prog.dogKills[targetDog.name] = (prog.dogKills[targetDog.name] || 0) + 1;
                                             }
