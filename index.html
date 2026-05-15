@@ -989,7 +989,7 @@
                 Play as a cat, hunt food, evolve through <b>50 levels</b> and survive endless dog hordes.
                 Solo, Hardcore, Co‑Op and Deathmatch modes · public leaderboards · permanent upgrades.
                 Built as a hobby project — no install, no pay‑to‑win.
-                <span style="margin-left: 10px; color: #555;">v1.3.0</span>
+                <span style="margin-left: 10px; color: #555;">v1.3.1</span>
             </footer>
         </div>
     </div>
@@ -3360,14 +3360,14 @@
                 dataToRender.sort((a, b) => {
                     let ta = a.bestTimes?.[tab] || Infinity;
                     let tb = b.bestTimes?.[tab] || Infinity;
-                    if (ta === tb) return (b.globalLevel || 1) - (a.globalLevel || 1); // Shoda časů -> rozhoduje rank
+                    if (ta === tb) return (b.maxLevel || 1) - (a.maxLevel || 1); // Tie: higher max cat level wins
                     return ta - tb;
                 });
             } else {
                 dataToRender.sort((a, b) => {
                     let ka = a.kills || 0;
                     let kb = b.kills || 0;
-                    if (ka === kb) return (b.globalLevel || 1) - (a.globalLevel || 1); // Shoda killů -> rozhoduje rank
+                    if (ka === kb) return (b.maxLevel || 1) - (a.maxLevel || 1); // Tie: higher max cat level wins
                     return kb - ka;
                 });
             }
@@ -5948,7 +5948,7 @@
                 
                 await setDoc(docRef, dataToSave, { merge: true });
                 
-                if (!auth.currentUser.isAnonymous || progressData.maxCatLevel >= 5) {
+                if (!auth.currentUser.isAnonymous || progressData.maxCatLevel >= 40) {
                     let nick = document.getElementById('login-nick').value || 'Hero';
                     if (auth.currentUser.email) nick = auth.currentUser.email.split('@')[0];
                     if (auth.currentUser.isAnonymous) nick = 'Guest_' + uid.substring(0,4);
