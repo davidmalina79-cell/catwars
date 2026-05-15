@@ -989,7 +989,7 @@
                 Play as a cat, hunt food, evolve through <b>50 levels</b> and survive endless dog hordes.
                 Solo, Hardcore, Co‑Op and Deathmatch modes · public leaderboards · permanent upgrades.
                 Built as a hobby project — no install, no pay‑to‑win.
-                <span style="margin-left: 10px; color: #555;">v1.3.2</span>
+                <span style="margin-left: 10px; color: #555;">v1.3.3</span>
             </footer>
         </div>
     </div>
@@ -5813,12 +5813,12 @@
                 // (credential-already-in-use), fall back to a plain sign-in into that
                 // existing account — guest data is intentionally NOT merged in.
                 linkWithPopup(current, provider)
-                    .then(() => { errEl.innerText = "Success! Loading data..."; })
+                    .then(() => { window.closeLoginModal(); })
                     .catch(e => {
                         if (e.code === 'auth/credential-already-in-use' || e.code === 'auth/email-already-in-use') {
                             errEl.innerHTML = "⏳ Signing in to existing Google account...";
                             signInWithPopup(auth, provider)
-                                .then(() => { errEl.innerText = "Success! Loading data..."; })
+                                .then(() => { window.closeLoginModal(); })
                                 .catch(handleError);
                         } else {
                             handleError(e);
@@ -5826,7 +5826,7 @@
                     });
             } else {
                 signInWithPopup(auth, provider)
-                    .then(() => { errEl.innerText = "Success! Loading data..."; })
+                    .then(() => { window.closeLoginModal(); })
                     .catch(handleError);
             }
         };
@@ -5837,7 +5837,7 @@
             if (email && pass) {
                 document.getElementById('login-error').innerHTML = "⏳ Verifying password... (please wait)";
                 signInWithEmailAndPassword(auth, email, pass)
-                    .then(() => { document.getElementById('login-error').innerText = "Success! Loading data..."; })
+                    .then(() => { window.closeLoginModal(); })
                     .catch(e => { document.getElementById('login-error').innerText = "Wrong nickname or password."; }); 
             }
         };
@@ -5859,7 +5859,7 @@
             if (current && current.isAnonymous) {
                 const credential = EmailAuthProvider.credential(email, pass);
                 linkWithCredential(current, credential)
-                    .then(() => { errEl.innerText = "Account created! Loading..."; })
+                    .then(() => { window.closeLoginModal(); })
                     .catch(e => {
                         if (e.code === 'auth/email-already-in-use' || e.code === 'auth/credential-already-in-use') {
                             // Nickname already taken by another account. Anti-fraud rule:
@@ -5873,7 +5873,7 @@
                     });
             } else {
                 createUserWithEmailAndPassword(auth, email, pass)
-                    .then(() => { errEl.innerText = "Account created! Loading..."; })
+                    .then(() => { window.closeLoginModal(); })
                     .catch(e => { errEl.innerText = (e.code === 'auth/email-already-in-use' ? "Nickname already in use." : "Error: " + e.message); });
             }
         };
