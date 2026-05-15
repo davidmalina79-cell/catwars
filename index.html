@@ -989,7 +989,7 @@
                 Play as a cat, hunt food, evolve through <b>50 levels</b> and survive endless dog hordes.
                 Solo, Hardcore, Co‑Op and Deathmatch modes · public leaderboards · permanent upgrades.
                 Built as a hobby project — no install, no pay‑to‑win.
-                <span style="margin-left: 10px; color: #555;">v1.3.3</span>
+                <span style="margin-left: 10px; color: #555;">v1.3.4</span>
             </footer>
         </div>
     </div>
@@ -5949,10 +5949,13 @@
                 
                 await setDoc(docRef, dataToSave, { merge: true });
                 
-                if (!auth.currentUser.isAnonymous || progressData.maxCatLevel >= 40) {
+                // Leaderboard rows are reserved for registered accounts only.
+                // Anonymous sessions get a fresh UID per browser / device / incognito
+                // window, which previously spawned duplicate "Guest_xxxx" rows for the
+                // same human player. Sign-in is now required to appear on the board.
+                if (!auth.currentUser.isAnonymous) {
                     let nick = document.getElementById('login-nick').value || 'Hero';
                     if (auth.currentUser.email) nick = auth.currentUser.email.split('@')[0];
-                    if (auth.currentUser.isAnonymous) nick = 'Guest_' + uid.substring(0,4);
                     
                     const pubRef = doc(db, 'artifacts', appId, 'public', 'data', 'leaderboard', uid);
                     await setDoc(pubRef, {
