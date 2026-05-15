@@ -184,6 +184,10 @@
         #tutorial { position: absolute; bottom: 100px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); padding: 12px 24px; border-radius: 12px; border: 2px solid var(--primary); font-size: 18px; font-weight: bold; display: none; z-index: 20; max-width: 80%; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
 
         .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(18, 28, 38, 0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: auto; z-index: 100; backdrop-filter: blur(8px); padding: 20px; box-sizing: border-box; }
+        /* Main menu always scrolls top-to-bottom so the footer flows naturally
+           BELOW the column grid instead of floating over it. Other overlays
+           (leaderboard, encyclopedia…) keep justify-content:center from .overlay. */
+        #main-menu.overlay { justify-content: flex-start; overflow-y: auto; }
         
         h1 { margin-top: 0; font-size: clamp(40px, 8vw, 55px); color: var(--primary); text-shadow: 3px 3px 0 #000; text-align: center;}
         
@@ -434,8 +438,7 @@
            the container grow naturally and scroll the whole overlay. */
         @media (max-width: 850px) {
             #main-menu.overlay {
-                justify-content: flex-start;
-                overflow-y: auto;
+                /* justify-content and overflow-y are already set in the base rule above */
                 padding: 12px 12px 16px 12px;
             }
             .menu-container {
@@ -963,7 +966,7 @@
             Play as a cat, hunt food, evolve through <b>50 levels</b> and survive endless dog hordes.
             Solo, Hardcore and Co‑Op modes · public leaderboards · permanent upgrades.
             Built as a hobby project — no install, no pay‑to‑win.
-            <span style="margin-left: 10px; color: #555;">v1.1.21</span>
+            <span style="margin-left: 10px; color: #555;">v1.1.22</span>
         </footer>
     </div>
 
