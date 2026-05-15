@@ -404,6 +404,28 @@
         .menu-col.side { flex: 1; min-width: 200px; max-width: 320px; }
         .menu-col.center { flex: 2; min-width: 300px; align-items: center; justify-content: flex-start; }
 
+        /* Opens Codex → Global ranks (replaces the old right-column shortcut button). */
+        button.mm-rank-codex-hit {
+            width: 100%;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            padding: 0;
+            margin: 0 0 2px 0;
+            text-align: center;
+            font: inherit;
+            color: inherit;
+            border-radius: 14px;
+            transition: filter 0.15s ease, transform 0.1s ease;
+            box-sizing: border-box;
+        }
+        button.mm-rank-codex-hit:hover { filter: brightness(1.07); }
+        button.mm-rank-codex-hit:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
+        button.mm-rank-codex-hit:active { transform: scale(0.992); }
+
+        /* In-game rank chip: receives clicks through #game-ui (pointer-events: none). */
+        #ui-global-rank { cursor: pointer; pointer-events: auto; }
+
         /* PRAVIDLO PRO MENŠÍ OBRAZOVKY (Přeskládá sloupce pod sebe)
            IMPORTANT: on mobile the overlay itself must scroll. With the old
            `height: 90vh` + a fixed-height column the footer was getting
@@ -772,7 +794,8 @@
             <!-- LEFT COLUMN: Profile & Stats -->
             <div class="menu-col side">
                 
-                <!-- GLOBÁLNÍ RANK A XP (Zvětšeno, nahrazuje nadpis) -->
+                <!-- GLOBÁLNÍ RANK A XP — click opens Codex (Global ranks) -->
+                <button type="button" class="mm-rank-codex-hit" onclick="openEncyclopedia('ranks')" title="Global ranks — open Codex" aria-label="Open Global ranks in Codex">
                 <div id="mm-global-rank-badge" style="background: #7f8c8d; color: white; padding: 10px 18px; border-radius: 10px; font-weight: bold; border: 3px solid #fff; display: inline-block; margin: 10px auto 10px auto; font-size: 18px; text-shadow: 1px 1px 3px #000; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">
                     Stray Recruit ★
                 </div>
@@ -782,6 +805,7 @@
                     <div id="global-xp-bar" style="height: 100%; width: 0%; background: linear-gradient(90deg, #3498db, #2ecc71); transition: width 0.3s ease-out;"></div>
                 </div>
                 <div id="global-xp-text" style="font-size: 13px; color: #fff; margin-top: 5px; margin-bottom: 25px; font-weight: bold;">0 / 1000 XP</div>
+                </button>
                 <!-- KONEC GLOBÁLNÍHO RANKU -->
 
                 <div style="font-size: 14px; color: #aaa; margin-bottom: 12px; font-weight: bold; background: rgba(0,0,0,0.4); padding: 8px; border-radius: 8px; text-align: left;">
@@ -916,11 +940,6 @@
                         <span style="font-size: 40px; line-height: 1; filter: drop-shadow(2px 4px 4px rgba(0,0,0,0.4)); width: 50px; text-align: center;">💎</span>
                         <span style="font-size: 20px; font-weight: 900; letter-spacing: 1px;">QUESTS</span>
                     </button>
-                    
-                    <button class="btn-main" onclick="openEncyclopedia('ranks')" style="background: #1abc9c; color: #fff; box-shadow: 0 8px 0 #16a085; width: 100%; padding: 18px 15px; margin: 0; display: flex; align-items: center; justify-content: flex-start; gap: 15px; border-radius: 16px;">
-                        <span style="font-size: 40px; line-height: 1; filter: drop-shadow(2px 4px 4px rgba(0,0,0,0.4)); width: 50px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center;">⭐</span>
-                        <span style="font-size: 20px; font-weight: 900; letter-spacing: 1px; line-height: 1; white-space: nowrap;">GLOBAL RANKS</span>
-                    </button>
                 </div>
 
                 <div style="border-top: 2px solid rgba(255,255,255,0.1); padding-top: 12px; margin-top: auto;">
@@ -944,7 +963,7 @@
             Play as a cat, hunt food, evolve through <b>50 levels</b> and survive endless dog hordes.
             Solo, Hardcore and Co‑Op modes · public leaderboards · permanent upgrades.
             Built as a hobby project — no install, no pay‑to‑win.
-            <span style="margin-left: 10px; color: #555;">v1.1.19</span>
+            <span style="margin-left: 10px; color: #555;">v1.1.21</span>
         </footer>
     </div>
 
@@ -1011,7 +1030,7 @@
     <div id="game-ui">
         <div class="stats-bar">
             <!-- ZÁŘÍCÍ ŠTÍTEK HRÁČE VLEVO NAHOŘE -->
-            <div id="ui-global-rank" class="stat-box" style="display: none; flex-direction: column; align-items: center; justify-content: center; border-width: 2px; gap: 4px; padding: 5px 15px; background: rgba(0,0,0,0.75);">
+            <div id="ui-global-rank" class="stat-box" onclick="openEncyclopedia('ranks')" title="All global ranks" style="display: none; flex-direction: column; align-items: center; justify-content: center; border-width: 2px; gap: 4px; padding: 5px 15px; background: rgba(0,0,0,0.75);">
                 <div id="ui-rank-name" style="font-size: 14px; text-shadow: 1px 1px 2px #000;">Stray Recruit ★</div>
                 <div style="width: 110px; height: 6px; background: rgba(0,0,0,0.8); border-radius: 3px; overflow: hidden; position: relative;">
                     <div id="ui-rank-bar" style="height: 100%; width: 0%; background: #2ecc71; transition: width 0.3s ease-out;"></div>
@@ -1414,7 +1433,7 @@
         let dashRequested = false;
 
         let rankStarsGradientSeq = 0;
-        /** SVG gradient fill — works across browsers vs. background-clip:text on punctuation glyphs. */
+        /** SVG gradient fill — scales with parent font-size like plain ★ text (tiers 51–60). */
         function htmlGradientRankStars(rawStars, stops) {
             if (!stops || stops.length === 0 || !rawStars) return rawStars;
             let gid = 'rank-star-grad-' + (++rankStarsGradientSeq);
@@ -1423,8 +1442,14 @@
                 return `<stop offset="${pct.toFixed(2)}%" stop-color="${hex}"/>`;
             }).join('');
             let n = rawStars.length;
-            let w = Math.max(40, Math.ceil(n * 19 + 8));
-            return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="22" role="presentation" aria-hidden="true" style="vertical-align:-4px;display:inline-block;overflow:visible"><defs><linearGradient id="${gid}" x1="0%" y1="0%" x2="100%" y2="0%">${stopsHtml}</linearGradient></defs><text x="1" y="17.5" fill="url(#${gid})" font-size="17" font-weight="800" font-family="Georgia,Times New Roman,serif,Apple Color Emoji,sans-serif">${rawStars}</text></svg>`;
+            let bh = 24;
+            let fs = 18;
+            let gap = n > 1 ? 3.5 : 0;
+            let bw = Math.max(20, Math.ceil(n * fs * 0.5 + (n - 1) * gap + 10));
+            let mx = bw / 2;
+            let my = bh / 2;
+            let wEm = (bw / bh).toFixed(4);
+            return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${bw} ${bh}" width="${wEm}em" height="1em" role="presentation" aria-hidden="true" preserveAspectRatio="xMidYMid meet" style="vertical-align:-0.14em;display:inline-block;overflow:visible"><defs><linearGradient id="${gid}" x1="0%" y1="0%" x2="100%" y2="0%">${stopsHtml}</linearGradient></defs><text x="${mx}" y="${my}" fill="url(#${gid})" font-size="${fs}" font-weight="800" font-family="Georgia,Times New Roman,serif,Segoe UI Emoji,Apple Color Emoji,sans-serif" text-anchor="middle" dominant-baseline="central" letter-spacing="${gap}">${rawStars}</text></svg>`;
         }
 
         function getGlobalRankInfo(level) {
@@ -2104,6 +2129,12 @@
         window.addEventListener('contextmenu', (e) => e.preventDefault());
         window.addEventListener('keydown', (e) => { 
             initAudio();
+            let enc = document.getElementById('encyclopedia');
+            if (e.code === 'Escape' && enc && enc.style.display === 'flex') {
+                closeEncyclopedia();
+                e.preventDefault();
+                return;
+            }
             if(e.code === 'Space') { dashRequested = true; e.preventDefault(); } 
             if(e.code === 'Escape' && (gameState === 'playing' || gameState === 'paused')) togglePause();
         });
@@ -3359,9 +3390,40 @@
         }
         window.goToMenu = goToMenu;
         
-        function openEncyclopedia(startTab = 'cats') { document.getElementById('main-menu').style.display = 'none'; document.getElementById('encyclopedia').style.display = 'flex'; switchTab(startTab); }
+        let codexReturnTarget = null;
+
+        function openEncyclopedia(startTab = 'cats') {
+            if (gameState === 'playing' || gameState === 'paused') {
+                codexReturnTarget = 'game';
+                if (gameState === 'playing') {
+                    gameState = 'paused';
+                    pauseStartTime = performance.now();
+                }
+                document.getElementById('pause-overlay').style.display = 'none';
+            } else {
+                codexReturnTarget = 'menu';
+            }
+            document.getElementById('main-menu').style.display = 'none';
+            document.getElementById('encyclopedia').style.display = 'flex';
+            switchTab(startTab);
+        }
         window.openEncyclopedia = openEncyclopedia;
-        function closeEncyclopedia() { document.getElementById('encyclopedia').style.display = 'none'; document.getElementById('main-menu').style.display = 'flex'; updateMenuStats(); }
+        function closeEncyclopedia() {
+            document.getElementById('encyclopedia').style.display = 'none';
+            if (codexReturnTarget === 'game') {
+                gameState = 'playing';
+                if (pauseStartTime > 0) {
+                    gameStartTime += (performance.now() - pauseStartTime);
+                    pauseStartTime = 0;
+                }
+                lastTime = performance.now();
+                codexReturnTarget = null;
+            } else {
+                document.getElementById('main-menu').style.display = 'flex';
+                updateMenuStats();
+                codexReturnTarget = null;
+            }
+        }
         window.closeEncyclopedia = closeEncyclopedia;
 
         function openPrivacy(tab = 'about') {
@@ -3397,10 +3459,7 @@
             if (tab === 'ranks') {
                 let curLv = prog.globalLevel || 1;
                 content.innerHTML = `
-                    <h3 style="margin-top:0; color:#fff;">⭐ Global ranks (preview)</h3>
-                    <p style="color:#aaa;font-size:14px; margin-bottom: 14px;line-height:1.45;">
-                        Same as the HUD: solid <b style="color:#fff;">★</b> stars for lower tiers; the top two tiers use horizontal <b style="color:#fff;">SVG</b> gradients on the glyphs (shows in any browser — not visible in plain chat).
-                    </p>
+                    <h3 style="margin-top:0; color:#fff;">⭐ Global ranks</h3>
                     <div id="enc-ranks-list" style="display:flex;flex-direction:column;gap:6px;max-height:calc(85vh - 200px);overflow-y:auto;padding:4px 8px 16px 0;box-sizing:border-box;"></div>
                 `;
                 let listEl = document.getElementById('enc-ranks-list');
