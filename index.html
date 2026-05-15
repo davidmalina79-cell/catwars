@@ -989,7 +989,7 @@
                 Play as a cat, hunt food, evolve through <b>50 levels</b> and survive endless dog hordes.
                 Solo, Hardcore, Co‑Op and Deathmatch modes · public leaderboards · permanent upgrades.
                 Built as a hobby project — no install, no pay‑to‑win.
-                <span style="margin-left: 10px; color: #555;">v1.3.1</span>
+                <span style="margin-left: 10px; color: #555;">v1.3.2</span>
             </footer>
         </div>
     </div>
@@ -5936,6 +5936,7 @@
                 return null; 
             }
         };
+        window.__catwars_fetchFromFirestoreImpl = window.fetchFromFirestore;
 
         window.saveToFirestore = async (progressData) => {
             if (!auth || !auth.currentUser || !db) return;
@@ -5968,6 +5969,7 @@
                 console.error("[CatWars] CRITICAL ERROR saving to Firestore:", error); 
             }
         };
+        window.__catwars_saveToFirestoreImpl = window.saveToFirestore;
 
         window.fetchLeaderboard = async () => {
             if (!db) return [];
@@ -6035,12 +6037,26 @@
                 const loadText = document.getElementById('loading-status-text');
 
                 if (user) {
-                    // If startLocalSession() already ran (3s timeout fired before
-                    // Firebase resolved), don't re-bootstrap UI — just sync the uid
-                    // for cloud saves going forward.
+                    // After the first bootstrap, auth can still change (login modal).
+                    // Hide the overlay, restore Firestore hooks if offline cleared them,
+                    // and load cloud for registered accounts (not late anonymous sync).
                     if (window._sessionStarted) {
                         window.currentUserUid = user.uid;
+                        if (window.__catwars_fetchFromFirestoreImpl) window.fetchFromFirestore = window.__catwars_fetchFromFirestoreImpl;
+                        if (window.__catwars_saveToFirestoreImpl) window.saveToFirestore = window.__catwars_saveToFirestoreImpl;
+                        if (!user.isAnonymous) {
+                            try {
+                                await window.loadCloudProgress(user.uid);
+                            } catch (e) {
+                                console.warn("[CatWars] loadCloudProgress after credential change:", e);
+                            }
+                        }
                         updateAuthUI(user);
+                        let loginScr = document.getElementById('login-screen');
+                        if (loginScr) loginScr.style.display = 'none';
+                        let loginErr = document.getElementById('login-error');
+                        if (loginErr) loginErr.innerHTML = '';
+                        if (loadingScreen) loadingScreen.style.display = 'none';
                         return;
                     }
                     window._sessionStarted = true;
