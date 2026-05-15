@@ -876,10 +876,10 @@
                         <div class="mode-name">Cats vs Dogs</div>
                         <div class="mode-badge" style="background: var(--info);">NEW</div>
                     </div>
-                    <div class="mode-card locked" id="mode-ffa" onclick="selectMode('ffa')">
+                    <div class="mode-card" id="mode-ffa" onclick="selectMode('ffa')">
                         <div class="mode-icon" style="font-size: 17px; letter-spacing: -1px; white-space: nowrap;">🐱⚔️🐱</div>
                         <div class="mode-name">Deathmatch</div>
-                        <div class="mode-badge">AI Soon</div>
+                        <div class="mode-badge" style="background: var(--danger);">NEW</div>
                     </div>
                 </div>
 
@@ -987,9 +987,9 @@
                 </div>
                 <b style="color: #ccc;">CatWars.io</b> — a free browser‑based 2D top‑down survival action game.
                 Play as a cat, hunt food, evolve through <b>50 levels</b> and survive endless dog hordes.
-                Solo, Hardcore and Co‑Op modes · public leaderboards · permanent upgrades.
+                Solo, Hardcore, Co‑Op and Deathmatch modes · public leaderboards · permanent upgrades.
                 Built as a hobby project — no install, no pay‑to‑win.
-                <span style="margin-left: 10px; color: #555;">v1.1.26</span>
+                <span style="margin-left: 10px; color: #555;">v1.3.0</span>
             </footer>
         </div>
     </div>
@@ -1004,6 +1004,7 @@
                 <button class="enc-tab lb-tab" onclick="switchLbTab('solo')">Best Solo</button>
                 <button class="enc-tab lb-tab" onclick="switchLbTab('hardcore')">Best Hardcore</button>
                 <button class="enc-tab lb-tab" onclick="switchLbTab('team')">Best Co-Op</button>
+                <button class="enc-tab lb-tab" onclick="switchLbTab('ffa')">Best Deathmatch</button>
             </div>
 
             <div style="background: rgba(0,0,0,0.4); border-radius: 10px; padding: 10px; flex-grow: 1; overflow: hidden; display: flex; flex-direction: column; text-align: left; margin-bottom: 20px;">
@@ -1638,8 +1639,6 @@
         let selectedGameMode = 'solo';
         
         function selectMode(mode) {
-            if (mode === 'ffa') return; 
-            
             document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('active'));
             document.getElementById('mode-' + mode).classList.add('active');
             selectedGameMode = mode;
@@ -1670,6 +1669,11 @@
                 startBtn.innerHTML = '<span style="font-size: 0.82em; letter-spacing: -0.06em; white-space: nowrap; vertical-align: middle;">🐱⚔️🐺</span> PLAY CO-OP';
                 startBtn.style.background = 'var(--info)';
                 startBtn.style.boxShadow = '0 6px 0 #2980b9';
+            } else if (mode === 'ffa') {
+                if (soloPanel) soloPanel.style.display = 'flex';
+                startBtn.innerHTML = '<span style="font-size: 0.82em; letter-spacing: -0.06em; white-space: nowrap; vertical-align: middle;">🐱⚔️🐱</span> PLAY DEATHMATCH';
+                startBtn.style.background = 'var(--danger)';
+                startBtn.style.boxShadow = '0 6px 0 #c0392b';
             }
         }
         window.selectMode = selectMode;
@@ -2340,15 +2344,18 @@
         const gridEnemies = new Map();
         const gridFoods = new Map();
         const gridGems = new Map();
+        const gridAiCats = new Map();
 
         function rebuildGrids() {
             for (let arr of gridEnemies.values()) arr.length = 0;
             for (let arr of gridFoods.values()) arr.length = 0;
             for (let arr of gridGems.values()) arr.length = 0;
+            for (let arr of gridAiCats.values()) arr.length = 0;
             
             for (let e of enemies) { let k = getGridKey(e.x, e.y); let arr = gridEnemies.get(k); if (!arr) { arr = []; gridEnemies.set(k, arr); } arr.push(e); }
             for (let f of foods) { let k = getGridKey(f.x, f.y); let arr = gridFoods.get(k); if (!arr) { arr = []; gridFoods.set(k, arr); } arr.push(f); }
             for (let g of droppedGems) { let k = getGridKey(g.x, g.y); let arr = gridGems.get(k); if (!arr) { arr = []; gridGems.set(k, arr); } arr.push(g); }
+            for (let c of aiCats) { let k = getGridKey(c.x, c.y); let arr = gridAiCats.get(k); if (!arr) { arr = []; gridAiCats.set(k, arr); } arr.push(c); }
         }
 
         function queryGridMap(map, x, y, radius) {
@@ -3339,7 +3346,7 @@
             let header = document.getElementById('lb-header');
             let currentBody = document.getElementById('lb-current-player');
             
-            let isTime = tab === 'solo' || tab === 'hardcore' || tab === 'team';
+            let isTime = tab === 'solo' || tab === 'hardcore' || tab === 'team' || tab === 'ffa';
             header.innerHTML = `<th style="width: 10%;">Rank</th><th style="width: 25%; text-align: left;">Player</th><th style="width: 30%; text-align: left;">Level</th><th style="width: 15%;">Max Cat Lv.</th><th style="width: 20%; color: #00d4ff;">${isTime ? 'Fastest Run ⏱️' : 'Total Kills ⚔️'}</th>`;
             
             let html = '';
@@ -3928,7 +3935,17 @@
             }
 
             if (selectedGameMode === 'team') {
-                document.getElementById('ui-team-kills-box').style.display = 'flex';
+                let kBox = document.getElementById('ui-team-kills-box');
+                kBox.style.display = 'flex';
+                kBox.style.color = '#3498db';
+                kBox.style.borderColor = '#3498db';
+                kBox.firstChild.textContent = '👥 ';
+            } else if (selectedGameMode === 'ffa') {
+                let kBox = document.getElementById('ui-team-kills-box');
+                kBox.style.display = 'flex';
+                kBox.style.color = 'var(--danger)';
+                kBox.style.borderColor = 'var(--danger)';
+                kBox.firstChild.textContent = '🐾 ';
             } else {
                 document.getElementById('ui-team-kills-box').style.display = 'none';
             }
@@ -3993,9 +4010,12 @@
             for(let i=0; i<FOOD_COUNT; i++) spawnFood();
             for(let i=0; i<ENEMY_COUNT; i++) spawnEnemy(true);
             
-            if (selectedGameMode === 'team') {
+            if (selectedGameMode === 'team' || selectedGameMode === 'ffa') {
                 for(let i=0; i<8; i++) spawnAICat(true);
             }
+            
+            // DM bot respawn timer state — populated when a bot dies in 'ffa' mode
+            window._ffaRespawnQueue = [];
             
             document.getElementById('tutorial').style.display = 'none';
             tutorialActive = false;
@@ -4016,7 +4036,19 @@
 
         function spawnAICat(isInitial = false) {
             let baseLevel = player ? player.level : 1;
-            let cLvl = Math.max(1, Math.min(50, baseLevel + Math.floor(Math.random() * 5) - 2));
+            let cLvl;
+            if (selectedGameMode === 'ffa') {
+                // Užší okno: ±1 lvl. Tvrdý cap player.level + 3 (vyřešen i dál
+                // při leveling-throttle uvnitř foodu).
+                cLvl = Math.max(1, Math.min(50, baseLevel + Math.floor(Math.random() * 3) - 1));
+                if (cLvl > baseLevel + 3) cLvl = baseLevel + 3;
+                // Anti-stomp: prvních 30 s hry nesmí bot předbíhat hráče vůbec.
+                if (!isInitial && gameStartTime && (performance.now() - gameStartTime) < 30000) {
+                    cLvl = Math.min(cLvl, baseLevel + 1);
+                }
+            } else {
+                cLvl = Math.max(1, Math.min(50, baseLevel + Math.floor(Math.random() * 5) - 2));
+            }
             let cx, cy; 
             if (isInitial || !player) { 
                 cx = Math.random() * WORLD_SIZE; cy = Math.random() * WORLD_SIZE; 
@@ -4127,7 +4159,8 @@
             let isCompHardcore = selectedGameMode === 'hardcore' && 
                 activeMods.doubleDmg && activeMods.noHeal && activeMods.doubleBoss && activeMods.fast && activeMods.noDash;
 
-            if (!prog.bestTimes) prog.bestTimes = { solo: null, hardcore: null, team: null };
+            if (!prog.bestTimes) prog.bestTimes = { solo: null, hardcore: null, team: null, ffa: null };
+            if (prog.bestTimes && prog.bestTimes.ffa === undefined) prog.bestTimes.ffa = null;
             
             if (isCompHardcore) {
                 if (!prog.bestTimes.hardcore || timeElapsedMs < prog.bestTimes.hardcore) prog.bestTimes.hardcore = timeElapsedMs;
@@ -4136,6 +4169,8 @@
                 if (!prog.bestTimes.solo || timeElapsedMs < prog.bestTimes.solo) prog.bestTimes.solo = timeElapsedMs;
             } else if (selectedGameMode === 'team') {
                 if (!prog.bestTimes.team || timeElapsedMs < prog.bestTimes.team) prog.bestTimes.team = timeElapsedMs;
+            } else if (selectedGameMode === 'ffa') {
+                if (!prog.bestTimes.ffa || timeElapsedMs < prog.bestTimes.ffa) prog.bestTimes.ffa = timeElapsedMs;
             }
             
             // Masivní exploze a ohňostroje
@@ -4390,7 +4425,25 @@
                 for (let i = aiCats.length - 1; i >= 0; i--) {
                     let c = aiCats[i];
                     if (c.hp <= 0) {
-                        dropGems(c.x, c.y, 5 + Math.floor(Math.random()*10));
+                        // DM: pokud hráč přispěl k smrti, dostane gemy + XP (2× než pes stejného levelu)
+                        let pvpGems = 5 + Math.floor(Math.random()*10);
+                        if (c.playerDamaged && selectedGameMode === 'ffa') {
+                            pvpGems = 6 + Math.floor(Math.random() * 7); // 6-12 gemů
+                            let pvpXp = Math.floor(25 * Math.pow(1.20, c.level - 1) * 2);
+                            player.xp += pvpXp;
+                            updateLevel();
+                            playerRunData.teamKills++; // přepoužité jako "Cat Kills" v DM
+                            playerRunData.kills++;
+                            prog.totalKills++;
+                            questProgress('total_kills', prog.totalKills);
+                            updateUI();
+                            // Combo +1 jak jsme se domluvili
+                            combo++; comboTimer = COMBO_WINDOW;
+                            if (combo > playerRunData.bestCombo) playerRunData.bestCombo = combo;
+                            // Vizuální feedback: žluté damage number "+XP"
+                            let d = getDmgNumber(); d.x = c.x; d.y = c.y - c.size - 15; d.val = '+' + formatNumber(pvpXp) + ' XP'; d.color = '#f1c40f'; d.life = 1.5; d.vy = -180; damageNumbers.push(d);
+                        }
+                        dropGems(c.x, c.y, pvpGems);
                         
                         // SPAWN HROBEČKU A DUŠIČEK
                         decorations.push({ x: c.x, y: c.y, type: 'tombstone', size: 1.2, rotation: 0, name: c.name, life: 45 });
@@ -4398,10 +4451,24 @@
                             let pt = getParticle(); if(pt) { pt.x = c.x; pt.y = c.y; pt.vx = (Math.random()-0.5)*80; pt.vy = -100 - Math.random()*150; pt.life = 2.5; pt.color = 'rgba(255, 255, 255, 0.6)'; pt.size = 12; particles.push(pt); }
                         }
 
+                        // DM: zařazení do respawn queue (8s delay)
+                        if (selectedGameMode === 'ffa') {
+                            if (!window._ffaRespawnQueue) window._ffaRespawnQueue = [];
+                            window._ffaRespawnQueue.push(performance.now() + 8000);
+                        }
+
                         aiCats.splice(i, 1);
                         continue;
                     } else if (Math.hypot(player.x - c.x, player.y - c.y) > 5000) {
-                        aiCats.splice(i, 1); 
+                        // V DM nesplaceujeme botí stěnu – jen if non-ffa
+                        if (selectedGameMode === 'ffa') {
+                            // V DM: jen warp blíž, abychom udrželi 8 botů v hráčově okolí
+                            window._ffaRespawnQueue = window._ffaRespawnQueue || [];
+                            window._ffaRespawnQueue.push(performance.now()); // okamžitý respawn (despawn ≠ smrt)
+                            aiCats.splice(i, 1);
+                        } else {
+                            aiCats.splice(i, 1);
+                        }
                         continue;
                     }
                     if (c.invuln > 0) c.invuln -= dt;
@@ -4457,6 +4524,39 @@
                         if (d < minGemDist) { nearestGem = g; minGemDist = d; }
                     }
 
+                    // DM: vyhledání PvP cíle (slabší / rovnocenná kočka nebo hráč)
+                    let pvpTarget = null, pvpDist = Infinity, strongerThreat = null, strongerDist = Infinity;
+                    if (selectedGameMode === 'ffa') {
+                        // Cache jako u dogs — refresh každé 4. frame s offsetem
+                        if (frameCounter % 4 === c.searchOffset || !c.nearCatsCache) {
+                            c.nearCatsCache = queryGridMap(gridAiCats, c.x, c.y, 1500);
+                        }
+                        for (let other of c.nearCatsCache) {
+                            if (other === c || other.hp <= 0) continue;
+                            let d = Math.hypot(other.x - c.x, other.y - c.y);
+                            if (d > 1500) continue;
+                            if (other.level <= c.level + 1 && d < pvpDist) {
+                                pvpTarget = other; pvpDist = d;
+                            } else if (other.level > c.level + 2 && d < strongerDist) {
+                                strongerThreat = other; strongerDist = d;
+                            }
+                        }
+                        // Hráč jako cíl, pokud je v dosahu a slabší / max +1 nad botem
+                        if (distToPlayer < 1500 && player.level <= c.level + 1) {
+                            if (distToPlayer < pvpDist) { pvpTarget = player; pvpDist = distToPlayer; }
+                        } else if (distToPlayer < 1200 && player.level > c.level + 2) {
+                            if (distToPlayer < strongerDist) { strongerThreat = player; strongerDist = distToPlayer; }
+                        }
+                        // Avoidance — pokud je v dohledu silnější protivník, drobně odpuzuj.
+                        // Konvence dt*60 dle AGENTS.md §5.3.
+                        if (strongerThreat && strongerDist < 700) {
+                            let dx = c.x - strongerThreat.x, dy = c.y - strongerThreat.y;
+                            let force = (700 - strongerDist) * 0.4;
+                            c.x += (dx / strongerDist) * force * dt * 60 * 0.02;
+                            c.y += (dy / strongerDist) * force * dt * 60 * 0.02;
+                        }
+                    }
+
                     let cStats = evolutions[Math.min(c.level - 1, 49)];
                     let cArchStats = ARCH_STATS[getWeaponArchetype(cStats.weaponType)];
                     let pTier = c.wTier;
@@ -4467,12 +4567,17 @@
 
                     // PERSONALITY STATE MACHINE
                     if (c.hp < c.maxHp * 0.25) c.state = 'flee';
-                    else if (c.personality === 'defender' && distToPlayer > 800 && distToPlayer < 3500) c.state = 'follow_player';
+                    else if (selectedGameMode === 'ffa' && pvpTarget && pvpDist < 1200) c.state = 'pvp_chase';
+                    else if (c.personality === 'defender' && distToPlayer > 800 && distToPlayer < 3500 && selectedGameMode !== 'ffa') c.state = 'follow_player';
                     else if (c.personality === 'greedy' && nearestGem && minGemDist < 1200) c.state = 'greedy_gem';
                     else if (targetDog && minDogDist < searchRadiusDog) c.state = 'chase';
                     else c.state = 'wander';
 
                     if (c.state === 'flee' && nearestFood) c.angle = Math.atan2(nearestFood.y - c.y, nearestFood.x - c.x);
+                    else if (c.state === 'pvp_chase' && pvpTarget) {
+                        c.angle = Math.atan2(pvpTarget.y - c.y, pvpTarget.x - c.x);
+                        if (pvpDist < cAttackReach * 0.8) cSpeed *= 0.5;
+                    }
                     else if (c.state === 'follow_player') c.angle = Math.atan2(player.y - c.y, player.x - c.x);
                     else if (c.state === 'greedy_gem' && nearestGem) c.angle = Math.atan2(nearestGem.y - c.y, nearestGem.x - c.x);
                     else if (c.state === 'chase' && targetDog) {
@@ -4490,6 +4595,68 @@
                         c.attackTimer -= dt;
                         c.attackProgress = 1 - (c.attackTimer / c.attackCooldown);
                     } else { c.attackProgress = 0; c.hasAttacked = false; }
+
+                    // DM: PvP attack init (kočka útočí na kočku nebo hráče)
+                    if (selectedGameMode === 'ffa' && c.state === 'pvp_chase' && pvpTarget && c.attackTimer <= 0) {
+                        let tgtSize = pvpTarget === player ? pSize : pvpTarget.size;
+                        if (pvpDist < cAttackReach + tgtSize) {
+                            c.attackTimer = cStats.attackCooldown || (0.66 * cArchStats.cdMult);
+                            c.attackCooldown = c.attackTimer;
+                            c.hasAttacked = false;
+                            c._pvpTargetCache = pvpTarget; // zafixovat cíl po dobu útoku
+                            if (Math.hypot(player.x - c.x, player.y - c.y) < viewRadius) playSound('swing');
+                        }
+                    }
+
+                    // DM: PvP attack resolution
+                    if (selectedGameMode === 'ffa' && c.attackTimer > 0 && c.attackProgress >= 0.25 && !c.hasAttacked && c._pvpTargetCache) {
+                        c.hasAttacked = true;
+                        let pt = c._pvpTargetCache;
+                        if (pt.hp > 0) {
+                            let ptSize = pt === player ? pSize : pt.size;
+                            let dToPt = Math.hypot(pt.x - c.x, pt.y - c.y);
+                            let aToPt = Math.atan2(pt.y - c.y, pt.x - c.x);
+                            let aDiff = Math.abs(((aToPt - c.angle) + Math.PI*3) % (Math.PI*2) - Math.PI);
+                            if (aDiff < cArchStats.sweepAngle && dToPt < cAttackReach + ptSize) {
+                                if (pt.invuln === undefined || pt.invuln <= 0) {
+                                    let dmg = cStats.playerDamage * cDmgMult;
+                                    pt.hp -= dmg;
+                                    pt.invuln = pt === player ? 0.5 : 0.1;
+                                    let d = getDmgNumber(); d.x = pt.x; d.y = pt.y - ptSize; d.val = formatNumber(dmg); d.color = '#3498db'; d.life = 1.0; d.vy = -200; damageNumbers.push(d);
+                                    if (Math.hypot(player.x - c.x, player.y - c.y) < viewRadius) playSound('hit');
+                                    if (cArchStats.knockback > 0) {
+                                        let ang = Math.atan2(pt.y - c.y, pt.x - c.x);
+                                        let kbFactor = pt === player ? 1.0 : 1.0;
+                                        pt.knockbackVx = Math.cos(ang) * cArchStats.knockback * kbFactor;
+                                        pt.knockbackVy = Math.sin(ang) * cArchStats.knockback * kbFactor;
+                                    }
+                                    if (pt === player) {
+                                        hitStop = 0.08; updateUI();
+                                        if (combo > 0 && !player.huntersEye) { combo = 0; comboTimer = 0; updateUI(); }
+                                        if (player.hp <= 0) {
+                                            // Atribuce smrti hráče k zabíjející kočce
+                                            window._lastKilledByCat = { name: c.name, level: c.level };
+                                            showDeathScreen();
+                                        }
+                                    } else {
+                                        // Bot zabil bota — XP jako z psa stejného levelu × 1.5, throttle pokud bot předbíhá hráče o víc než +3
+                                        if (pt.hp <= 0) {
+                                            let xpGain = Math.floor(25 * Math.pow(1.20, pt.level - 1) * 1.5);
+                                            if (c.level > player.level + 3) xpGain = Math.floor(xpGain * 0.5);
+                                            c.xp += xpGain;
+                                            let cStats2 = evolutions[Math.min(c.level - 1, 49)];
+                                            while (c.xp >= cStats2.nextXp && c.level < 50) {
+                                                c.level++; c.xp -= cStats2.nextXp;
+                                                cStats2 = evolutions[Math.min(c.level - 1, 49)];
+                                                c.maxHp = cStats2.maxHp * HELMET_HP_MULT[c.hTier]; c.hp = c.maxHp; c.size = cStats2.baseSize;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        c._pvpTargetCache = null;
+                    }
 
                     if (c.state === 'chase' && targetDog && targetDist < cAttackReach + targetDog.size && c.attackTimer <= 0) {
                         c.attackTimer = cStats.attackCooldown || (0.66 * cArchStats.cdMult);
@@ -4551,6 +4718,7 @@
                                 c.hp = Math.min(c.maxHp, c.hp + c.maxHp * 0.15);
                             } else {
                                 let xpGained = (f.type === 'milk' ? Math.max(18, Math.floor(cStats.nextXp * 0.12)) : f.type === 'mouse' ? Math.max(10, Math.floor(cStats.nextXp * 0.06)) : f.type === 'fish' ? Math.max(6, Math.floor(cStats.nextXp * 0.03)) : Math.max(2, Math.floor(cStats.nextXp * 0.01)));
+                                if (selectedGameMode === 'ffa' && c.level > player.level + 3) xpGained = Math.floor(xpGained * 0.5);
                                 c.xp += xpGained;
                                 while (c.xp >= cStats.nextXp && c.level < 50) {
                                     c.level++; c.xp -= cStats.nextXp;
@@ -4569,7 +4737,9 @@
                         if (Math.hypot(c.x - g.x, c.y - g.y) < c.size + 20) {
                             droppedGems.splice(j, 1);
                             if (g.isXp) {
-                                c.xp += g.xpVal;
+                                let xpAdd = g.xpVal;
+                                if (selectedGameMode === 'ffa' && c.level > player.level + 3) xpAdd = Math.floor(xpAdd * 0.5);
+                                c.xp += xpAdd;
                                 let cStats = evolutions[Math.min(c.level - 1, 49)];
                                 while (c.xp >= cStats.nextXp && c.level < 50) {
                                     c.level++; c.xp -= cStats.nextXp;
@@ -4582,6 +4752,18 @@
                     }
                 }
                 // --- END AI CATS LOGIC ---
+
+                // DM: respawn queue — spawne nového bota pro každý záznam, jehož timer dozrál
+                if (selectedGameMode === 'ffa' && window._ffaRespawnQueue && window._ffaRespawnQueue.length > 0) {
+                    let now = performance.now();
+                    for (let r = window._ffaRespawnQueue.length - 1; r >= 0; r--) {
+                        if (window._ffaRespawnQueue[r] <= now) {
+                            window._ffaRespawnQueue.splice(r, 1);
+                            // Spawn max 8 botů celkem
+                            if (aiCats.length < 8) spawnAICat(false);
+                        }
+                    }
+                }
 
                 if (player.dashTimer > 0) player.dashTimer -= dt;
                 if (player.dashActive > 0) player.dashActive -= dt;
@@ -4741,6 +4923,39 @@
                         }
                     }
                     if(chestHit) { hitStop = 0.05; playSound('hit'); }
+
+                    // DM: Hráč může zasáhnout AI kočky v 'ffa' módu.
+                    // Vlastní samostatný průchod proměnnou `ac`, aby se nemíchal
+                    // s `c` (chest) nahoře ani s `c` (target cat) v enemy loopu níže.
+                    if (selectedGameMode === 'ffa') {
+                        for (let ai = aiCats.length - 1; ai >= 0; ai--) {
+                            let ac = aiCats[ai];
+                            if (ac.hp <= 0) continue;
+                            let comboPierce = combo >= BALANCE.COMBO_TIER_PIERCE;
+                            let distToAc = Math.hypot(ac.x - player.x, ac.y - player.y);
+                            if (distToAc > pAttackReach + ac.size || (ac.invuln > 0 && !comboPierce)) continue;
+                            let aToAc = Math.atan2(ac.y - player.y, ac.x - player.x);
+                            let aDiffAc = Math.abs(((aToAc - player.angle) + Math.PI*3) % (Math.PI*2) - Math.PI);
+                            if (aDiffAc < archStats.sweepAngle) {
+                                let dmg = stats.playerDamage * pDmgMult;
+                                ac.hp -= dmg;
+                                ac.invuln = comboPierce ? 0 : 0.1;
+                                ac.playerDamaged = true; // pro rozdělení odměn v death handleru
+                                hitStop = comboCrit ? 0.09 : 0.05;
+                                if (Math.hypot(player.x - ac.x, player.y - ac.y) < viewRadius) playSound('hit');
+                                if (archStats.knockback > 0) {
+                                    let ang = Math.atan2(ac.y - player.y, ac.x - player.x);
+                                    ac.knockbackVx = Math.cos(ang) * archStats.knockback;
+                                    ac.knockbackVy = Math.sin(ang) * archStats.knockback;
+                                }
+                                let dmgColor = comboCrit ? '#f1c40f' : '#fff';
+                                let dmgLabel = comboCrit ? ('CRIT ' + formatNumber(dmg)) : formatNumber(dmg);
+                                let d = getDmgNumber(); d.x=ac.x; d.y=ac.y-ac.size; d.val=dmgLabel; d.color=dmgColor; d.life=1.0; d.vy=-200; damageNumbers.push(d);
+                                for(let p=0; p<8; p++) { let pt = getParticle(); if(!pt) break; pt.x=ac.x; pt.y=ac.y; pt.vx=(Math.random()-0.5)*800; pt.vy=(Math.random()-0.5)*800; pt.life=0.5; pt.color=comboCrit ? '#f1c40f' : '#3498db'; particles.push(pt); }
+                                // Smrt vyřeší AI cat loop v dalším framu (atribuce + respawn queue).
+                            }
+                        }
+                    }
                 }
                 
                 for (let i = enemies.length - 1; i >= 0; i--) { if (!enemies[i].isBoss && !enemies[i].isMiniBoss && Math.hypot(player.x - enemies[i].x, player.y - enemies[i].y) > 3500) enemies.splice(i, 1); }
@@ -5156,7 +5371,18 @@
                 mmCtx.fillStyle = color; mmCtx.fillRect(c.x*scale - s/2, c.y*scale - s/2, s, s);
             }
             
-            mmCtx.fillStyle = '#3498db'; for (let c of aiCats) { mmCtx.beginPath(); mmCtx.arc(c.x*scale, c.y*scale, 2, 0, Math.PI*2); mmCtx.fill(); }
+            if (selectedGameMode === 'ffa') {
+                for (let c of aiCats) {
+                    let diff = c.level - player.level;
+                    let color = '#3498db'; // default modrá (slabší)
+                    if (diff > 1) color = '#e67e22'; // oranžová (silnější)
+                    else if (Math.abs(diff) <= 1) color = '#f1c40f'; // žlutá (rovnocenný)
+                    if (c.level >= 50) color = '#9b59b6'; // elite Lv.50 champion
+                    mmCtx.fillStyle = color; mmCtx.beginPath(); mmCtx.arc(c.x*scale, c.y*scale, c.level >= 50 ? 3 : 2, 0, Math.PI*2); mmCtx.fill();
+                }
+            } else {
+                mmCtx.fillStyle = '#3498db'; for (let c of aiCats) { mmCtx.beginPath(); mmCtx.arc(c.x*scale, c.y*scale, 2, 0, Math.PI*2); mmCtx.fill(); }
+            }
 
             for (let e of enemies) {
                 if (e.hp <= 0) continue;
@@ -5252,6 +5478,10 @@
                 title.style.color = 'var(--danger)';
                 title.style.textShadow = 'none';
                 subtitle.innerText = "A dog ended your meow-journey.";
+                if (window._lastKilledByCat && selectedGameMode === 'ffa') {
+                    subtitle.innerText = `Killed by Lv.${window._lastKilledByCat.level} ${window._lastKilledByCat.name}.`;
+                    window._lastKilledByCat = null;
+                }
                 subtitle.style.color = '#ddd';
                 subtitle.style.fontWeight = 'normal';
                 timeEl.style.display = 'none';
