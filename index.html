@@ -219,6 +219,17 @@
         html.crazygames .menu-about-footer {
             display: none !important;
         }
+
+        /* CrazyGames forbids ANY external login (Google / Facebook / email)
+           competing with their account system. Hide our entire auth UI on
+           crazygames.com — players are anonymous guests, progress saves
+           locally via localStorage. The login modal itself is also forced
+           hidden as a belt-and-suspenders guard against any code path that
+           still tries to open it (e.g. logout() fallback). */
+        html.crazygames #auth-section,
+        html.crazygames #login-screen {
+            display: none !important;
+        }
         
         canvas { display: block; width: 100%; height: 100%; }
         
@@ -979,7 +990,7 @@
                 <b style="color: #ccc;">CatWars.io</b> — a free browser‑based 2D top‑down survival action game.
                 Solo, Hardcore, Co‑Op and Deathmatch modes · public leaderboards · permanent upgrades.
                 Built as a hobby project — no install, no pay‑to‑win.
-                <span style="display: block; margin-top: 4px; color: #555;">v1.6.1</span>
+                <span style="display: block; margin-top: 4px; color: #555;">v1.6.2</span>
             </footer>
         </div>
     </div>
@@ -1270,7 +1281,7 @@
                 <button class="btn-main" onclick="window.openLeaderboard()" style="background: #e67e22; box-shadow: 0 6px 0 #d35400; width: 100%; font-size: 18px; padding: 15px; margin-top: 0;">🏆 Leaderboard</button>
                 <button class="btn-main" id="btn-daily-spin" onclick="window.openDailySpin()" style="background: #9b59b6; box-shadow: 0 6px 0 #8e44ad; width: 100%; font-size: 18px; padding: 15px; margin: 8px 0 0 0; line-height: 1.2;">🎰 Daily Spin<br><span id="daily-spin-sub" style="font-size: 14px;">Ready!</span></button>
 
-                <div style="margin-top: auto; border-top: 2px solid rgba(255,255,255,0.1); padding-top: 12px; display: flex; flex-direction: column; gap: 8px;">
+                <div id="auth-section" style="margin-top: auto; border-top: 2px solid rgba(255,255,255,0.1); padding-top: 12px; display: flex; flex-direction: column; gap: 8px;">
                     <div id="auth-status-text" style="color: #aaa; font-size: 13px; font-weight: bold; text-shadow: 1px 1px 2px black; text-align: center;">Playing as: Guest</div>
                     <button id="auth-action-btn" class="btn-main" onclick="window.handleAuthAction()" style="font-size: 15px; padding: 12px 16px; margin: 0; background: var(--success); box-shadow: 0 4px 0 #27ae60; width: 100%;">🔑 Sign In to Save</button>
                 </div>
@@ -1411,7 +1422,7 @@
                     <b style="color: #ccc;">CatWars.io</b> — free 2D browser survival game.
                     Hunt food, evolve through <b>50 levels</b>, survive endless dog hordes.
                     Solo · Hardcore · Co‑Op · no install · no pay‑to‑win.
-                    <span style="display: block; margin-top: 4px; color: #555;">v1.6.1</span>
+                    <span style="display: block; margin-top: 4px; color: #555;">v1.6.2</span>
                 </footer>
             </div>
         </div>
@@ -6348,6 +6359,9 @@
         window.updateAuthUI = updateAuthUI;
 
         window.openLoginModal = () => {
+            // CrazyGames forbids external login methods. Never open the modal
+            // there — players stay as anonymous guests (progress -> localStorage).
+            if (window.IS_CRAZYGAMES) return;
             const modal = document.getElementById('login-screen');
             const err = document.getElementById('login-error');
             if (err) err.innerHTML = '';
