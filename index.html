@@ -2,7 +2,14 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <!-- iOS Safari: encourages "Add to Home Screen" to launch fullscreen so the
+         URL bar / status bar stop eating ~80px of precious vertical space.
+         Cosmetic on regular tabs, critical for the in-game HUD on iPhones. -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="CatWars.io">
     <!-- Tab title: brand only — do not append feature/marketing phrases. -->
     <title>CatWars.io</title>
     
@@ -114,8 +121,21 @@
             window.__rewardedAdsAvailable = available;
             var reviveBtn = document.getElementById('btn-revive-ad');
             if (reviveBtn) reviveBtn.style.display = available ? 'block' : 'none';
-            // The boost button is rebuilt each time switchTab('boosts') renders,
-            // so we store the flag and let the render function read it (see below).
+            // If the player happens to have the Boosts tab open while the SDK
+            // resolves (common on CrazyGames where SDK init can land *after* the
+            // first openEncyclopedia('boosts')), re-render so the
+            // "Watch Ad for Random Boost" button appears without a tab switch.
+            try {
+                var enc = document.getElementById('encyclopedia');
+                var content = document.getElementById('enc-content');
+                if (enc && enc.style.display === 'flex' && content
+                    && typeof window.renderBoostsTab === 'function') {
+                    var activeTabBtn = enc.querySelector('.enc-tab.active');
+                    if (activeTabBtn && /'boosts'/.test(activeTabBtn.getAttribute('onclick') || '')) {
+                        window.renderBoostsTab(content);
+                    }
+                }
+            } catch (e) { /* re-render is purely cosmetic — never block updates. */ }
         };
 
         window.loadAdsense = function () {
@@ -313,7 +333,9 @@
         .lobby-desc li  { margin-bottom: 4px; }
         #lobby-play-btn:hover  { transform: translateY(2px); box-shadow: 0 6px 0 #27ae60, 0 0 30px rgba(46,204,113,0.3); }
         #lobby-play-btn:active { transform: translateY(5px); box-shadow: 0 3px 0 #27ae60; }
-        /* Rotate-device overlay — visible only after lobby Play click on portrait mobile */
+        /* Rotate-device overlay — visible only after lobby Play click on portrait mobile.
+           pointer-events: auto so the player can't accidentally tap menu buttons hidden
+           behind it (we want to block all input until the device is rotated). */
         #rotate-overlay {
             display: none;
             position: fixed;
@@ -328,12 +350,21 @@
             font-size: 22px;
             font-weight: bold;
             text-align: center;
-            pointer-events: none;
+            pointer-events: auto;
         }
         body.post-lobby #rotate-overlay { display: flex; }
         @media (orientation: landscape) {
             body.post-lobby #rotate-overlay { display: none; }
         }
+
+        /* ── LOBBY: minimal "Evowars-style" layout ────────────────────────
+           The long SEO description and the meta-progression block stay in
+           the DOM (Google bot crawls the markup for AdSense legitimacy),
+           but they're visually hidden so the player sees only logo + tagline
+           + giant Play button. The About / How to play / Privacy / Cookies
+           links remain visible because AdSense compliance requires reachable
+           legal pages. */
+        #lobby-screen .lobby-desc { display: none; }
         /* ── END LOBBY ──────────────────────────────────────────────────── */
 
         h1 { margin-top: 0; font-size: clamp(40px, 8vw, 55px); color: var(--primary); text-shadow: 3px 3px 0 #000; text-align: center;}
@@ -681,8 +712,86 @@
                 color: var(--primary);
                 background: rgba(243, 156, 18, 0.12);
             }
+
+            /* Right-column upgrade buttons stack to ~500px (5 × 80px) but the
+               column only has ~304px on a 360-tall phone. Shrink the buttons
+               so the Boosts + Quests rows aren't permanently below the fold. */
+            #main-menu .menu-col.side button.btn-main {
+                padding: 10px 12px !important;
+            }
+            #main-menu .menu-col.side button.btn-main > span:first-child {
+                font-size: 26px !important;
+                width: 38px !important;
+            }
+            #main-menu .menu-col.side button.btn-main > span:nth-child(2) {
+                font-size: 15px !important;
+                letter-spacing: 0.5px !important;
+            }
+            #main-menu .menu-col.side > div {
+                gap: 8px !important;
+            }
+
+            /* Subtle fade-out gradient on each scrollable column to hint
+               "there's more content below". Pure cosmetic — no JS needed. */
+            #main-menu .menu-container > .menu-col {
+                -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 18px), transparent 100%);
+                        mask-image: linear-gradient(to bottom, #000 calc(100% - 18px), transparent 100%);
+            }
         }
         /* ── END MOBILE TAB BAR ──────────────────────────────────────────── */
+
+        /* ── LANDSCAPE PHONE — compact OVERLAYS (death / pause) ──────────
+           Default .panel reserves max-height: 95vh, but the death screen
+           stacks title + subtitle + stat block + 4 buttons. On a 360-tall
+           landscape phone the buttons sit below the fold, the panel scrolls
+           internally, and the 0.5s opacity transition on #death-buttons
+           makes it look frozen. Crunch padding + font sizes so everything
+           fits in one screen. Selectors target the IDs directly so we don't
+           leak onto wider .panel overlays. */
+        @media (max-height: 520px) and (orientation: landscape) {
+            #death-screen .panel,
+            #pause-overlay .panel {
+                max-height: 96vh;
+                max-height: 96dvh;
+                padding: 10px 16px !important;
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+            }
+            #ds-title {
+                font-size: 26px !important;
+                margin-bottom: 2px !important;
+                line-height: 1.05 !important;
+            }
+            #ds-subtitle {
+                font-size: 13px !important;
+                margin-bottom: 6px !important;
+            }
+            #ds-panel > div:nth-child(3) {
+                padding: 6px 10px !important;
+                margin-bottom: 6px !important;
+                border-radius: 8px !important;
+            }
+            #ds-panel p {
+                font-size: 12px !important;
+                margin: 2px 0 !important;
+            }
+            #ds-time-text { font-size: 16px !important; }
+            #death-buttons .btn-main {
+                padding: 7px 14px !important;
+                font-size: 13px !important;
+                margin: 3px 0 !important;
+                box-shadow: 0 3px 0 rgba(0,0,0,0.4) !important;
+            }
+            #pause-overlay h1 { font-size: 24px !important; margin: 0 0 4px 0 !important; }
+            #pause-overlay p  { font-size: 12px !important; margin: 0 0 8px 0 !important; }
+            #pause-overlay .btn-main {
+                padding: 8px 14px !important;
+                font-size: 14px !important;
+                margin: 4px 0 !important;
+            }
+        }
+        /* ── END COMPACT OVERLAYS ────────────────────────────────────────── */
 
         .nickname-input {
             width: 80%; max-width: 300px; padding: 12px; margin: 10px 0; font-size: 20px; font-weight: bold; 
@@ -1239,7 +1348,7 @@
                     <b style="color: #ccc;">CatWars.io</b> — free 2D browser survival game.
                     Hunt food, evolve through <b>50 levels</b>, survive endless dog hordes.
                     Solo · Hardcore · Co‑Op · no install · no pay‑to‑win.
-                    <span style="display: block; margin-top: 4px; color: #555;">v1.4.2</span>
+                    <span style="display: block; margin-top: 4px; color: #555;">v1.5.0</span>
                 </footer>
             </div>
         </div>
@@ -1406,7 +1515,7 @@
                 </p>
             </div>
 
-            <div id="death-buttons" style="opacity: 0; pointer-events: none; transition: opacity 0.5s ease; width: 100%;">
+            <div id="death-buttons" style="opacity: 0; pointer-events: none; transition: opacity 0.35s ease; width: 100%;">
                 <button id="btn-revive-gem" class="btn-main" onclick="reviveWithGems()" style="background: #00d4ff; box-shadow: 0 4px 0 #0099cc; width: 100%; margin: 8px 0;">
                     💎 Revive (Cost: <span id="revive-cost">0</span>)
                 </button>
@@ -3639,7 +3748,33 @@
             }
             if (window._lobbyShown) return; // guard against double-call
             window._lobbyShown = true;
+            // Future-proofing: if a future "back to lobby" button ever calls
+            // showLobby() again, drop the post-lobby flag so the rotate-overlay
+            // re-arms only after the player clicks Play again.
+            document.body.classList.remove('post-lobby');
             document.getElementById('lobby-screen').style.display = 'flex';
+        };
+
+        // Shared helper — requests fullscreen + landscape lock. Both are no-ops
+        // on desktop / CrazyGames iframe / when the user already denied permission.
+        // Called from the lobby Play button AND from startGame() so the browser
+        // back-button (which always exits fullscreen) can recover on the next
+        // user-gesture click into a run.
+        window.requestFullscreenAndLandscape = async function() {
+            if (window !== window.top) return; // never inside an iframe (CrazyGames)
+            try {
+                const el = document.documentElement;
+                if (el.requestFullscreen && !document.fullscreenElement) {
+                    await el.requestFullscreen();
+                } else if (el.webkitRequestFullscreen && !document.webkitFullscreenElement) {
+                    await el.webkitRequestFullscreen();
+                }
+            } catch (e) { /* desktop / browser permission denied — not a problem */ }
+            try {
+                if (screen.orientation && screen.orientation.lock) {
+                    await screen.orientation.lock('landscape');
+                }
+            } catch (e) { /* iOS Safari — CSS rotate-overlay handles this case */ }
         };
 
         // Called when the player clicks PLAY on the lobby screen.
@@ -3648,20 +3783,7 @@
             document.getElementById('main-menu').style.display = 'flex';
             // Enables the CSS rotate-overlay on portrait mobile
             document.body.classList.add('post-lobby');
-
-            // Request fullscreen + landscape lock — outside CrazyGames iframe only
-            if (window === window.top) {
-                try {
-                    const el = document.documentElement;
-                    if (el.requestFullscreen) await el.requestFullscreen();
-                    else if (el.webkitRequestFullscreen) await el.webkitRequestFullscreen();
-                } catch (e) { /* desktop / browser permission denied — not a problem */ }
-                try {
-                    if (screen.orientation && screen.orientation.lock) {
-                        await screen.orientation.lock('landscape');
-                    }
-                } catch (e) { /* iOS Safari — CSS rotate-overlay handles this case */ }
-            }
+            await window.requestFullscreenAndLandscape();
         };
         // ── END LOBBY ──────────────────────────────────────────────────────
 
@@ -4271,6 +4393,14 @@
         }
 
         async function startGame() {
+            // Browser back-gesture / Esc always drops fullscreen. The Play click
+            // is a fresh user gesture so we can re-request fullscreen + landscape
+            // lock here — fire-and-forget so a denial / non-secure-context doesn't
+            // delay the run. Lobby Play also triggered this once on first entry.
+            if (window.requestFullscreenAndLandscape) {
+                window.requestFullscreenAndLandscape();
+            }
+
             // Před startem run-u — pokud jsme v menu už dlouho, refresh z cloudu.
             // Tím chytíme případ kdy hráč nechal hru otevřenou na PC1, pak hrál na PC2,
             // a teď se vrací na PC1 a kliká PLAY.
@@ -4532,7 +4662,12 @@
         function triggerWin() {
             if (gameWon) return;
             gameWon = true;
-            
+
+            // Tell CrazyGames the gameplay session is over even though we keep
+            // the canvas running for 2s of celebration explosions. Without this
+            // their SDK thinks we're still in active play during the win VFX.
+            if (window.notifyGameplayStop) window.notifyGameplayStop();
+
             // OPRAVA ZAMRZNUTÍ: Odstraněno gameState = 'game_over'; aby hra nezamrzla a doběhly exploze
             if (player) player.invuln = 9999;
             for (let c of aiCats) c.invuln = 9999;
@@ -5904,12 +6039,15 @@
             let deathBtns = document.getElementById('death-buttons');
             deathBtns.style.opacity = '0';
             deathBtns.style.pointerEvents = 'none';
+            // 900ms was 1500ms — on landscape phones a long delay combined with
+            // a tight viewport made the screen feel frozen (panel scrolled, but
+            // the buttons that *do* the scrolling were invisible).
             setTimeout(() => {
                 if(deathBtns) {
                     deathBtns.style.opacity = '1';
                     deathBtns.style.pointerEvents = 'auto';
                 }
-            }, 1500);
+            }, 900);
 
             // Death screen už ne — banking se stejně udělá při kliknutí na "New Game" / "Quit to Menu",
             // a tam to půjde do cloudu. Tady jen lokální save aby se neztratil playerRunData stav.
