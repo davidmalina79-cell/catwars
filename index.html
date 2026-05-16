@@ -582,8 +582,9 @@
         /* LANDSCAPE PHONE — vertical space is the bottleneck. Keep the whole
            HUD in a single top row: stats (left) · short XP+HP bars (center)
            · pause/sound (right). Minimap moves to the bottom-right corner
-           above the attack button so it never collides with the bars. */
-        @media (max-height: 500px) {
+           above the attack button so it never collides with the bars.
+           pointer: coarse: only apply on real phones, not desktop iframes. */
+        @media (max-height: 500px) and (pointer: coarse) {
             .stats-bar {
                 top: 6px; left: 6px; gap: 4px;
                 flex-direction: row; flex-wrap: nowrap;
@@ -715,11 +716,13 @@
 
         /* ── MOBILE LANDSCAPE TAB BAR ─────────────────────────────────────
            Default state: hidden on desktop, tablet, and portrait orientation.
-           Activated only on short landscape viewports (typical phone landscape
-           is 350-430px tall). Three tabs map to the three menu columns. */
+           Activated only on short landscape viewports on TOUCH devices (typical
+           phone landscape is 350-430px tall). pointer: coarse keeps this from
+           firing inside a CrazyGames iframe on a desktop — that iframe is short
+           and landscape too, but the user has a mouse (pointer: fine). */
         .mobile-tab-bar { display: none; }
 
-        @media (max-height: 520px) and (orientation: landscape) {
+        @media (max-height: 520px) and (orientation: landscape) and (pointer: coarse) {
             /* Banner image eats too much vertical space — hide on landscape phones */
             #main-menu .game-art-banner { display: none; }
 
@@ -826,8 +829,9 @@
            internally, and the 0.5s opacity transition on #death-buttons
            makes it look frozen. Crunch padding + font sizes so everything
            fits in one screen. Selectors target the IDs directly so we don't
-           leak onto wider .panel overlays. */
-        @media (max-height: 520px) and (orientation: landscape) {
+           leak onto wider .panel overlays.
+           pointer: coarse: only apply on real phones, not desktop iframes. */
+        @media (max-height: 520px) and (orientation: landscape) and (pointer: coarse) {
             #death-screen .panel,
             #pause-overlay .panel {
                 max-height: 96vh;
