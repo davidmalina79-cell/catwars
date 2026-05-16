@@ -5703,16 +5703,35 @@
 
         console.log("[CatWars] Initializing Firebase...");
         let isCanvasEnv = typeof __firebase_config !== 'undefined';
-        
-        let firebaseConfig = isCanvasEnv ? JSON.parse(__firebase_config) : { 
-            apiKey: "AIzaSyA6EOidw5V5q45xINGnDbh1Szoho5_Ksd0", 
-            authDomain: "catwars-63a0c.firebaseapp.com", 
-            projectId: "catwars-63a0c", 
-            storageBucket: "catwars-63a0c.firebasestorage.app", 
-            messagingSenderId: "918204912047", 
+        const isBeta = !isCanvasEnv && (
+            window.location.hostname.startsWith('beta.') ||
+            window.location.hostname.includes('beta--')
+        );
+
+        const firebaseConfigProd = {
+            apiKey: "AIzaSyA6EOidw5V5q45xINGnDbh1Szoho5_Ksd0",
+            authDomain: "catwars-63a0c.firebaseapp.com",
+            projectId: "catwars-63a0c",
+            storageBucket: "catwars-63a0c.firebasestorage.app",
+            messagingSenderId: "918204912047",
             appId: "1:918204912047:web:3059fc2c0a7ff1e48f5f5a",
             measurementId: "G-R74QC0ZMG5"
         };
+        const firebaseConfigBeta = {
+            apiKey: "AIzaSyCAVIHkg_drOtENDPQjkfQzhvAaE9WxjCg",
+            authDomain: "catwars-beta.firebaseapp.com",
+            projectId: "catwars-beta",
+            storageBucket: "catwars-beta.firebasestorage.app",
+            messagingSenderId: "196393796253",
+            appId: "1:196393796253:web:ab9651fddf0ac3634a8a74",
+            measurementId: "G-RR0D5L0VBK"
+        };
+
+        let firebaseConfig = isCanvasEnv ? JSON.parse(__firebase_config)
+            : isBeta ? firebaseConfigBeta
+            : firebaseConfigProd;
+
+        if (isBeta) console.warn("[CatWars] ⚠️ BETA environment — using catwars-beta Firebase project.");
 
         let app, auth, db;
         try { 
