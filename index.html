@@ -989,7 +989,7 @@
                 Play as a cat, hunt food, evolve through <b>50 levels</b> and survive endless dog hordes.
                 Solo, Hardcore, Co‑Op and Deathmatch modes · public leaderboards · permanent upgrades.
                 Built as a hobby project — no install, no pay‑to‑win.
-                <span style="margin-left: 10px; color: #555;">v1.3.4</span>
+                <span style="margin-left: 10px; color: #555;">v1.3.6</span>
             </footer>
         </div>
     </div>
@@ -3403,13 +3403,21 @@
             }
             tbody.innerHTML = html;
 
-            // Zobrazení pozice aktuálního hráče pod tabulkou (z lokálního progresu)
+            // Zobrazení pozice aktuálního hráče pod tabulkou (z lokálního progresu).
+            // Prefer the account-bound nickname from the leaderboard doc (email prefix
+            // for signed-in users) so the sticky row matches the public board. Fall
+            // back to the in-game cat name for guests.
             let myScore = isTime ? (formatTime(prog.bestTimes?.[tab]) || '--:--') : (prog.totalKills || 0).toLocaleString();
             let myRInfo = getGlobalRankInfo(prog.globalLevel || 1);
+            let myName = prog.nickname || 'Guest';
+            if (window.currentUserUid) {
+                let mine = (window.leaderboardData || []).find(r => r.uid === window.currentUserUid);
+                if (mine && mine.nickname) myName = mine.nickname;
+            }
 
             currentBody.innerHTML = `<tr>
                 <td style="width: 10%; color:var(--primary);font-weight:bold;">-</td>
-                <td style="width: 25%; text-align: left; color:var(--primary); font-weight:bold;">${escapeHtml(prog.nickname || 'Guest')} (You)</td>
+                <td style="width: 25%; text-align: left; color:var(--primary); font-weight:bold;">${escapeHtml(myName)} (You)</td>
                 <td style="width: 30%; text-align: left;">
                     <span style="font-size: 14px; color: #aaa;">Level ${prog.globalLevel || 1}</span>
                     <span style="font-size: 16px; color: ${myRInfo.color}; font-weight: bold; margin-left: 5px; letter-spacing: 1px;">${myRInfo.stars}</span>
@@ -5892,9 +5900,18 @@
             let local = localStorage.getItem('catwars_save_' + uid);
             let localProg = local ? { ...window.defaultProg, ...JSON.parse(local) } : null;
             let cloudLoaded = false;
+            let cloudFetchAttempted = false;
+            let cloudFetchFailed = false;
 
             if (window.fetchFromFirestore) {
-                 let cloudData = await window.fetchFromFirestore(uid);
+                 cloudFetchAttempted = true;
+                 let cloudData;
+                 try {
+                     cloudData = await window.fetchFromFirestore(uid);
+                 } catch (e) {
+                     console.error("[CatWars] Cloud fetch threw:", e);
+                     cloudFetchFailed = true;
+                 }
                  if (cloudData) {
                      if (!localProg || (cloudData.totalKills || 0) >= (localProg.totalKills || 0)) {
                          window.prog = { ...window.defaultProg, ...cloudData };
@@ -5904,10 +5921,29 @@
                      }
                      cloudLoaded = true;
                      console.log("[CatWars] Game data SUCCESSFULLY loaded from Firebase!");
+                 } else if (cloudData === null && !cloudFetchFailed) {
+                     // fetch proběhl ale dokument neexistuje = skutečně nový hráč
+                     console.log("[CatWars] No cloud save found — treating as new player.");
+                 } else {
+                     // fetch selhal (timeout / network / permission) — NEPŘEPISUJ data!
+                     cloudFetchFailed = true;
+                     console.warn("[CatWars] Cloud fetch failed — using local save and BLOCKING cloud writes to prevent overwrite.");
                  }
             }
             
-            if (!cloudLoaded) {
+            // KRITICKÉ: Pokud cloud fetch selhal a nemáme lokální data, zablokuj zápis do cloudu.
+            // Jinak by `saveProgress` mohl přepsat existující cloud data defaultníma.
+            if (cloudFetchFailed) {
+                window._cloudWriteBlocked = true;
+                window.prog = localProg ? localProg : { ...window.defaultProg };
+                // Ukaž uživateli varování
+                setTimeout(() => {
+                    let banner = document.createElement('div');
+                    banner.style.cssText = 'position:fixed;top:10px;left:50%;transform:translateX(-50%);background:#e74c3c;color:#fff;padding:12px 20px;border-radius:10px;font-weight:bold;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,0.5);max-width:90%;text-align:center;';
+                    banner.innerHTML = '⚠️ Cloud sync failed. Your progress is loaded locally but won\'t sync until you reload. <button onclick="location.reload()" style="margin-left:10px;background:#fff;color:#e74c3c;border:none;padding:5px 12px;border-radius:6px;font-weight:bold;cursor:pointer;">Reload</button>';
+                    document.body.appendChild(banner);
+                }, 500);
+            } else if (!cloudLoaded) {
                  window.prog = localProg ? localProg : { ...window.defaultProg };
             }
             
@@ -5923,23 +5959,29 @@
         };
 
         window.fetchFromFirestore = async (uid) => {
-            if (!db) return null;
+            if (!db) throw new Error("No db");
             try {
                 const docRef = doc(db, 'artifacts', appId, 'users', uid, 'gamedata', 'progress');
                 const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 15000));
                 const snap = await Promise.race([getDoc(docRef), timeoutPromise]);
                 if (snap.exists()) return snap.data();
+                // Doc skutečně neexistuje = nový hráč. Vrať null bez chyby.
                 return null;
             } catch(e) { 
                 console.error("[CatWars] ERROR fetching from Firestore:", e); 
                 if (e.code === 'permission-denied') console.error("FIREBASE RULES ERROR: You need to allow read/write in your Firebase Console!");
-                return null; 
+                // KRITICKÉ: hoď výjimku místo return null — caller pozná že fetch selhal vs. že doc neexistuje
+                throw e;
             }
         };
         window.__catwars_fetchFromFirestoreImpl = window.fetchFromFirestore;
 
         window.saveToFirestore = async (progressData) => {
             if (!auth || !auth.currentUser || !db) return;
+            if (window._cloudWriteBlocked) {
+                console.warn("[CatWars] Cloud write blocked — last fetch failed, refusing to overwrite cloud with potentially-default data.");
+                return;
+            }
             try {
                 const uid = auth.currentUser.uid;
                 const docRef = doc(db, 'artifacts', appId, 'users', uid, 'gamedata', 'progress');
