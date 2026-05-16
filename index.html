@@ -1552,17 +1552,27 @@
         }
 
         let saveTimeout = null;
+        // debouncedForceSaveNow = jen lokální save, žádný cloud (šetříme Firestore quota).
+        // Cloud save se děje jen v explicitních momentech (banking run-u, nákup v Codexu).
         function debouncedForceSaveNow() {
             if (saveTimeout) clearTimeout(saveTimeout);
-            saveTimeout = setTimeout(() => { forceSaveNow(); }, 4000);
+            saveTimeout = setTimeout(() => { 
+                if (window.currentUserUid) {
+                    localStorage.setItem('catwars_save_' + window.currentUserUid, JSON.stringify(prog)); 
+                }
+                updateMenuStats();
+            }, 4000);
         }
 
-        async function forceSaveNow() {
+        // forceSaveNow = lokální save VŽDY + cloud save jen když to caller chce.
+        // Volej s opts.cloud = true pro důležité momenty (banking, nákup v Codexu).
+        // Bez opts.cloud (nebo opts.cloud = false) jen lokální save = zdarma, neutrácíme quotu.
+        async function forceSaveNow(opts = {}) {
             if (window.currentUserUid) {
                 localStorage.setItem('catwars_save_' + window.currentUserUid, JSON.stringify(prog)); 
             }
             updateMenuStats();
-            if (window.saveToFirestore) {
+            if (opts.cloud && window.saveToFirestore) {
                 try {
                     await window.saveToFirestore(prog);
                 } catch (e) {
@@ -1762,7 +1772,7 @@
                     (streakBonus > 1 ? '<br><span style="color:#2ecc71; font-size:14px;">×2 streak bonus applied!</span>' : '');
                 btn.innerHTML = '🎰 Come back tomorrow';
                 playSound('gem');
-                forceSaveNow();
+                forceSaveNow({ cloud: true });
                 refreshDailySpinButton();
             }, 1200);
         }
@@ -1807,7 +1817,7 @@
             if (!q || q.claimed || q.progress < q.goal) return;
             q.claimed = true;
             prog.gems += Math.floor(q.reward);
-            debouncedForceSaveNow(); 
+            forceSaveNow({ cloud: true }); 
             playSound('gem');
             switchTab('quests');
         }
@@ -1865,7 +1875,7 @@
             prog.gems -= cost;
             prog.boosts[id] = (prog.boosts[id] || 0) + 1;
             playSound('gem');
-            forceSaveNow();
+            forceSaveNow({ cloud: true });
             switchTab('boosts');
         }
         window.buyBoost = buyBoost;
@@ -1985,7 +1995,7 @@
                     const id = grantRandomBoost(1);
                     prog.lastAdBoostAt = Date.now();
                     playSound('gem');
-                    forceSaveNow();
+                    forceSaveNow({ cloud: true });
                     switchTab('boosts'); // re-renders the panel, which also resets the cooldown timer button
                     showToast(`${BOOSTS[id].icon} You got <b>${BOOSTS[id].name}</b>!`);
                 },
@@ -3740,7 +3750,7 @@
                 prog.gems -= cost; 
                 if (type === 'weapon') prog.weaponUpgrades[level] = nextTier; 
                 if (type === 'helmet') prog.helmetUpgrades[level] = nextTier; 
-                forceSaveNow(); playSound('gem'); switchTab('cats'); 
+                forceSaveNow({ cloud: true }); playSound('gem'); switchTab('cats'); 
             } 
         }
 
@@ -3833,7 +3843,7 @@
             // Auto-equip on first purchase — most players will want this immediately.
             prog.equippedLegendary[level] = key;
             playSound('gem');
-            forceSaveNow();
+            forceSaveNow({ cloud: true });
             closeLegendaryModal();
             switchTab('cats');
         }
@@ -3845,7 +3855,7 @@
             if (owned.indexOf(key) === -1) return;
             prog.equippedLegendary[level] = key;
             playSound('gem');
-            forceSaveNow();
+            forceSaveNow({ cloud: true });
             closeLegendaryModal();
             switchTab('cats');
         }
@@ -3854,7 +3864,7 @@
         function unequipLegendary(level) {
             delete prog.equippedLegendary[level];
             playSound('gem');
-            forceSaveNow();
+            forceSaveNow({ cloud: true });
             closeLegendaryModal();
             switchTab('cats');
         }
@@ -5544,6 +5554,8 @@
                 }
             }, 1500);
 
+            // Death screen už ne — banking se stejně udělá při kliknutí na "New Game" / "Quit to Menu",
+            // a tam to půjde do cloudu. Tady jen lokální save aby se neztratil playerRunData stav.
             forceSaveNow();
         }
 
@@ -5573,7 +5585,7 @@
                 playerRunData.totalRunGems -= playerRunData.gems;
                 playerRunData.gems = 0; 
                 prog.gems -= fromMeta; 
-                forceSaveNow(); 
+                forceSaveNow({ cloud: true }); 
             } 
             playSound('gem'); executeRevive(); 
         } window.reviveWithGems = reviveWithGems;
@@ -5637,7 +5649,8 @@
                 }
             }
             if (prog.globalLevel >= 60) { prog.globalLevel = 60; prog.globalXp = 0; }
-            await forceSaveNow();
+            // BANKING = cloud save. Toto je hlavní okamžik kdy se gemy a XP propisují do cloudu.
+            await forceSaveNow({ cloud: true });
         }
 
         async function newGameFromDeath() {
