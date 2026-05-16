@@ -603,6 +603,87 @@
     }
 }
 
+        /* ── MOBILE LANDSCAPE TAB BAR ─────────────────────────────────────
+           Default state: hidden on desktop, tablet, and portrait orientation.
+           Activated only on short landscape viewports (typical phone landscape
+           is 350-430px tall). Three tabs map to the three menu columns. */
+        .mobile-tab-bar { display: none; }
+
+        @media (max-height: 520px) and (orientation: landscape) {
+            /* Banner image eats too much vertical space — hide on landscape phones */
+            #main-menu .game-art-banner { display: none; }
+
+            /* Pin the menu to the viewport; tab bar sits at the bottom (~60px tall) */
+            #main-menu.overlay {
+                padding: 8px 8px 64px 8px;
+                overflow: hidden;
+                justify-content: flex-start;
+            }
+            #main-menu .menu-container {
+                flex-direction: row;
+                flex-wrap: nowrap;
+                width: 100%;
+                max-width: none;
+                height: calc(100dvh - 72px);
+                max-height: calc(100dvh - 72px);
+                margin-top: 0;
+                gap: 0;
+                align-items: stretch;
+            }
+            /* Hide all columns by default; the active body.mb-tab-* class shows one */
+            #main-menu .menu-container > .menu-col {
+                display: none;
+                flex: 1;
+                width: 100%;
+                max-width: none;
+                min-width: 0;
+                min-height: 0;
+                max-height: 100%;
+                overflow-y: auto;
+            }
+            body.mb-tab-profile #main-menu .menu-container > .menu-col:nth-child(1) { display: flex; }
+            body.mb-tab-play    #main-menu .menu-container > .menu-col:nth-child(2) { display: flex; }
+            body.mb-tab-codex   #main-menu .menu-container > .menu-col:nth-child(3) { display: flex; }
+
+            /* Tab bar itself — fixed to bottom of viewport */
+            .mobile-tab-bar {
+                display: flex;
+                position: fixed;
+                left: 0; right: 0; bottom: 0;
+                height: calc(56px + env(safe-area-inset-bottom, 0px));
+                padding-bottom: env(safe-area-inset-bottom, 0px);
+                background: rgba(10, 18, 26, 0.97);
+                border-top: 2px solid var(--primary);
+                box-shadow: 0 -4px 16px rgba(0,0,0,0.5);
+                z-index: 110;
+                box-sizing: border-box;
+            }
+            .mobile-tab-bar button {
+                flex: 1;
+                background: transparent;
+                color: #aaa;
+                border: none;
+                font-size: 11px;
+                font-weight: bold;
+                cursor: pointer;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: 2px;
+                padding: 4px;
+                transition: color 0.15s, background 0.15s;
+            }
+            .mobile-tab-bar button .icon { font-size: 22px; line-height: 1; }
+            body.mb-tab-profile .mobile-tab-bar button[data-tab="profile"],
+            body.mb-tab-play    .mobile-tab-bar button[data-tab="play"],
+            body.mb-tab-codex   .mobile-tab-bar button[data-tab="codex"] {
+                color: var(--primary);
+                background: rgba(243, 156, 18, 0.12);
+            }
+        }
+        /* ── END MOBILE TAB BAR ──────────────────────────────────────────── */
+
         .nickname-input {
             width: 80%; max-width: 300px; padding: 12px; margin: 10px 0; font-size: 20px; font-weight: bold; 
             text-align: center; background: #2c3e50; color: white; border: 3px solid var(--primary);
@@ -1158,10 +1239,26 @@
                     <b style="color: #ccc;">CatWars.io</b> — free 2D browser survival game.
                     Hunt food, evolve through <b>50 levels</b>, survive endless dog hordes.
                     Solo · Hardcore · Co‑Op · no install · no pay‑to‑win.
-                    <span style="display: block; margin-top: 4px; color: #555;">v1.4.1</span>
+                    <span style="display: block; margin-top: 4px; color: #555;">v1.4.2</span>
                 </footer>
             </div>
         </div>
+
+        <!-- Mobile landscape tab bar — only visible via CSS @media (max-height: 520px) and (orientation: landscape) -->
+        <nav class="mobile-tab-bar" aria-label="Menu sections">
+            <button type="button" data-tab="profile" onclick="window.switchMobileTab('profile')">
+                <span class="icon">👤</span>
+                <span>Profile</span>
+            </button>
+            <button type="button" data-tab="play" onclick="window.switchMobileTab('play')">
+                <span class="icon">🗡️</span>
+                <span>Play</span>
+            </button>
+            <button type="button" data-tab="codex" onclick="window.switchMobileTab('codex')">
+                <span class="icon">📖</span>
+                <span>Codex</span>
+            </button>
+        </nav>
     </div>
 
     <!-- LEADERBOARD SCREEN -->
@@ -3567,6 +3664,19 @@
             }
         };
         // ── END LOBBY ──────────────────────────────────────────────────────
+
+        // ── MOBILE LANDSCAPE TAB BAR ───────────────────────────────────────
+        // Default tab = Play. Body class is read by CSS to show the matching column.
+        if (!document.body.classList.contains('mb-tab-profile') &&
+            !document.body.classList.contains('mb-tab-play') &&
+            !document.body.classList.contains('mb-tab-codex')) {
+            document.body.classList.add('mb-tab-play');
+        }
+        window.switchMobileTab = function(tab) {
+            document.body.classList.remove('mb-tab-profile', 'mb-tab-play', 'mb-tab-codex');
+            document.body.classList.add('mb-tab-' + tab);
+        };
+        // ── END MOBILE TAB BAR ─────────────────────────────────────────────
 
         window.openLeaderboard = async () => {
             document.getElementById('main-menu').style.display = 'none';
