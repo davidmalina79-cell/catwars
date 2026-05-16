@@ -304,33 +304,45 @@
             z-index: 150;
             padding: 0;
         }
+        /* The lobby uses the SAME framed-panel look as the loading screen
+           (dark bg, 4px orange border, rounded corners, deep shadow) so the
+           two consecutive screens feel visually unified. */
         .lobby-inner {
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 40px 20px 40px;
             width: 100%;
-            max-width: 680px;
-            margin: 0 auto;
+            max-width: 600px;
+            margin: 30px auto;
+            padding: clamp(20px, 4vw, 30px);
             box-sizing: border-box;
+            background: var(--panel-bg);
+            border: 4px solid var(--primary);
+            border-radius: 20px;
+            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+            text-align: center;
         }
+        /* About / SEO section sits INSIDE the lobby panel and adopts the
+           same typography as the loading-screen info paragraphs (light grey
+           body text, yellow keywords/headings, thin top divider). No nested
+           dark box — we're already in the panel. */
         .lobby-desc {
-            background: rgba(0,0,0,0.35);
-            border-radius: 16px;
-            border: 1px solid rgba(255,255,255,0.07);
-            padding: 24px 28px;
+            margin-top: 22px;
+            padding-top: 16px;
+            border-top: 1px solid #333;
             color: #ccc;
-            line-height: 1.65;
-            font-size: 15px;
+            font-size: 13px;
+            line-height: 1.55;
             text-align: left;
             width: 100%;
             box-sizing: border-box;
-            margin-bottom: 24px;
         }
-        .lobby-desc h2 { color: var(--primary); margin-top: 0; margin-bottom: 10px; }
-        .lobby-desc h3 { color: var(--primary); font-size: 16px; margin-top: 18px; margin-bottom: 6px; }
-        .lobby-desc ul  { padding-left: 20px; margin: 4px 0; }
+        .lobby-desc h2 { color: var(--primary-hover); margin: 0 0 8px;  font-size: 18px; }
+        .lobby-desc h3 { color: var(--primary-hover); margin: 14px 0 4px; font-size: 14px; }
+        .lobby-desc p  { margin: 0 0 8px; }
+        .lobby-desc ul, .lobby-desc ol { padding-left: 20px; margin: 4px 0 8px; }
         .lobby-desc li  { margin-bottom: 4px; }
+        .lobby-desc b, .lobby-desc strong { color: var(--primary-hover); }
         #lobby-play-btn:hover  { transform: translateY(2px); box-shadow: 0 6px 0 #27ae60, 0 0 30px rgba(46,204,113,0.3); }
         #lobby-play-btn:active { transform: translateY(5px); box-shadow: 0 3px 0 #27ae60; }
         /* Rotate-device overlay — visible only after lobby Play click on portrait mobile.
@@ -361,14 +373,14 @@
             body.post-lobby #rotate-overlay { display: flex; }
         }
 
-        /* ── LOBBY: minimal "Evowars-style" layout ────────────────────────
-           The long SEO description and the meta-progression block stay in
-           the DOM (Google bot crawls the markup for AdSense legitimacy),
-           but they're visually hidden so the player sees only logo + tagline
-           + giant Play button. The About / How to play / Privacy / Cookies
-           links remain visible because AdSense compliance requires reachable
-           legal pages. */
-        #lobby-screen .lobby-desc { display: none; }
+        /* ── LOBBY: unified loading-screen look ───────────────────────────
+           Earlier the long SEO / About block was hidden with display:none
+           to keep the lobby minimal, but Google de-prioritises hidden
+           content and human players also lose context. The About is now
+           visible inside the lobby panel with typography matching the
+           loading screen, so the same markup serves both crawlers and
+           players. Legal links (About / How to play / Privacy / Cookies)
+           remain at the bottom for AdSense compliance. */
         /* ── END LOBBY ──────────────────────────────────────────────────── */
 
         h1 { margin-top: 0; font-size: clamp(40px, 8vw, 55px); color: var(--primary); text-shadow: 3px 3px 0 #000; text-align: center;}
@@ -872,53 +884,57 @@
         </div>
     </div>
 
-    <!-- LOBBY SCREEN — shown once on initial load, before the main menu -->
+    <!-- LOBBY SCREEN — shown once on initial load, before the main menu.
+         Visually mirrors the loading screen (framed panel · banner art ·
+         title · tagline · separator · About) but with the giant green PLAY
+         button as the single primary call-to-action. -->
     <div id="lobby-screen" class="overlay" style="display: none;">
         <div class="lobby-inner">
-            <img src="https://raw.githubusercontent.com/davidmalina79-cell/catwars.io/main/CatWars.png"
-                 alt="CatWars.io — Free Browser Survival Game"
-                 style="max-width: 320px; width: 80%; margin-bottom: 16px; filter: drop-shadow(0 8px 24px rgba(0,0,0,0.7));"
-                 onerror="this.style.display='none'">
-            <h1 style="color: #f1c40f; margin: 0 0 6px; text-shadow: 0 4px 16px rgba(0,0,0,0.8);">CatWars.io</h1>
-            <p style="color: #aaa; font-size: 16px; margin: 0 0 12px; text-align: center; font-weight: bold;">
+            <div class="game-art-banner" style="margin-bottom: 20px;">
+                <img src="https://raw.githubusercontent.com/davidmalina79-cell/catwars.io/main/CatWars.png"
+                     alt="CatWars.io — Free Browser Survival Game"
+                     onerror="this.style.display='none';">
+            </div>
+            <h1 style="font-size: 35px; margin: 0 0 10px; color: #fff; text-shadow: 2px 2px 4px #000;">CatWars.io</h1>
+            <p style="margin: 0 0 14px; color: #ddd; font-size: 15px; line-height: 1.45; font-weight: bold;">
                 Eat food. Evolve fast. Scratch through endless dog hordes.
             </p>
-            <p style="max-width: 460px; color: #ddd; font-size: 14px; line-height: 1.5; margin: 0 0 28px; text-align: center;">
+            <p style="margin: 0 0 26px; color: #aaa; font-size: 14px; line-height: 1.5;">
                 Survive solo, push Hardcore for bigger rewards, or fight beside AI cats in Co-Op.
-                No install, no pay-to-win - just jump in and become the strongest cat.
+                No install, no pay-to-win — just jump in and become the strongest cat.
             </p>
             <button id="lobby-play-btn" onclick="window.enterFromLobby()"
                     style="font-size: 32px; padding: 20px 70px; background: var(--success); color: #fff;
                            border: none; border-radius: 16px; cursor: pointer; font-weight: 900;
                            box-shadow: 0 8px 0 #27ae60, 0 0 40px rgba(46,204,113,0.35);
                            letter-spacing: 2px; text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
-                           transition: transform 0.1s, box-shadow 0.1s; margin-bottom: 32px;">
+                           transition: transform 0.1s, box-shadow 0.1s;">
                 🗡️ PLAY
             </button>
             <div class="lobby-desc">
                 <h2>🐱 What is CatWars.io?</h2>
-                <p style="margin-top: 0;">CatWars.io is a free 2D top-down browser survival game inspired by Vampire Survivors.
-                   Play as a cat, collect food, evolve through <strong>50 levels</strong> — from Kitten to God Cat —
+                <p><b>CatWars.io</b> is a free 2D top-down browser survival game inspired by Vampire Survivors.
+                   Play as a cat, collect food, evolve through <b>50 levels</b> — from Kitten to God Cat —
                    and survive endless waves of dog hordes. No download required, plays instantly in any modern browser.</p>
                 <h3>⚔️ Game Modes</h3>
                 <ul>
-                    <li><strong>Solo Survival</strong> — Classic mode. Collect XP, evolve and survive as long as possible.</li>
-                    <li><strong>Hardcore</strong> — Stackable difficulty modifiers for a brutal challenge. More Gems on victory.</li>
-                    <li><strong>Cats vs Dogs (Co-Op)</strong> — Fight alongside up to 8 AI cat teammates against the dog horde.</li>
+                    <li><b>Solo Survival</b> — Classic mode. Collect XP, evolve and survive as long as possible.</li>
+                    <li><b>Hardcore</b> — Stackable difficulty modifiers for a brutal challenge. More Gems on victory.</li>
+                    <li><b>Cats vs Dogs (Co-Op)</b> — Fight alongside up to 8 AI cat teammates against the dog horde.</li>
                 </ul>
                 <h3>🎮 How to Play</h3>
                 <ul>
-                    <li><strong>Desktop:</strong> WASD / Arrow Keys to move · Left Click or Space to attack · Shift to dash.</li>
-                    <li><strong>Mobile:</strong> Virtual joystick to move · Attack button to fight · Dash button to escape.</li>
+                    <li><b>Desktop:</b> WASD / Arrow Keys to move · Left Click or Space to attack · Shift to dash.</li>
+                    <li><b>Mobile:</b> Virtual joystick to move · Attack button to fight · Dash button to escape.</li>
                     <li>Collect food dropped by dogs to gain XP and level up your cat.</li>
                     <li>Defeat boss waves and collect Gems to spend on permanent upgrades between runs.</li>
                 </ul>
                 <h3>💎 Meta Progression</h3>
-                <p>Earn Gems from every run and spend them in the Codex on permanent weapon and helmet upgrades.
-                   Unlock new cat evolutions, special boosts, and daily quests. Sign in to save your progress
-                   and compete on global leaderboards.</p>
+                <p>Earn <b>Gems</b> from every run and spend them in the <b>Codex</b> on permanent weapon and
+                   helmet upgrades. Unlock new cat evolutions, special boosts, and daily quests. Sign in to save
+                   your progress and compete on global leaderboards.</p>
             </div>
-            <footer class="menu-about-footer" style="width: 100%; box-sizing: border-box;">
+            <footer class="menu-about-footer" style="width: 100%; box-sizing: border-box; margin-top: 18px; padding-top: 14px; border-top: 1px solid #333; font-size: 12px; line-height: 1.5; color: #888; text-align: center;">
                 <div style="margin-bottom: 6px; font-size: 12px; color: #777;">
                     <a href="#" onclick="window.openPrivacy('about'); return false;" style="color: #bbb; text-decoration: none;">About</a>
                     <span style="margin: 0 6px; color: #555;">·</span>
@@ -931,7 +947,7 @@
                 <b style="color: #ccc;">CatWars.io</b> — a free browser‑based 2D top‑down survival action game.
                 Solo, Hardcore, Co‑Op and Deathmatch modes · public leaderboards · permanent upgrades.
                 Built as a hobby project — no install, no pay‑to‑win.
-                <span style="display: block; margin-top: 4px; color: #555;">v1.5.2</span>
+                <span style="display: block; margin-top: 4px; color: #555;">v1.6.0</span>
             </footer>
         </div>
     </div>
@@ -1363,7 +1379,7 @@
                     <b style="color: #ccc;">CatWars.io</b> — free 2D browser survival game.
                     Hunt food, evolve through <b>50 levels</b>, survive endless dog hordes.
                     Solo · Hardcore · Co‑Op · no install · no pay‑to‑win.
-                    <span style="display: block; margin-top: 4px; color: #555;">v1.5.2</span>
+                    <span style="display: block; margin-top: 4px; color: #555;">v1.6.0</span>
                 </footer>
             </div>
         </div>
@@ -6634,38 +6650,33 @@
             }
         };
 
-        // Try to bootstrap an auth session as soon as the page loads. If there is no
-        // existing user we sign in anonymously so the player lands directly on the
-        // main menu (no login dead-end / "screens without publisher content").
-        const initAuth = async () => {
-            if (!auth) return;
-            if (auth.currentUser) return;
-            try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
-            }
-            catch (e) {
-                console.warn("[CatWars] initAuth failed, falling back to offline guest.", e);
-                window.startLocalSession();
-            }
-        };
-
+        // Auth bootstrap.
+        //
+        // CRITICAL: we deliberately do NOT call signInAnonymously() eagerly here.
+        // At page load Firebase has not yet restored the persisted user from
+        // IndexedDB — auth.currentUser is null until the SDK finishes its async
+        // persistence read. If we called signInAnonymously() at that point it
+        // would race the restore and overwrite the saved real user with a fresh
+        // anonymous one, which is exactly the "every refresh logs me out" bug
+        // testers reported on prod.
+        //
+        // Instead we wait for onAuthStateChanged to fire once. The first
+        // callback is guaranteed to arrive *after* persistence has been read,
+        // so a `user === null` there means "really no persisted user" — only
+        // then is it safe to create an anonymous session.
         if (auth) {
-            initAuth();
-
             let authResolved = false;
-            // If Firebase doesn't resolve in 3s (blocked / hung) — still take the user
+            // If Firebase doesn't resolve in 5s (blocked / hung) — still take the user
             // straight into the game as an offline guest. The sign-in modal stays
-            // available from the main menu.
+            // available from the main menu. Bumped from 3s to give slow devices /
+            // mobile Safari / restrictive networks more time to finish the
+            // IndexedDB persistence restore before we declare offline.
             setTimeout(() => {
                 if (!authResolved) {
                     console.warn("[CatWars] Auth timeout. Falling back to offline guest.");
                     window.startLocalSession();
                 }
-            }, 3000);
+            }, 5000);
 
             onAuthStateChanged(auth, async (user) => {
                 authResolved = true;
@@ -6713,14 +6724,22 @@
                         window.showLobby();
                     }, 400);
                 } else {
-                    // No user (initial load, or just signed out): silently start a fresh
-                    // anonymous session. Falls back to offline guest if Firebase blocks it.
+                    // No persisted user (genuine first-time visit, or just signed out).
+                    // Now — and only now — is it safe to create an anonymous session,
+                    // because Firebase has already finished its persistence restore.
+                    // In Canvas env use the provided custom token instead.
                     window.currentUserUid = null;
                     if (loadText) loadText.innerText = "Starting guest session...";
-                    signInAnonymously(auth).catch(e => {
+                    try {
+                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                            await signInWithCustomToken(auth, __initial_auth_token);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
+                    } catch (e) {
                         console.warn("[CatWars] Anonymous auth failed, falling back to offline guest.", e);
                         window.startLocalSession();
-                    });
+                    }
                 }
             });
         } else {
