@@ -536,8 +536,11 @@
         /* MOBILE PORTRAIT — keep stats horizontal wrap (column stacked too tall
            and was crashing into the centered Level / XP / HP bars). Hide the
            in-game global-rank chip (with its own mini XP bar) — that info is
-           already on the menu screen and just clutters gameplay on tiny phones. */
-        @media (max-width: 600px) {
+           already on the menu screen and just clutters gameplay on tiny phones.
+           pointer: coarse gates this to real touch devices — desktop browsers
+           inside a narrow CrazyGames iframe report pointer: fine and must NOT
+           get the stripped-down HUD. */
+        @media (max-width: 600px) and (pointer: coarse) {
             .stats-bar {
                 top: 8px; left: 8px; right: auto;
                 flex-direction: row; flex-wrap: wrap; gap: 4px;
@@ -671,13 +674,11 @@
         /* In-game rank chip: receives clicks through #game-ui (pointer-events: none). */
         #ui-global-rank { cursor: pointer; pointer-events: auto; }
 
-        /* PRAVIDLO PRO MENŠÍ OBRAZOVKY (Přeskládá sloupce pod sebe)
-           IMPORTANT: on mobile the overlay itself must scroll. With the old
-           `height: 90vh` + a fixed-height column the footer was getting
-           pushed UP on top of the menu (overlay is `justify-content: center`,
-           so an overflowing flex child gets visually shifted upward). Let
-           the container grow naturally and scroll the whole overlay. */
-           @media (max-width: 850px) {
+        /* MOBILE — stack columns vertically on touch devices (phones/tablets).
+           pointer: coarse keeps this from firing inside a narrow desktop iframe
+           on CrazyGames, where pointer: fine (mouse) is always reported even
+           when the iframe width is well below 850px. */
+        @media (max-width: 850px) and (pointer: coarse) {
     #main-menu.overlay {
         padding: 12px 12px 0 12px;
     }
@@ -691,6 +692,25 @@
         width: 100%; max-width: 500px; min-height: auto; flex: none;
         overflow-y: visible;
     }
+}
+
+        /* NARROW DESKTOP IFRAME — keeps the three-column layout intact but
+           tightens spacing so all columns fit inside a ~500-850px CrazyGames
+           windowed iframe. Branding (logo, art banner, all columns) stays
+           fully visible. Only applies when a real pointer device is present. */
+        @media (max-width: 850px) and (pointer: fine) {
+    #main-menu.overlay {
+        padding: 8px 8px 0 8px;
+    }
+    .menu-container {
+        gap: 6px;
+        width: 99%;
+    }
+    #main-menu .menu-container > .menu-col {
+        min-height: 75vh;
+    }
+    .menu-col.side { min-width: 130px; max-width: 200px; padding: 10px 8px; }
+    .menu-col.center { min-width: 200px; padding: 10px 8px; }
 }
 
         /* ── MOBILE LANDSCAPE TAB BAR ─────────────────────────────────────
@@ -990,7 +1010,7 @@
                 <b style="color: #ccc;">CatWars.io</b> — a free browser‑based 2D top‑down survival action game.
                 Solo, Hardcore, Co‑Op and Deathmatch modes · public leaderboards · permanent upgrades.
                 Built as a hobby project — no install, no pay‑to‑win.
-                <span style="display: block; margin-top: 4px; color: #555;">v1.6.2</span>
+                <span style="display: block; margin-top: 4px; color: #555;">v1.6.3</span>
             </footer>
         </div>
     </div>
@@ -1422,7 +1442,7 @@
                     <b style="color: #ccc;">CatWars.io</b> — free 2D browser survival game.
                     Hunt food, evolve through <b>50 levels</b>, survive endless dog hordes.
                     Solo · Hardcore · Co‑Op · no install · no pay‑to‑win.
-                    <span style="display: block; margin-top: 4px; color: #555;">v1.6.2</span>
+                    <span style="display: block; margin-top: 4px; color: #555;">v1.6.3</span>
                 </footer>
             </div>
         </div>
