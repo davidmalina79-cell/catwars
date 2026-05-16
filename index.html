@@ -397,11 +397,37 @@
         .enc-header h2 { margin: 0; color: white; font-size: clamp(20px, 5vw, 30px); }
         .enc-tabs { display: flex; gap: 5px; flex-wrap: wrap; flex: 1; align-items: center; justify-content: center;}
         .enc-tab { padding: 10px 15px; background: #34495e; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 14px; flex: 1; min-width: 80px;}
+        /* Leaderboard header row: [Menu btn] [Title] [spacer] */
+        .lb-top-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .lb-title {
+            color: #f1c40f;
+            font-size: clamp(16px, 4vw, 28px);
+            margin: 0;
+            flex: 1;
+            text-align: center;
+            white-space: nowrap;
+        }
+        .lb-back-btn {
+            flex-shrink: 0;
+            padding: 8px 14px !important;
+            font-size: 13px !important;
+            min-width: 90px;
+            line-height: 1.2;
+        }
+        .lb-top-spacer {
+            flex-shrink: 0;
+            min-width: 90px;
+        }
         /* Leaderboard only: equal-width tabs, no flex-grow inside overlay panel */
         .enc-tabs.lb-tabs {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 6px;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 5px;
             flex: 0 0 auto;
             width: 100%;
             min-width: 0;
@@ -411,9 +437,9 @@
             flex: none;
             width: 100%;
             min-width: 0;
-            padding: 10px 8px;
-            font-size: clamp(11px, 1.4vw, 14px);
-            min-height: 42px;
+            padding: 8px 4px;
+            font-size: clamp(10px, 1.2vw, 13px);
+            min-height: 36px;
             box-sizing: border-box;
             text-align: center;
             white-space: nowrap;
@@ -526,6 +552,12 @@
                 top: auto; right: 8px; bottom: 130px;
             }
             .enc-tab { font-size: 12px; padding: 8px; }
+            /* Leaderboard mobile tweaks */
+            .lb-back-btn { padding: 6px 10px !important; font-size: 11px !important; min-width: 68px; }
+            .lb-top-spacer { min-width: 68px; }
+            .lb-title { font-size: clamp(13px, 3.8vw, 20px); }
+            .enc-tabs.lb-tabs { gap: 3px; }
+            .enc-tabs.lb-tabs .enc-tab { font-size: clamp(9px, 2.4vw, 12px); padding: 6px 2px; min-height: 30px; }
             /* Smaller virtual controls so attack/dash/joystick all fit comfortably */
             body.touch-device #attack-btn { width: 78px; height: 78px; font-size: 28px; }
             body.touch-device #dash-container { width: 52px; height: 52px; right: 108px; }
@@ -947,7 +979,7 @@
                 <b style="color: #ccc;">CatWars.io</b> — a free browser‑based 2D top‑down survival action game.
                 Solo, Hardcore, Co‑Op and Deathmatch modes · public leaderboards · permanent upgrades.
                 Built as a hobby project — no install, no pay‑to‑win.
-                <span style="display: block; margin-top: 4px; color: #555;">v1.6.0</span>
+                <span style="display: block; margin-top: 4px; color: #555;">v1.6.1</span>
             </footer>
         </div>
     </div>
@@ -1379,7 +1411,7 @@
                     <b style="color: #ccc;">CatWars.io</b> — free 2D browser survival game.
                     Hunt food, evolve through <b>50 levels</b>, survive endless dog hordes.
                     Solo · Hardcore · Co‑Op · no install · no pay‑to‑win.
-                    <span style="display: block; margin-top: 4px; color: #555;">v1.6.0</span>
+                    <span style="display: block; margin-top: 4px; color: #555;">v1.6.1</span>
                 </footer>
             </div>
         </div>
@@ -1403,10 +1435,17 @@
 
     <!-- LEADERBOARD SCREEN -->
     <div id="leaderboard-screen" class="overlay" style="display: none; z-index: 250;">
-        <div class="panel" style="max-width: 900px; width: 95%; padding: 20px; display: flex; flex-direction: column; max-height: 90vh;">
-            <h1 style="color: #f1c40f; font-size: 35px; margin-bottom: 10px; margin-top: 0;">🏆 LEADERBOARD</h1>
-            
-            <div class="enc-tabs lb-tabs" style="margin-bottom: 15px; width: 100%;">
+        <div class="panel" style="max-width: 900px; width: 95%; padding: 15px; display: flex; flex-direction: column; max-height: 90vh;">
+
+            <!-- Header row: back button (left) · title (centre) · spacer (right) -->
+            <div class="lb-top-row">
+                <button class="btn-main lb-back-btn" onclick="closeLeaderboard()">🏠 Menu</button>
+                <h1 class="lb-title">🏆 LEADERBOARD</h1>
+                <div class="lb-top-spacer"></div>
+            </div>
+
+            <!-- All 5 category tabs on one row -->
+            <div class="enc-tabs lb-tabs" style="margin-bottom: 12px; width: 100%;">
                 <button class="enc-tab lb-tab active" onclick="switchLbTab('kills')">Total Kills</button>
                 <button class="enc-tab lb-tab" onclick="switchLbTab('solo')">Best Solo</button>
                 <button class="enc-tab lb-tab" onclick="switchLbTab('hardcore')">Best Hardcore</button>
@@ -1414,7 +1453,7 @@
                 <button class="enc-tab lb-tab" onclick="switchLbTab('ffa')">Best Deathmatch</button>
             </div>
 
-            <div style="background: rgba(0,0,0,0.4); border-radius: 10px; padding: 10px; flex-grow: 1; overflow: hidden; display: flex; flex-direction: column; text-align: left; margin-bottom: 20px;">
+            <div style="background: rgba(0,0,0,0.4); border-radius: 10px; padding: 10px; flex-grow: 1; overflow: hidden; display: flex; flex-direction: column; text-align: left;">
                 <div style="padding-right: 8px;">
                     <table class="stats-table" style="margin-bottom:0;">
                         <thead>
@@ -1429,7 +1468,7 @@
                         </tbody>
                     </table>
                 </div>
-                
+
                 <!-- Current Player Sticky Row -->
                 <div style="border-top: 2px solid var(--primary); margin-top: 5px; padding-top: 5px;">
                     <table class="stats-table" style="margin-bottom:0; background: rgba(243, 156, 18, 0.2);">
@@ -1439,7 +1478,6 @@
                     </table>
                 </div>
             </div>
-            <button class="btn-main" onclick="closeLeaderboard()" style="margin-top: auto; width: 100%; max-width: 400px; align-self: center;">🏠 Back to Menu</button>
         </div>
     </div>
 
