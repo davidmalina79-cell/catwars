@@ -1018,6 +1018,7 @@
                 <div class="stat-box" style="margin-bottom: 12px; font-size: 16px;">Max Lv: <span id="mm-level">1</span></div>
                 <div class="stat-box gem-text" style="margin-bottom: 12px; font-size: 18px;">💎 <span id="mm-gems">0</span></div>
                 <button class="btn-main" onclick="window.openLeaderboard()" style="background: #e67e22; box-shadow: 0 6px 0 #d35400; width: 100%; font-size: 18px; padding: 15px; margin-top: 0;">🏆 Leaderboard</button>
+                <button class="btn-main" id="btn-daily-spin" onclick="window.openDailySpin()" style="background: #9b59b6; box-shadow: 0 6px 0 #8e44ad; width: 100%; font-size: 18px; padding: 15px; margin: 8px 0 0 0; line-height: 1.2;">🎰 Daily Spin<br><span id="daily-spin-sub" style="font-size: 14px;">Ready!</span></button>
 
                 <div style="margin-top: auto; border-top: 2px solid rgba(255,255,255,0.1); padding-top: 12px; display: flex; flex-direction: column; gap: 8px;">
                     <div id="auth-status-text" style="color: #aaa; font-size: 13px; font-weight: bold; text-shadow: 1px 1px 2px black; text-align: center;">Playing as: Guest</div>
@@ -1058,7 +1059,7 @@
                 </div>
 
                 <!-- HARDCORE MODIFIERS PANEL (Skrytý by default) -->
-                <div id="modifiers-panel" style="display: none; flex-direction: column; background: rgba(0,0,0,0.5); padding: 6px 12px; border-radius: 12px; border: 2px solid var(--danger); width: 100%; max-width: 400px; margin-bottom: 8px; box-sizing: border-box; gap: 2px; flex-shrink: 0; height: 215px; justify-content: space-between;">
+                <div id="modifiers-panel" style="display: none; flex-direction: column; background: rgba(0,0,0,0.5); padding: 6px 12px; border-radius: 12px; border: 2px solid var(--danger); width: 100%; max-width: 400px; margin-bottom: 0; box-sizing: border-box; gap: 2px; flex-shrink: 0; flex-grow: 1; justify-content: space-between;">
                     
                     <!-- BLOK 1: Hlavička a Násobič -->
                     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #444; padding-bottom: 4px;">
@@ -1087,7 +1088,7 @@
                 </div>
 
                 <!-- SOLO INFO PANEL -->
-                <div id="solo-panel" style="display: flex; flex-direction: column; background: rgba(0,0,0,0.5); padding: 12px; border-radius: 12px; border: 2px solid var(--success); width: 100%; max-width: 400px; margin-bottom: 8px; box-sizing: border-box; flex-shrink: 0; height: 215px; justify-content: flex-start; text-align: left;">
+                <div id="solo-panel" style="display: flex; flex-direction: column; background: rgba(0,0,0,0.5); padding: 12px; border-radius: 12px; border: 2px solid var(--success); width: 100%; max-width: 400px; margin-bottom: 0; box-sizing: border-box; flex-shrink: 0; flex-grow: 1; justify-content: flex-start; text-align: left;">
                     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #444; padding-bottom: 4px; margin-bottom: 12px;">
                         <h3 style="margin: 0; color: var(--success); font-size: 15px; text-transform: uppercase; letter-spacing: 0.5px;">🗡️ Classic Survival</h3>
                     </div>
@@ -1100,7 +1101,7 @@
                 </div>
 
                 <!-- TEAM INFO PANEL -->
-                <div id="team-panel" style="display: none; flex-direction: column; background: rgba(0,0,0,0.5); padding: 12px; border-radius: 12px; border: 2px solid var(--info); width: 100%; max-width: 400px; margin-bottom: 8px; box-sizing: border-box; flex-shrink: 0; height: 215px; justify-content: flex-start; text-align: left;">
+                <div id="team-panel" style="display: none; flex-direction: column; background: rgba(0,0,0,0.5); padding: 12px; border-radius: 12px; border: 2px solid var(--info); width: 100%; max-width: 400px; margin-bottom: 0; box-sizing: border-box; flex-shrink: 0; flex-grow: 1; justify-content: flex-start; text-align: left;">
                     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #444; padding-bottom: 4px; margin-bottom: 12px;">
                         <h3 style="margin: 0; color: var(--info); font-size: 15px; text-transform: uppercase; letter-spacing: 0.5px;">🔵 Co-Op Domination</h3>
                     </div>
@@ -1141,10 +1142,6 @@
                         <span style="font-size: 40px; line-height: 1; filter: drop-shadow(2px 4px 4px rgba(0,0,0,0.4)); width: 50px; text-align: center;">💎</span>
                         <span style="font-size: 20px; font-weight: 900; letter-spacing: 1px;">QUESTS</span>
                     </button>
-                </div>
-
-                <div style="border-top: 2px solid rgba(255,255,255,0.1); padding-top: 12px; margin-top: auto;">
-                    <button class="btn-main" id="btn-daily-spin" onclick="window.openDailySpin()" style="background: #9b59b6; box-shadow: 0 6px 0 #8e44ad; width: 100%; font-size: 18px; padding: 15px; margin: 0; line-height: 1.2;">🎰 Daily Spin<br><span id="daily-spin-sub" style="font-size: 14px;">Ready!</span></button>
                 </div>
 
                 <!-- About footer — sits inside the right column as a plain flex child; no special positioning needed -->
