@@ -15,6 +15,73 @@
         gtag('config', 'G-R74QC0ZMG5', { send_page_view: true });
     </script>
 
+    <!-- CrazyGames distribution gate.
+         When the game is iframed on a crazygames.com page (e.g. crazygames.com/game/catwars-io)
+         we load the CrazyGames SDK v3 and route rewarded-ad / mid-game-break calls through
+         it INSTEAD of AdSense. On catwars.io directly nothing changes — AdSense runs as today.
+         Detection MUST run before AdSense / game scripts so they can branch off it. -->
+    <script>
+        (function () {
+            try {
+                if (window.location.ancestorOrigins && window.location.ancestorOrigins.length) {
+                    window.IS_CRAZYGAMES = Array.from(window.location.ancestorOrigins)
+                        .some(function (o) { return /crazygames\.com/i.test(o); });
+                } else {
+                    window.IS_CRAZYGAMES = (window.parent !== window)
+                        && /crazygames\.com/i.test(document.referrer || '');
+                }
+            } catch (e) { window.IS_CRAZYGAMES = false; }
+
+            // Tag the document so CSS can hide AdSense-only publisher chrome on CrazyGames.
+            if (window.IS_CRAZYGAMES) {
+                document.documentElement.classList.add('crazygames');
+                console.log('[CatWars] CrazyGames host detected — routing ads through SDK v3.');
+            }
+
+            // Lifecycle helpers. Safe to call before / after SDK init (no-op if not ready).
+            window.__crazyReady = false;
+            window.notifyGameplayStart = function () {
+                if (!window.IS_CRAZYGAMES || !window.__crazyReady) return;
+                try { window.CrazyGames.SDK.game.gameplayStart(); }
+                catch (e) { /* SDK disabled / not initialized — ignore. */ }
+            };
+            window.notifyGameplayStop = function () {
+                if (!window.IS_CRAZYGAMES || !window.__crazyReady) return;
+                try { window.CrazyGames.SDK.game.gameplayStop(); }
+                catch (e) { /* SDK disabled / not initialized — ignore. */ }
+            };
+
+            if (window.IS_CRAZYGAMES) {
+                var sdk = document.createElement('script');
+                sdk.src = 'https://sdk.crazygames.com/crazygames-sdk-v3.js';
+                sdk.async = true;
+                sdk.onload = function () {
+                    if (!window.CrazyGames || !window.CrazyGames.SDK || !window.CrazyGames.SDK.init) {
+                        console.warn('[CatWars] CrazyGames SDK script loaded but API missing.');
+                        return;
+                    }
+                    window.CrazyGames.SDK.init().then(function () {
+                        window.__crazyReady = true;
+                        // Rewarded ads on CrazyGames are always available (their SDK falls back
+                        // to a demo overlay on no-fill / localhost), so surface the revive +
+                        // boost buttons unconditionally.
+                        window.__rewardedAdsAvailable = true;
+                        if (typeof window.updateRewardedAdUI === 'function') {
+                            window.updateRewardedAdUI(true);
+                        }
+                        console.log('[CatWars] CrazyGames SDK initialized.');
+                    }).catch(function (err) {
+                        console.warn('[CatWars] CrazyGames SDK init failed:', err);
+                    });
+                };
+                sdk.onerror = function () {
+                    console.warn('[CatWars] CrazyGames SDK failed to load.');
+                };
+                document.head.appendChild(sdk);
+            }
+        })();
+    </script>
+
     <!-- Google AdSense + H5 Games Ads (Ad Placement API) — deferred.
          The verification meta tag stays in <head> so Google's crawler can match the
          site to the publisher account even before the script loads. The adsbygoogle.js
@@ -52,6 +119,10 @@
         };
 
         window.loadAdsense = function () {
+            // On CrazyGames we serve ads via their SDK instead of AdSense.
+            // Loading adsbygoogle.js inside their iframe would just be dead weight
+            // (and CrazyGames forbids third-party ad networks competing with theirs).
+            if (window.IS_CRAZYGAMES) return;
             if (window.__adsenseLoaded) return;
             window.__adsenseLoaded = true;
             var s = document.createElement('script');
@@ -119,6 +190,14 @@
             background-color: var(--bg-dark); 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
             user-select: none; -webkit-user-select: none; touch-action: none; color: var(--text-main);
+        }
+
+        /* CrazyGames distribution: hide the AdSense-only publisher footer
+           (About / How to play / Privacy / Cookies links). It is required by
+           AdSense for catwars.io, but CrazyGames forbids navigation away from
+           their iframe and has its own privacy / about chrome around the game. */
+        html.crazygames #main-menu .menu-container > footer.menu-about-footer {
+            display: none !important;
         }
         
         canvas { display: block; width: 100%; height: 100%; }
@@ -989,7 +1068,7 @@
                 Play as a cat, hunt food, evolve through <b>50 levels</b> and survive endless dog hordes.
                 Solo, Hardcore, Co‑Op and Deathmatch modes · public leaderboards · permanent upgrades.
                 Built as a hobby project — no install, no pay‑to‑win.
-                <span style="margin-left: 10px; color: #555;">v1.3.7</span>
+                <span style="margin-left: 10px; color: #555;">v1.4.0</span>
             </footer>
         </div>
     </div>
@@ -1898,6 +1977,37 @@
         // }
         window.showRewardedAd = function (opts) {
             opts = opts || {};
+
+            // CrazyGames distribution: route through their SDK instead of AdSense.
+            // Their SDK uses an explicit { adStarted, adFinished, adError } callback shape
+            // (not promises), and we must pause game audio while the ad plays.
+            if (window.IS_CRAZYGAMES) {
+                if (!window.__crazyReady || !window.CrazyGames || !window.CrazyGames.SDK || !window.CrazyGames.SDK.ad) {
+                    if (opts.onUnavailable) opts.onUnavailable('sdk_not_ready');
+                    return;
+                }
+                try {
+                    window.CrazyGames.SDK.ad.requestAd('rewarded', {
+                        adStarted: () => { window.__adActive = true; },
+                        adFinished: () => {
+                            window.__adActive = false;
+                            if (opts.onReward) opts.onReward();
+                        },
+                        adError: (err) => {
+                            window.__adActive = false;
+                            console.warn('[CatWars] CrazyGames rewarded ad error:', err);
+                            // CrazyGames lumps "user skipped" and "no fill" into adError.
+                            // Treat both as a skip so the boost / revive UI restores cleanly.
+                            if (opts.onSkip) opts.onSkip();
+                        }
+                    });
+                } catch (e) {
+                    window.__adActive = false;
+                    console.warn('[CatWars] CrazyGames requestAd threw:', e);
+                    if (opts.onUnavailable) opts.onUnavailable('error');
+                }
+                return;
+            }
 
             // If the real adsbygoogle script hasn't loaded yet (site pending approval,
             // network blocked, etc.) the stub just enqueues and adBreakDone never fires,
@@ -3440,6 +3550,7 @@
         };
 
         function goToMenu() { 
+            if (window.notifyGameplayStop) window.notifyGameplayStop();
             document.getElementById('game-ui').style.display = 'none'; 
             document.getElementById('encyclopedia').style.display = 'none'; document.getElementById('dash-container').style.display = 'none'; document.getElementById('joystick-zone').style.display = 'none'; document.getElementById('attack-btn').style.display = 'none';
             document.getElementById('minimap').style.display = 'none'; document.getElementById('boss-arrow').style.display = 'none';
@@ -3458,6 +3569,7 @@
                 if (gameState === 'playing') {
                     gameState = 'paused';
                     pauseStartTime = performance.now();
+                    if (window.notifyGameplayStop) window.notifyGameplayStop();
                 }
                 document.getElementById('pause-overlay').style.display = 'none';
             } else {
@@ -3478,6 +3590,7 @@
                 }
                 lastTime = performance.now();
                 codexReturnTarget = null;
+                if (window.notifyGameplayStart) window.notifyGameplayStart();
             } else {
                 document.getElementById('main-menu').style.display = 'flex';
                 updateMenuStats();
@@ -3877,6 +3990,7 @@
                 gameState = 'paused';
                 pauseStartTime = performance.now();
                 document.getElementById('pause-overlay').style.display = 'flex';
+                if (window.notifyGameplayStop) window.notifyGameplayStop();
             } else if (gameState === 'paused') {
                 gameState = 'playing';
                 // OPRAVA TIMERU: Posuneme startovní čas hry o dobu strávenou v pauze
@@ -3885,6 +3999,7 @@
                 }
                 lastTime = performance.now();
                 document.getElementById('pause-overlay').style.display = 'none';
+                if (window.notifyGameplayStart) window.notifyGameplayStart();
             }
         }
         window.togglePause = togglePause;
@@ -4052,6 +4167,7 @@
             if (!prog.tutorialDone) { tutorialActive = true; tutorialIdx = 0; showTutorial(); prog.tutorialDone = true; saveProgress(); }
             
             gameState = 'playing'; updateUI(); lastTime = performance.now();
+            if (window.notifyGameplayStart) window.notifyGameplayStart();
         }
         window.startGame = startGame;
 
@@ -5465,6 +5581,7 @@
             }
 
             gameState = 'death_menu'; document.body.classList.remove('low-hp'); setHeartbeat(false);
+            if (window.notifyGameplayStop) window.notifyGameplayStop();
             // Scale revive cost by the hardcore gem multiplier — otherwise revives
             // become trivial when running e.g. 5× hardcore (gems flow in 5× faster
             // but revive stays at base cost).
@@ -5573,6 +5690,7 @@
             lastTime = performance.now(); 
             gameState = 'playing'; 
             updateUI(); 
+            if (window.notifyGameplayStart) window.notifyGameplayStart();
         }
 
         function reviveWithGems() { 
