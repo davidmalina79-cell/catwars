@@ -989,7 +989,7 @@
                 Play as a cat, hunt food, evolve through <b>50 levels</b> and survive endless dog hordes.
                 Solo, Hardcore, Co‑Op and Deathmatch modes · public leaderboards · permanent upgrades.
                 Built as a hobby project — no install, no pay‑to‑win.
-                <span style="margin-left: 10px; color: #555;">v1.3.6</span>
+                <span style="margin-left: 10px; color: #555;">v1.3.7</span>
             </footer>
         </div>
     </div>
@@ -1442,7 +1442,9 @@
     <!-- ================================================================================================= -->
     <script>
         // GLOBAL SCOPE DECLARATIONS (FIX PRO OFFLINE GUEST CHYBU)
-        var defaultProg = { nickname: '', globalLevel: 1, globalXp: 0, maxCatLevel: 1, totalKills: 0, gems: 0, dogKills: {}, weaponUpgrades: {}, helmetUpgrades: {}, unlockedLegendaries: {}, equippedLegendary: {}, bestCombo: 0, tutorialDone: false, questDate: '', quests: [], bestTimes: { solo: null, hardcore: null, team: null }, boosts: {}, equippedBoosts: [null, null, null], lastDailySpinAt: 0, dailyStreak: 0, lastAdBoostAt: 0 };
+        var defaultProg = { nickname: '', globalLevel: 1, globalXp: 0, maxCatLevel: 1, totalKills: 0, gems: 0, dogKills: {}, weaponUpgrades: {}, helmetUpgrades: {}, unlockedLegendaries: {}, equippedLegendary: {}, bestCombo: 0, tutorialDone: false, questDate: '', quests: [], bestTimes: { solo: null, hardcore: null, team: null }, boosts: {}, equippedBoosts: [null, null, null], lastDailySpinAt: 0, dailyStreak: 0, lastAdBoostAt: 0, lastSavedAt: 0 };
+        // Timestamp kdy jsme načetli prog z cloudu — slouží jako "věk" lokálního snapshotu
+        window._progLoadedAt = 0;
         var prog = { ...defaultProg };
         var currentGemMultiplier = 1.0; 
         var activeMods = { doubleDmg: false, noHeal: false, doubleBoss: false, fast: false, noDash: false };
@@ -3903,7 +3905,17 @@
             tutorialTimer = tutorialSteps[tutorialIdx].duration;
         }
 
-        function startGame() {
+        async function startGame() {
+            // Před startem run-u — pokud jsme v menu už dlouho, refresh z cloudu.
+            // Tím chytíme případ kdy hráč nechal hru otevřenou na PC1, pak hrál na PC2,
+            // a teď se vrací na PC1 a kliká PLAY.
+            if (window.currentUserUid && window.loadCloudProgress && !window._cloudWriteBlocked && window._progLoadedAt > 0) {
+                let ageMs = Date.now() - window._progLoadedAt;
+                if (ageMs > 60000) { // pokud je snapshot starší než 1 minuta, refresh
+                    console.log("[CatWars] Snapshot is", Math.round(ageMs/1000), "s old, refreshing before run...");
+                    try { await window.loadCloudProgress(window.currentUserUid); } catch(e) { console.warn("[CatWars] Pre-run refresh failed:", e); }
+                }
+            }
             document.getElementById('main-menu').style.display = 'none'; document.getElementById('game-ui').style.display = 'flex'; document.getElementById('dash-container').style.display = 'flex'; document.getElementById('pause-btn').style.display = 'flex'; document.getElementById('minimap').style.display = 'block';
             if (IS_TOUCH_DEV) { document.getElementById('joystick-zone').style.display = 'flex'; document.getElementById('attack-btn').style.display = 'flex'; }
             
@@ -5640,6 +5652,11 @@
             document.getElementById('pause-overlay').style.display = 'none'; 
             document.getElementById('game-ui').style.display = 'none'; 
             await bankEndedRunToMeta();
+            // Po návratu do menu refreshni z cloudu — pokud hráč mezitím hrál na jiném zařízení
+            // a my máme starší snímek, načteme novější verzi
+            if (window.currentUserUid && window.loadCloudProgress && !window._cloudWriteBlocked) {
+                try { await window.loadCloudProgress(window.currentUserUid); } catch(e) { console.warn("[CatWars] Menu refresh failed:", e); }
+            }
             goToMenu(); 
         } window.giveUp = giveUp;
         
@@ -5920,7 +5937,9 @@
                          debouncedForceSaveNow();
                      }
                      cloudLoaded = true;
-                     console.log("[CatWars] Game data SUCCESSFULLY loaded from Firebase!");
+                     // Zapamatuj si timestamp co je v cloudu — tím víme co jsme načetli
+                     window._progLoadedAt = cloudData.lastSavedAt || Date.now();
+                     console.log("[CatWars] Game data SUCCESSFULLY loaded from Firebase! (snapshot age:", window._progLoadedAt, ")");
                  } else if (cloudData === null && !cloudFetchFailed) {
                      // fetch proběhl ale dokument neexistuje = skutečně nový hráč
                      console.log("[CatWars] No cloud save found — treating as new player.");
@@ -5936,6 +5955,7 @@
             if (cloudFetchFailed) {
                 window._cloudWriteBlocked = true;
                 window.prog = localProg ? localProg : { ...window.defaultProg };
+                window._progLoadedAt = 0; // Nevíme co je v cloudu, takže "nejsme synchronizovaní"
                 // Ukaž uživateli varování
                 setTimeout(() => {
                     let banner = document.createElement('div');
@@ -5979,34 +5999,62 @@
         window.saveToFirestore = async (progressData) => {
             if (!auth || !auth.currentUser || !db) return;
             if (window._cloudWriteBlocked) {
-                console.warn("[CatWars] Cloud write blocked — last fetch failed, refusing to overwrite cloud with potentially-default data.");
+                console.warn("[CatWars] Cloud write blocked — refusing to overwrite cloud.");
                 return;
             }
             try {
                 const uid = auth.currentUser.uid;
                 const docRef = doc(db, 'artifacts', appId, 'users', uid, 'gamedata', 'progress');
-                const dataToSave = JSON.parse(JSON.stringify(progressData));
                 
-                if (dataToSave.gems > 100000000) dataToSave.gems = 100000000; // Basic client sanity cap
+                // CONFLICT DETECTION — přečti aktuální cloud lastSavedAt a porovnej se snapshotem co máme v paměti.
+                // Pokud cloud má novější timestamp než kdy jsme si data načítali, znamená to že někdo jiný
+                // (druhé PC / telefon) mezitím uložil novější data. V tom případě NEPŘEPISUJ — varuj uživatele.
+                try {
+                    const currentCloud = await getDoc(docRef);
+                    if (currentCloud.exists()) {
+                        const cloudSavedAt = currentCloud.data().lastSavedAt || 0;
+                        // Tolerance 2 sekundy na clock skew mezi zařízeními
+                        if (cloudSavedAt > 0 && cloudSavedAt > (window._progLoadedAt || 0) + 2000) {
+                            console.warn("[CatWars] Cloud has newer save (cloud:", cloudSavedAt, ", local loaded:", window._progLoadedAt, "). Blocking overwrite.");
+                            window._cloudWriteBlocked = true;
+                            // Ukázat hráči banner s nabídkou refreshe
+                            if (!document.getElementById('conflict-banner')) {
+                                let banner = document.createElement('div');
+                                banner.id = 'conflict-banner';
+                                banner.style.cssText = 'position:fixed;top:10px;left:50%;transform:translateX(-50%);background:#e67e22;color:#fff;padding:14px 22px;border-radius:10px;font-weight:bold;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,0.5);max-width:90%;text-align:center;line-height:1.5;';
+                                banner.innerHTML = '⚠️ Newer progress found on another device.<br>Your current session won\'t save until you reload. <button onclick="location.reload()" style="margin-left:10px;background:#fff;color:#e67e22;border:none;padding:6px 14px;border-radius:6px;font-weight:bold;cursor:pointer;">Reload now</button>';
+                                document.body.appendChild(banner);
+                            }
+                            return;
+                        }
+                    }
+                } catch (e) {
+                    console.warn("[CatWars] Conflict check failed, proceeding with save:", e);
+                    // Pokud kontrola selže, raději uložíme než nic — lepší než ztratit progress
+                }
+                
+                const dataToSave = JSON.parse(JSON.stringify(progressData));
+                if (dataToSave.gems > 100000000) dataToSave.gems = 100000000;
+                // Stamp this save with current time — bude porovnán při příštím zápisu z jiného zařízení
+                dataToSave.lastSavedAt = Date.now();
+                window._progLoadedAt = dataToSave.lastSavedAt;
                 
                 await setDoc(docRef, dataToSave, { merge: true });
                 
-                // Leaderboard rows are reserved for registered accounts only.
-                // Anonymous sessions get a fresh UID per browser / device / incognito
-                // window, which previously spawned duplicate "Guest_xxxx" rows for the
-                // same human player. Sign-in is now required to appear on the board.
                 if (!auth.currentUser.isAnonymous) {
-                    let nick = document.getElementById('login-nick').value || 'Hero';
-                    if (auth.currentUser.email) nick = auth.currentUser.email.split('@')[0];
+                    // Nickname: priorita = co je v progress, fallback email prefix
+                    let nick = (dataToSave.nickname || '').trim();
+                    if (!nick && auth.currentUser.email) nick = auth.currentUser.email.split('@')[0];
+                    if (!nick) nick = 'Hero';
                     
                     const pubRef = doc(db, 'artifacts', appId, 'public', 'data', 'leaderboard', uid);
                     await setDoc(pubRef, {
                         nickname: nick,
-                        maxLevel: progressData.maxCatLevel,
-                        globalLevel: progressData.globalLevel || 1, // Přidáno uložení globalLevel pro leaderboard
-                        kills: progressData.totalKills,
-                        gems: progressData.gems,
-                        bestTimes: progressData.bestTimes || { solo: null, hardcore: null, team: null },
+                        maxLevel: dataToSave.maxCatLevel || 1,
+                        globalLevel: dataToSave.globalLevel || 1,
+                        kills: dataToSave.totalKills || 0,
+                        gems: dataToSave.gems || 0,
+                        bestTimes: dataToSave.bestTimes || { solo: null, hardcore: null, team: null, ffa: null },
                         lastActive: new Date().toISOString()
                     }, { merge: true });
                 }
