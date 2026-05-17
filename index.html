@@ -986,7 +986,7 @@
                 <b style="color: #ccc;">CatWars.io</b> — a free browser‑based 2D top‑down survival action game.
                 Solo, Hardcore, Co‑Op and Deathmatch modes · public leaderboards · permanent upgrades.
                 Built as a hobby project — no install, no pay‑to‑win.
-                <span style="display: block; margin-top: 4px; color: #555;">v1.6.4</span>
+                <span style="display: block; margin-top: 4px; color: #555;">v1.6.5</span>
             </footer>
         </div>
     </div>
@@ -1051,6 +1051,11 @@
 
             <section id="priv-about" class="priv-section" style="color: #ddd; line-height: 1.65; font-size: 15px;">
                 <h2 style="color: var(--primary-hover); margin-top: 0;">About CatWars.io</h2>
+                <p style="font-size: 16px; color: #eee;">
+                    Survive solo, push <b>Hardcore</b> for bigger rewards, or fight beside
+                    AI cats in <b>Co‑Op</b>. No install, no pay‑to‑win — just jump in and
+                    become the strongest cat.
+                </p>
                 <p>
                     <b>CatWars.io</b> is a free browser-based 2D top-down survival action game.
                     You play a brave little cat fighting endless waves of dogs across an open
@@ -1420,7 +1425,7 @@
                     <b style="color: #ccc;">CatWars.io</b> — free 2D browser survival game.
                     Hunt food, evolve through <b>50 levels</b>, survive endless dog hordes.
                     Solo · Hardcore · Co‑Op · no install · no pay‑to‑win.
-                    <span style="display: block; margin-top: 4px; color: #555;">v1.6.4</span>
+                    <span style="display: block; margin-top: 4px; color: #555;">v1.6.5</span>
                 </footer>
             </div>
         </div>
@@ -3823,6 +3828,19 @@
                 document.getElementById('main-menu').style.display = 'flex';
                 return;
             }
+            // Desktop / mouse-and-keyboard users — skip the lobby entirely. The
+            // lobby exists only to provide a user-gesture for mobile fullscreen +
+            // orientation lock; on PC it's just a speed-bump. Detect via
+            // (pointer: coarse) which is reliably true on phones / tablets and
+            // false on laptops & desktops (even hybrids with touchscreens).
+            let isTouchDevice = false;
+            try { isTouchDevice = window.matchMedia('(pointer: coarse)').matches; } catch (e) {}
+            if (!isTouchDevice) {
+                window._lobbyShown = true;
+                document.body.classList.add('post-lobby');
+                document.getElementById('main-menu').style.display = 'flex';
+                return;
+            }
             if (window._lobbyShown) return; // guard against double-call
             window._lobbyShown = true;
             // Future-proofing: if a future "back to lobby" button ever calls
@@ -3839,6 +3857,12 @@
         // user-gesture click into a run.
         window.requestFullscreenAndLandscape = async function() {
             if (window !== window.top) return; // never inside an iframe (CrazyGames)
+            // Touch-first devices only. Desktop browsers shouldn't be force-fullscreened —
+            // the lobby exists primarily as a user-gesture for mobile orientation lock,
+            // and startGame() shouldn't kidnap a desktop player's window either.
+            try {
+                if (!window.matchMedia('(pointer: coarse)').matches) return;
+            } catch (e) { /* matchMedia missing → assume desktop, bail */ return; }
             try {
                 const el = document.documentElement;
                 if (el.requestFullscreen && !document.fullscreenElement) {
