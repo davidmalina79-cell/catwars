@@ -629,6 +629,113 @@
             body.touch-device #pause-btn { top: 8px; right: 56px; width: 40px; height: 40px; font-size: 15px; }
         }
 
+        /* NARROW DESKTOP IFRAME (e.g. CrazyGames windowed mode) — pointer: fine
+           so the mobile HUD rules above don't apply, but the viewport is too
+           narrow for the desktop HUD. Keep the centered Level / XP / HP bars
+           anchored to the very top (margin-top: 0) — the stats-bar pills are
+           left-aligned and the minimap is right-aligned, so the centered
+           title/bars have plenty of horizontal room between them. Drop the
+           bulky in-game rank chip (its info is already in the menu) and
+           shrink the stat pills slightly so they don't dominate. */
+        @media (max-width: 1200px) and (pointer: fine) {
+            .top-bar { margin-top: 0; }
+            #ui-global-rank { display: none !important; }
+            .stat-box { font-size: 15px; padding: 6px 11px; }
+            /* Shrink level title + bars ~30% so they fit the narrow iframe
+               without overlapping game content. */
+            #level-text.text-info { font-size: 18px; margin-bottom: 3px; }
+            #xp-bar-container { height: 17px; max-width: 420px; }
+            #xp-text { font-size: 11px; }
+            #hp-bar-container { height: 11px !important; max-width: 420px !important; }
+        }
+
+        /* SHORT DESKTOP IFRAME — death / pause panels overflow the top of the
+           viewport when the iframe is ~550px tall (CrazyGames windowed mode).
+           The default justify-content:center causes the top of the panel to go
+           above the visible area with no way to scroll to it. Switch to
+           flex-start + overflow-y:auto so the panel anchors at the top and the
+           overlay scrolls if needed. Also compact the death/pause panel
+           contents (title, subtitle, stat block, buttons) so the whole panel
+           fits inside the iframe without any internal scrolling — the user
+           never has to scroll to reach the action buttons.
+           pointer:fine keeps this off real phones (which have their own
+           compact rules in the landscape-phone block below). */
+        @media (max-height: 650px) and (pointer: fine) {
+            #death-screen.overlay,
+            #pause-overlay.overlay {
+                justify-content: flex-start;
+                overflow-y: auto;
+                padding: 6px 0;
+            }
+
+            /* Death panel — compact spacing so title + stats + 4 buttons fit. */
+            #death-screen .panel {
+                padding: 12px 20px !important;
+                max-height: none;
+                overflow-y: visible;
+            }
+            #ds-title {
+                font-size: 28px !important;
+                margin-bottom: 2px !important;
+                line-height: 1.05 !important;
+            }
+            #ds-subtitle {
+                font-size: 13px !important;
+                margin-bottom: 6px !important;
+            }
+            #ds-panel > div:nth-child(3) {
+                padding: 8px 12px !important;
+                margin-bottom: 8px !important;
+                border-radius: 10px !important;
+            }
+            #ds-panel > div:nth-child(3) p {
+                font-size: 14px !important;
+                margin: 3px 0 !important;
+            }
+            #ds-panel > div:nth-child(3) p[id="ds-time-text"] {
+                font-size: 18px !important;
+                margin: 0 0 6px 0 !important;
+            }
+            #ds-panel > div:nth-child(3) p.gem-text {
+                font-size: 15px !important;
+                margin: 6px 0 !important;
+            }
+            #ds-panel > div:nth-child(3) p:last-child {
+                font-size: 13px !important;
+                margin: 6px 0 0 0 !important;
+                padding-top: 6px !important;
+            }
+            #death-buttons .btn-main {
+                padding: 9px 14px !important;
+                font-size: 14px !important;
+                margin: 4px 0 !important;
+                box-shadow: 0 3px 0 rgba(0,0,0,0.4) !important;
+            }
+            #death-buttons .btn-main:last-child {
+                margin-top: 8px !important;
+            }
+
+            /* Pause overlay — same compaction so Resume/Quit fit too. */
+            #pause-overlay .panel {
+                padding: 14px 20px !important;
+                max-height: none;
+                overflow-y: visible;
+            }
+            #pause-overlay h1 {
+                font-size: 26px !important;
+                margin: 0 0 4px 0 !important;
+            }
+            #pause-overlay p {
+                font-size: 13px !important;
+                margin: 0 0 10px 0 !important;
+            }
+            #pause-overlay .btn-main {
+                padding: 10px 16px !important;
+                font-size: 15px !important;
+                margin: 5px 0 !important;
+            }
+        }
+
         /* VLASTNÍ HERNÍ POSUVNÍKY (Odstraní hnusné šedé pruhy) */
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.3); border-radius: 4px; }
@@ -700,19 +807,136 @@
            windowed iframe. Branding (logo, art banner, all columns) stays
            fully visible. Only applies when a real pointer device is present. */
         @media (max-width: 850px) and (pointer: fine) {
-    #main-menu.overlay {
-        padding: 8px 8px 0 8px;
-    }
-    .menu-container {
-        gap: 6px;
-        width: 99%;
-    }
-    #main-menu .menu-container > .menu-col {
-        min-height: 75vh;
-    }
-    .menu-col.side { min-width: 130px; max-width: 200px; padding: 10px 8px; }
-    .menu-col.center { min-width: 200px; padding: 10px 8px; }
-}
+            #main-menu.overlay {
+                padding: 8px 8px 0 8px;
+            }
+            .menu-container {
+                gap: 6px;
+                width: 99%;
+            }
+            #main-menu .menu-container > .menu-col {
+                min-height: 75vh;
+            }
+            .menu-col.side { min-width: 130px; max-width: 200px; padding: 10px 8px; }
+            .menu-col.center { min-width: 200px; padding: 10px 8px; }
+        }
+
+        /* SHORT DESKTOP IFRAME — compact menu typography so all three columns
+           fit inside a short embed (CrazyGames windowed mode is ~600px tall,
+           1024px wide — too wide for max-width: 850px, so this needs to fire
+           on height). Comma in the media list = OR, so the same rules also
+           cover the narrow case. pointer: fine keeps it off real phones. */
+        @media (max-height: 720px) and (pointer: fine),
+               (max-width: 850px)  and (pointer: fine) {
+            /* Tighten the main-menu overlay and column padding to claw back
+               vertical space inside short iframes. */
+            #main-menu.overlay { padding: 6px 8px 0 8px; }
+            #main-menu .menu-container { margin-top: 0; }
+            #main-menu .menu-container > .menu-col {
+                min-height: 0;
+                padding: 10px 10px;
+            }
+            #main-menu .game-art-banner { margin-bottom: 8px !important; }
+
+            /* ── LEFT COLUMN: shrink rank badge, stats, and action buttons ── */
+            #mm-global-rank-badge {
+                font-size: 13px !important;
+                padding: 6px 10px !important;
+                margin: 4px auto 6px auto !important;
+            }
+            #main-menu #mm-global-level {
+                font-size: 12px !important;
+            }
+            #main-menu .menu-col.side button.mm-rank-codex-hit > div:nth-of-type(1) {
+                font-size: 12px !important;
+                margin-bottom: 5px !important;
+            }
+            /* Global-XP bar wrapper (the 18px-tall track) */
+            #main-menu .menu-col.side button.mm-rank-codex-hit > div:nth-of-type(2) {
+                height: 12px !important;
+            }
+            #global-xp-text {
+                font-size: 10px !important;
+                margin-bottom: 10px !important;
+            }
+            #main-menu .menu-col.side .stat-box {
+                font-size: 12px !important;
+                padding: 5px 8px !important;
+                margin-bottom: 6px !important;
+            }
+            /* "Best Solo / Best Hardcore" info card */
+            #mm-best-solo, #mm-best-hardcore {
+                font-size: 11px !important;
+            }
+            /* Leaderboard + Daily Spin (large btn-main buttons in left col) */
+            #main-menu .menu-col.side > button.btn-main {
+                font-size: 13px !important;
+                padding: 9px 8px !important;
+                line-height: 1.15 !important;
+            }
+            #daily-spin-sub {
+                font-size: 11px !important;
+            }
+            #auth-status-text { font-size: 11px !important; }
+            #auth-action-btn  { font-size: 12px !important; padding: 8px 10px !important; }
+            #auth-section     { padding-top: 8px !important; gap: 6px !important; }
+
+            /* ── RIGHT COLUMN: shrink large icon buttons (UPGRADES, BESTIARY, …) ── */
+            #main-menu .menu-col.side > div > button.btn-main {
+                padding: 9px 10px !important;
+                box-shadow: 0 4px 0 rgba(0,0,0,0.35) !important;
+                gap: 10px !important;
+                border-radius: 12px !important;
+            }
+            #main-menu .menu-col.side > div > button.btn-main > span:first-child {
+                font-size: 24px !important;
+                width: 32px !important;
+            }
+            #main-menu .menu-col.side > div > button.btn-main > span:nth-child(2) {
+                font-size: 13px !important;
+                letter-spacing: 0.5px !important;
+            }
+            #main-menu .menu-col.side > div { gap: 8px !important; }
+
+            /* ── CENTER COLUMN: shrink main play button and name input ── */
+            #btn-start-game {
+                font-size: 18px !important;
+                padding: 11px 16px !important;
+            }
+            #player-nickname {
+                font-size: 15px !important;
+                padding: 8px !important;
+            }
+            /* Mode-card grid — shrink slightly so all four cards stay visible */
+            .mode-card { padding: 6px 4px !important; }
+            .mode-card .mode-icon { font-size: 20px !important; }
+            .mode-card .mode-name { font-size: 11px !important; }
+
+            /* Solo / Team / FFA info panels */
+            #solo-panel, #team-panel, #ffa-panel {
+                padding: 8px 10px !important;
+            }
+            #solo-panel h3, #team-panel h3, #ffa-panel h3 {
+                font-size: 13px !important;
+            }
+            #solo-panel p, #team-panel p, #ffa-panel p {
+                font-size: 12px !important;
+                margin: 0 0 6px 0 !important;
+            }
+            #solo-panel ul, #team-panel ul, #ffa-panel ul {
+                font-size: 11px !important;
+                line-height: 1.5 !important;
+            }
+
+            /* About footer under the right column — tighten so it doesn't push
+               buttons off-screen. */
+            .menu-about-footer {
+                font-size: 10px !important;
+                line-height: 1.4 !important;
+                padding: 6px 4px calc(4px + env(safe-area-inset-bottom, 0px)) !important;
+                margin-top: 8px !important;
+            }
+        }
 
         /* ── MOBILE LANDSCAPE TAB BAR ─────────────────────────────────────
            Default state: hidden on desktop, tablet, and portrait orientation.
@@ -962,14 +1186,6 @@
                      alt="CatWars.io — Free Browser Survival Game"
                      onerror="this.style.display='none';">
             </div>
-            <h1 style="font-size: 35px; margin: 0 0 10px; color: #fff; text-shadow: 2px 2px 4px #000;">CatWars.io</h1>
-            <p style="margin: 0 0 14px; color: #ddd; font-size: 15px; line-height: 1.45; font-weight: bold;">
-                Eat food. Evolve fast. Scratch through endless dog hordes.
-            </p>
-            <p style="margin: 0 0 26px; color: #aaa; font-size: 14px; line-height: 1.5;">
-                Survive solo, push Hardcore for bigger rewards, or fight beside AI cats in Co-Op.
-                No install, no pay-to-win — just jump in and become the strongest cat.
-            </p>
             <button id="lobby-play-btn" onclick="window.enterFromLobby()"
                     style="font-size: 32px; padding: 20px 70px; background: var(--success); color: #fff;
                            border: none; border-radius: 16px; cursor: pointer; font-weight: 900;
@@ -978,30 +1194,9 @@
                            transition: transform 0.1s, box-shadow 0.1s;">
                 🗡️ PLAY
             </button>
-            <div class="lobby-desc">
-                <h2>🐱 What is CatWars.io?</h2>
-                <p><b>CatWars.io</b> is a free 2D top-down browser survival game.
-                   Play as a cat, collect food, evolve through <b>50 levels</b> — from Kitten to God Cat —
-                   and survive endless waves of dog hordes. No download required, plays instantly in any modern browser.</p>
-                <h3>⚔️ Game Modes</h3>
-                <ul>
-                    <li><b>Solo Survival</b> — Classic mode. Collect XP, evolve and survive as long as possible.</li>
-                    <li><b>Hardcore</b> — Stackable difficulty modifiers for a brutal challenge. More Gems on victory.</li>
-                    <li><b>Cats vs Dogs (Co-Op)</b> — Fight alongside up to 8 AI cat teammates against the dog horde.</li>
-                    <li><b>Deathmatch</b> — Cats vs Cats free-for-all. Battle AI cat opponents while surviving the dog horde.</li>
-                </ul>
-                <h3>🎮 How to Play</h3>
-                <ul>
-                    <li><b>Desktop:</b> Mouse to move · Left Click to attack · Space to dash.</li>
-                    <li><b>Mobile:</b> Virtual joystick to move · Attack button to fight · Dash button to escape.</li>
-                    <li>Collect food dropped by dogs to gain XP and level up your cat.</li>
-                    <li>Defeat boss waves and collect Gems to spend on permanent upgrades between runs.</li>
-                </ul>
-                <h3>💎 Meta Progression</h3>
-                <p>Earn <b>Gems</b> from every run and spend them in the <b>Codex</b> on permanent weapon and
-                   helmet upgrades. Unlock new cat evolutions, special boosts, and daily quests. Sign in to save
-                   your progress and compete on global leaderboards.</p>
-            </div>
+            <p style="margin: 18px 0 0; color: #ddd; font-size: 15px; line-height: 1.45; font-weight: bold;">
+                Eat food. Evolve fast. Scratch through endless dog hordes.
+            </p>
             <footer class="menu-about-footer" style="width: 100%; box-sizing: border-box; margin-top: 18px; padding-top: 14px; border-top: 1px solid #333; font-size: 12px; line-height: 1.5; color: #888; text-align: center;">
                 <div style="margin-bottom: 6px; font-size: 12px; color: #777;">
                     <a href="#" onclick="window.openPrivacy('about'); return false;" style="color: #bbb; text-decoration: none;">About</a>
@@ -1015,7 +1210,7 @@
                 <b style="color: #ccc;">CatWars.io</b> — a free browser‑based 2D top‑down survival action game.
                 Solo, Hardcore, Co‑Op and Deathmatch modes · public leaderboards · permanent upgrades.
                 Built as a hobby project — no install, no pay‑to‑win.
-                <span style="display: block; margin-top: 4px; color: #555;">v1.6.4</span>
+                <span style="display: block; margin-top: 4px; color: #555;">v1.6.13</span>
             </footer>
         </div>
     </div>
@@ -1080,6 +1275,11 @@
 
             <section id="priv-about" class="priv-section" style="color: #ddd; line-height: 1.65; font-size: 15px;">
                 <h2 style="color: var(--primary-hover); margin-top: 0;">About CatWars.io</h2>
+                <p style="font-size: 16px; color: #eee;">
+                    Survive solo, push <b>Hardcore</b> for bigger rewards, or fight beside
+                    AI cats in <b>Co‑Op</b>. No install, no pay‑to‑win — just jump in and
+                    become the strongest cat.
+                </p>
                 <p>
                     <b>CatWars.io</b> is a free browser-based 2D top-down survival action game.
                     You play a brave little cat fighting endless waves of dogs across an open
@@ -1449,7 +1649,7 @@
                     <b style="color: #ccc;">CatWars.io</b> — free 2D browser survival game.
                     Hunt food, evolve through <b>50 levels</b>, survive endless dog hordes.
                     Solo · Hardcore · Co‑Op · no install · no pay‑to‑win.
-                    <span style="display: block; margin-top: 4px; color: #555;">v1.6.4</span>
+                    <span style="display: block; margin-top: 4px; color: #555;">v1.6.13</span>
                 </footer>
             </div>
         </div>
@@ -3852,6 +4052,19 @@
                 document.getElementById('main-menu').style.display = 'flex';
                 return;
             }
+            // Desktop / mouse-and-keyboard users — skip the lobby entirely. The
+            // lobby exists only to provide a user-gesture for mobile fullscreen +
+            // orientation lock; on PC it's just a speed-bump. Detect via
+            // (pointer: coarse) which is reliably true on phones / tablets and
+            // false on laptops & desktops (even hybrids with touchscreens).
+            let isTouchDevice = false;
+            try { isTouchDevice = window.matchMedia('(pointer: coarse)').matches; } catch (e) {}
+            if (!isTouchDevice) {
+                window._lobbyShown = true;
+                document.body.classList.add('post-lobby');
+                document.getElementById('main-menu').style.display = 'flex';
+                return;
+            }
             if (window._lobbyShown) return; // guard against double-call
             window._lobbyShown = true;
             // Future-proofing: if a future "back to lobby" button ever calls
@@ -3868,6 +4081,12 @@
         // user-gesture click into a run.
         window.requestFullscreenAndLandscape = async function() {
             if (window !== window.top) return; // never inside an iframe (CrazyGames)
+            // Touch-first devices only. Desktop browsers shouldn't be force-fullscreened —
+            // the lobby exists primarily as a user-gesture for mobile orientation lock,
+            // and startGame() shouldn't kidnap a desktop player's window either.
+            try {
+                if (!window.matchMedia('(pointer: coarse)').matches) return;
+            } catch (e) { /* matchMedia missing → assume desktop, bail */ return; }
             try {
                 const el = document.documentElement;
                 if (el.requestFullscreen && !document.fullscreenElement) {
@@ -6114,7 +6333,11 @@
                 subtitle.style.fontWeight = 'normal';
                 timeEl.style.display = 'none';
                 reviveGemBtn.style.display = 'block';
-                reviveAdBtn.style.display = window.__rewardedAdsAvailable ? 'block' : 'none';
+                // Ad-revive disabled — the "Watch Ad to Revive" button is intentionally
+                // hidden on every platform (catwars.io + CrazyGames). The button stays
+                // in the DOM so the feature can be re-enabled by reverting this single
+                // line to: window.__rewardedAdsAvailable ? 'block' : 'none'.
+                reviveAdBtn.style.display = 'none';
             }
 
             document.getElementById('ds-final-gems').innerText = String(playerRunData.totalRunGems);
