@@ -807,80 +807,136 @@
            windowed iframe. Branding (logo, art banner, all columns) stays
            fully visible. Only applies when a real pointer device is present. */
         @media (max-width: 850px) and (pointer: fine) {
-    #main-menu.overlay {
-        padding: 8px 8px 0 8px;
-    }
-    .menu-container {
-        gap: 6px;
-        width: 99%;
-    }
-    #main-menu .menu-container > .menu-col {
-        min-height: 75vh;
-    }
-    .menu-col.side { min-width: 130px; max-width: 200px; padding: 10px 8px; }
-    .menu-col.center { min-width: 200px; padding: 10px 8px; }
+            #main-menu.overlay {
+                padding: 8px 8px 0 8px;
+            }
+            .menu-container {
+                gap: 6px;
+                width: 99%;
+            }
+            #main-menu .menu-container > .menu-col {
+                min-height: 75vh;
+            }
+            .menu-col.side { min-width: 130px; max-width: 200px; padding: 10px 8px; }
+            .menu-col.center { min-width: 200px; padding: 10px 8px; }
+        }
 
-    /* ── LEFT COLUMN: shrink rank badge, stats, and action buttons ── */
-    #mm-global-rank-badge {
-        font-size: 13px !important;
-        padding: 7px 10px !important;
-        margin: 6px auto 6px auto !important;
-    }
-    #main-menu .menu-col.side > button.mm-rank-codex-hit > div[style*="font-size: 15px"] {
-        font-size: 12px !important;
-        margin-bottom: 5px !important;
-    }
-    #global-xp-bar, #main-menu .menu-col.side div[style*="height: 18px"] {
-        height: 12px !important;
-    }
-    #global-xp-text {
-        font-size: 10px !important;
-        margin-bottom: 12px !important;
-    }
-    #main-menu .menu-col.side .stat-box {
-        font-size: 12px !important;
-        padding: 5px 8px !important;
-        margin-bottom: 7px !important;
-    }
-    #main-menu .menu-col.side div[style*="font-size: 14px"][style*="Best Solo"] {
-        font-size: 11px !important;
-        padding: 6px !important;
-        margin-bottom: 8px !important;
-    }
-    #main-menu .menu-col.side > button.btn-main {
-        font-size: 13px !important;
-        padding: 10px 8px !important;
-        box-shadow: 0 4px 0 #d35400 !important;
-    }
-    #auth-status-text { font-size: 11px !important; }
-    #auth-action-btn  { font-size: 12px !important; padding: 8px 10px !important; }
+        /* SHORT DESKTOP IFRAME — compact menu typography so all three columns
+           fit inside a short embed (CrazyGames windowed mode is ~600px tall,
+           1024px wide — too wide for max-width: 850px, so this needs to fire
+           on height). Comma in the media list = OR, so the same rules also
+           cover the narrow case. pointer: fine keeps it off real phones. */
+        @media (max-height: 720px) and (pointer: fine),
+               (max-width: 850px)  and (pointer: fine) {
+            /* Tighten the main-menu overlay and column padding to claw back
+               vertical space inside short iframes. */
+            #main-menu.overlay { padding: 6px 8px 0 8px; }
+            #main-menu .menu-container { margin-top: 0; }
+            #main-menu .menu-container > .menu-col {
+                min-height: 0;
+                padding: 10px 10px;
+            }
+            #main-menu .game-art-banner { margin-bottom: 8px !important; }
 
-    /* ── RIGHT COLUMN: shrink large icon buttons ── */
-    #main-menu .menu-col.side button.btn-main {
-        padding: 10px 10px !important;
-        box-shadow: 0 4px 0 rgba(0,0,0,0.35) !important;
-        gap: 10px !important;
-    }
-    #main-menu .menu-col.side button.btn-main > span:first-child {
-        font-size: 26px !important;
-        width: 34px !important;
-    }
-    #main-menu .menu-col.side button.btn-main > span:nth-child(2) {
-        font-size: 14px !important;
-        letter-spacing: 0.5px !important;
-    }
-    #main-menu .menu-col.side > div { gap: 8px !important; }
+            /* ── LEFT COLUMN: shrink rank badge, stats, and action buttons ── */
+            #mm-global-rank-badge {
+                font-size: 13px !important;
+                padding: 6px 10px !important;
+                margin: 4px auto 6px auto !important;
+            }
+            #main-menu #mm-global-level {
+                font-size: 12px !important;
+            }
+            #main-menu .menu-col.side button.mm-rank-codex-hit > div:nth-of-type(1) {
+                font-size: 12px !important;
+                margin-bottom: 5px !important;
+            }
+            /* Global-XP bar wrapper (the 18px-tall track) */
+            #main-menu .menu-col.side button.mm-rank-codex-hit > div:nth-of-type(2) {
+                height: 12px !important;
+            }
+            #global-xp-text {
+                font-size: 10px !important;
+                margin-bottom: 10px !important;
+            }
+            #main-menu .menu-col.side .stat-box {
+                font-size: 12px !important;
+                padding: 5px 8px !important;
+                margin-bottom: 6px !important;
+            }
+            /* "Best Solo / Best Hardcore" info card */
+            #mm-best-solo, #mm-best-hardcore {
+                font-size: 11px !important;
+            }
+            /* Leaderboard + Daily Spin (large btn-main buttons in left col) */
+            #main-menu .menu-col.side > button.btn-main {
+                font-size: 13px !important;
+                padding: 9px 8px !important;
+                line-height: 1.15 !important;
+            }
+            #daily-spin-sub {
+                font-size: 11px !important;
+            }
+            #auth-status-text { font-size: 11px !important; }
+            #auth-action-btn  { font-size: 12px !important; padding: 8px 10px !important; }
+            #auth-section     { padding-top: 8px !important; gap: 6px !important; }
 
-    /* ── CENTER COLUMN: shrink main play button and name input ── */
-    #btn-start-game {
-        font-size: 18px !important;
-        padding: 11px 16px !important;
-    }
-    #player-nickname {
-        font-size: 15px !important;
-        padding: 8px !important;
-    }
-}
+            /* ── RIGHT COLUMN: shrink large icon buttons (UPGRADES, BESTIARY, …) ── */
+            #main-menu .menu-col.side > div > button.btn-main {
+                padding: 9px 10px !important;
+                box-shadow: 0 4px 0 rgba(0,0,0,0.35) !important;
+                gap: 10px !important;
+                border-radius: 12px !important;
+            }
+            #main-menu .menu-col.side > div > button.btn-main > span:first-child {
+                font-size: 24px !important;
+                width: 32px !important;
+            }
+            #main-menu .menu-col.side > div > button.btn-main > span:nth-child(2) {
+                font-size: 13px !important;
+                letter-spacing: 0.5px !important;
+            }
+            #main-menu .menu-col.side > div { gap: 8px !important; }
+
+            /* ── CENTER COLUMN: shrink main play button and name input ── */
+            #btn-start-game {
+                font-size: 18px !important;
+                padding: 11px 16px !important;
+            }
+            #player-nickname {
+                font-size: 15px !important;
+                padding: 8px !important;
+            }
+            /* Mode-card grid — shrink slightly so all four cards stay visible */
+            .mode-card { padding: 6px 4px !important; }
+            .mode-card .mode-icon { font-size: 20px !important; }
+            .mode-card .mode-name { font-size: 11px !important; }
+
+            /* Solo / Team / FFA info panels */
+            #solo-panel, #team-panel, #ffa-panel {
+                padding: 8px 10px !important;
+            }
+            #solo-panel h3, #team-panel h3, #ffa-panel h3 {
+                font-size: 13px !important;
+            }
+            #solo-panel p, #team-panel p, #ffa-panel p {
+                font-size: 12px !important;
+                margin: 0 0 6px 0 !important;
+            }
+            #solo-panel ul, #team-panel ul, #ffa-panel ul {
+                font-size: 11px !important;
+                line-height: 1.5 !important;
+            }
+
+            /* About footer under the right column — tighten so it doesn't push
+               buttons off-screen. */
+            .menu-about-footer {
+                font-size: 10px !important;
+                line-height: 1.4 !important;
+                padding: 6px 4px calc(4px + env(safe-area-inset-bottom, 0px)) !important;
+                margin-top: 8px !important;
+            }
+        }
 
         /* ── MOBILE LANDSCAPE TAB BAR ─────────────────────────────────────
            Default state: hidden on desktop, tablet, and portrait orientation.
@@ -1154,7 +1210,7 @@
                 <b style="color: #ccc;">CatWars.io</b> — a free browser‑based 2D top‑down survival action game.
                 Solo, Hardcore, Co‑Op and Deathmatch modes · public leaderboards · permanent upgrades.
                 Built as a hobby project — no install, no pay‑to‑win.
-                <span style="display: block; margin-top: 4px; color: #555;">v1.6.12</span>
+                <span style="display: block; margin-top: 4px; color: #555;">v1.6.13</span>
             </footer>
         </div>
     </div>
@@ -1593,7 +1649,7 @@
                     <b style="color: #ccc;">CatWars.io</b> — free 2D browser survival game.
                     Hunt food, evolve through <b>50 levels</b>, survive endless dog hordes.
                     Solo · Hardcore · Co‑Op · no install · no pay‑to‑win.
-                    <span style="display: block; margin-top: 4px; color: #555;">v1.6.12</span>
+                    <span style="display: block; margin-top: 4px; color: #555;">v1.6.13</span>
                 </footer>
             </div>
         </div>
