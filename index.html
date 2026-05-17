@@ -629,6 +629,19 @@
             body.touch-device #pause-btn { top: 8px; right: 56px; width: 40px; height: 40px; font-size: 15px; }
         }
 
+        /* NARROW DESKTOP IFRAME (e.g. CrazyGames windowed mode) — pointer: fine
+           so the mobile HUD rules above don't apply, but the viewport is too
+           narrow for the desktop HUD: the centered top-bar (level title + XP
+           bar) collides with the absolute-positioned stats-bar pills on the
+           left. Push the top-bar below the stats row, drop the bulky in-game
+           rank chip (its info is already in the menu), and shrink the stat
+           pills slightly so they don't dominate. */
+        @media (max-width: 1200px) and (pointer: fine) {
+            .top-bar { margin-top: 56px; }
+            #ui-global-rank { display: none !important; }
+            .stat-box { font-size: 15px; padding: 6px 11px; }
+        }
+
         /* VLASTNÍ HERNÍ POSUVNÍKY (Odstraní hnusné šedé pruhy) */
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.3); border-radius: 4px; }
@@ -986,7 +999,7 @@
                 <b style="color: #ccc;">CatWars.io</b> — a free browser‑based 2D top‑down survival action game.
                 Solo, Hardcore, Co‑Op and Deathmatch modes · public leaderboards · permanent upgrades.
                 Built as a hobby project — no install, no pay‑to‑win.
-                <span style="display: block; margin-top: 4px; color: #555;">v1.6.5</span>
+                <span style="display: block; margin-top: 4px; color: #555;">v1.6.6</span>
             </footer>
         </div>
     </div>
@@ -1425,7 +1438,7 @@
                     <b style="color: #ccc;">CatWars.io</b> — free 2D browser survival game.
                     Hunt food, evolve through <b>50 levels</b>, survive endless dog hordes.
                     Solo · Hardcore · Co‑Op · no install · no pay‑to‑win.
-                    <span style="display: block; margin-top: 4px; color: #555;">v1.6.5</span>
+                    <span style="display: block; margin-top: 4px; color: #555;">v1.6.6</span>
                 </footer>
             </div>
         </div>
@@ -6109,7 +6122,11 @@
                 subtitle.style.fontWeight = 'normal';
                 timeEl.style.display = 'none';
                 reviveGemBtn.style.display = 'block';
-                reviveAdBtn.style.display = window.__rewardedAdsAvailable ? 'block' : 'none';
+                // Ad-revive disabled — the "Watch Ad to Revive" button is intentionally
+                // hidden on every platform (catwars.io + CrazyGames). The button stays
+                // in the DOM so the feature can be re-enabled by reverting this single
+                // line to: window.__rewardedAdsAvailable ? 'block' : 'none'.
+                reviveAdBtn.style.display = 'none';
             }
 
             document.getElementById('ds-final-gems').innerText = String(playerRunData.totalRunGems);
