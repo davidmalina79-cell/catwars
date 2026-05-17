@@ -642,6 +642,21 @@
             .stat-box { font-size: 15px; padding: 6px 11px; }
         }
 
+        /* SHORT DESKTOP IFRAME — death / pause panels overflow the top of the
+           viewport when the iframe is ~550px tall (CrazyGames windowed mode).
+           The default justify-content:center causes the top of the panel to go
+           above the visible area with no way to scroll to it. Switch to
+           flex-start + overflow-y:auto so the panel anchors at the top and the
+           overlay scrolls if needed. pointer:fine keeps this off real phones
+           (which have their own compact rules above). */
+        @media (max-height: 650px) and (pointer: fine) {
+            #death-screen.overlay,
+            #pause-overlay.overlay {
+                justify-content: flex-start;
+                overflow-y: auto;
+            }
+        }
+
         /* VLASTNÍ HERNÍ POSUVNÍKY (Odstraní hnusné šedé pruhy) */
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.3); border-radius: 4px; }
@@ -999,7 +1014,7 @@
                 <b style="color: #ccc;">CatWars.io</b> — a free browser‑based 2D top‑down survival action game.
                 Solo, Hardcore, Co‑Op and Deathmatch modes · public leaderboards · permanent upgrades.
                 Built as a hobby project — no install, no pay‑to‑win.
-                <span style="display: block; margin-top: 4px; color: #555;">v1.6.6</span>
+                <span style="display: block; margin-top: 4px; color: #555;">v1.6.7</span>
             </footer>
         </div>
     </div>
@@ -1438,7 +1453,7 @@
                     <b style="color: #ccc;">CatWars.io</b> — free 2D browser survival game.
                     Hunt food, evolve through <b>50 levels</b>, survive endless dog hordes.
                     Solo · Hardcore · Co‑Op · no install · no pay‑to‑win.
-                    <span style="display: block; margin-top: 4px; color: #555;">v1.6.6</span>
+                    <span style="display: block; margin-top: 4px; color: #555;">v1.6.7</span>
                 </footer>
             </div>
         </div>
