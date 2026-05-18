@@ -414,6 +414,26 @@
 
         #tutorial { position: absolute; bottom: 100px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); padding: 12px 24px; border-radius: 12px; border: 2px solid var(--primary); font-size: 18px; font-weight: bold; display: none; z-index: 20; max-width: 80%; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
 
+        /* ── ONBOARDING TUTORIAL OVERLAY ──────────────────────────────────── */
+        #onboarding-overlay { z-index: 500; }
+        #onboarding-overlay .ob-panel { background: var(--panel-bg); border: 2px solid var(--primary); border-radius: 20px; padding: 32px 36px; max-width: 540px; width: calc(100% - 32px); text-align: center; box-shadow: 0 0 60px rgba(243,156,18,0.25); animation: ob-fadein 0.3s ease; }
+        @keyframes ob-fadein { from { opacity:0; transform: scale(0.95); } to { opacity:1; transform: scale(1); } }
+        #ob-dots { display: flex; justify-content: center; gap: 8px; margin-bottom: 22px; }
+        .ob-dot { width: 10px; height: 10px; border-radius: 50%; background: #444; transition: background 0.3s, transform 0.3s; }
+        .ob-dot.active { background: var(--primary); transform: scale(1.3); }
+        #ob-icon { font-size: 72px; line-height: 1; margin-bottom: 14px; }
+        #ob-title { margin: 0 0 12px; color: var(--primary-hover); font-size: 22px; font-weight: 900; }
+        #ob-desc { color: #ddd; font-size: 15px; line-height: 1.7; margin: 0 0 26px; }
+        #ob-desc b { color: var(--primary-hover); }
+        .ob-highlight-box { background: rgba(243,156,18,0.12); border: 1px solid rgba(243,156,18,0.4); border-radius: 10px; padding: 10px 16px; margin: 10px 0 0; font-size: 14px; color: #fde047; }
+        #ob-buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+        #ob-skip-btn { background: #3a3a3a; color: #aaa; border: 1px solid #555; border-radius: 10px; padding: 10px 20px; font-size: 14px; cursor: pointer; transition: background 0.2s; }
+        #ob-skip-btn:hover { background: #555; color: #fff; }
+        #ob-next-btn { background: var(--success); color: #fff; border: none; border-radius: 12px; padding: 13px 34px; font-size: 17px; font-weight: 900; cursor: pointer; box-shadow: 0 5px 0 #27ae60; transition: transform 0.1s, box-shadow 0.1s; letter-spacing: 0.5px; }
+        #ob-next-btn:hover { transform: translateY(2px); box-shadow: 0 3px 0 #27ae60; }
+        #ob-next-btn:active { transform: translateY(4px); box-shadow: 0 1px 0 #27ae60; }
+        /* ── END ONBOARDING ────────────────────────────────────────────────── */
+
         .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(18, 28, 38, 0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: auto; z-index: 100; backdrop-filter: blur(8px); padding: 20px; box-sizing: border-box; }
         /* Main menu always scrolls top-to-bottom so the footer flows naturally
            BELOW the column grid instead of floating over it. Other overlays
@@ -1333,7 +1353,7 @@
                 <b style="color: #ccc;">CatWars.io</b> — a free browser‑based 2D top‑down survival action game.
                 Solo, Hardcore, Co‑Op and Deathmatch modes · public leaderboards · permanent upgrades.
                 Built as a hobby project — no install, no pay‑to‑win.
-                <span style="display: block; margin-top: 4px; color: #555;">v1.7.0</span>
+                <span style="display: block; margin-top: 4px; color: #555;">v1.7.1</span>
             </footer>
         </div>
     </div>
@@ -1350,6 +1370,20 @@
             <button id="cg-play-btn" onclick="window.startGameFromCgLanding()">🗡️ PLAY</button>
             <div class="cg-landing-hint">
                 Move with mouse · Left click to attack · Space / Right click to dash
+            </div>
+        </div>
+    </div>
+
+    <!-- ONBOARDING TUTORIAL OVERLAY — shown once for new players before first run -->
+    <div id="onboarding-overlay" class="overlay" style="display:none;">
+        <div class="ob-panel">
+            <div id="ob-dots"></div>
+            <div id="ob-icon">🐱</div>
+            <h2 id="ob-title"></h2>
+            <p id="ob-desc"></p>
+            <div id="ob-buttons">
+                <button id="ob-skip-btn" onclick="window.skipOnboarding()">Skip Tutorial</button>
+                <button id="ob-next-btn" onclick="window.advanceOnboarding()">Next →</button>
             </div>
         </div>
     </div>
@@ -1788,7 +1822,7 @@
                     <b style="color: #ccc;">CatWars.io</b> — free 2D browser survival game.
                     Hunt food, evolve through <b>50 levels</b>, survive endless dog hordes.
                     Solo · Hardcore · Co‑Op · no install · no pay‑to‑win.
-                    <span style="display: block; margin-top: 4px; color: #555;">v1.7.0</span>
+                    <span style="display: block; margin-top: 4px; color: #555;">v1.7.1</span>
                 </footer>
             </div>
         </div>
@@ -2263,7 +2297,7 @@
     <!-- ================================================================================================= -->
     <script>
         // GLOBAL SCOPE DECLARATIONS (FIX PRO OFFLINE GUEST CHYBU)
-        var defaultProg = { nickname: '', globalLevel: 1, globalXp: 0, maxCatLevel: 1, totalKills: 0, gems: 0, dogKills: {}, weaponUpgrades: {}, helmetUpgrades: {}, unlockedLegendaries: {}, equippedLegendary: {}, bestCombo: 0, tutorialDone: false, questDate: '', quests: [], bestTimes: { solo: null, hardcore: null, team: null }, boosts: {}, equippedBoosts: [null, null, null], lastDailySpinAt: 0, dailyStreak: 0, lastAdBoostAt: 0, lastSavedAt: 0 };
+        var defaultProg = { nickname: '', globalLevel: 1, globalXp: 0, maxCatLevel: 1, totalKills: 0, gems: 0, dogKills: {}, weaponUpgrades: {}, helmetUpgrades: {}, unlockedLegendaries: {}, equippedLegendary: {}, bestCombo: 0, tutorialDone: false, inGameTipsDone: false, questDate: '', quests: [], bestTimes: { solo: null, hardcore: null, team: null }, boosts: {}, equippedBoosts: [null, null, null], lastDailySpinAt: 0, dailyStreak: 0, lastAdBoostAt: 0, lastSavedAt: 0 };
         // Timestamp kdy jsme načetli prog z cloudu — slouží jako "věk" lokálního snapshotu
         window._progLoadedAt = 0;
         var prog = { ...defaultProg };
@@ -4869,22 +4903,146 @@
         let lastTime = 0; 
         
         let tutorialSteps = [
-            { text: "🖱️ Move your mouse to hunt weaker dogs.", duration: 5 },
-            { text: "⚔️ Left click to attack. Find some food!", duration: 5 },
-            { text: "⚡ Space or Right click to dash.", duration: 5 },
-            { text: "💎 Break chests to get Gems for permanent upgrades.", duration: 6 }
+            { text: "🖱️ Move your mouse to steer — your cat always faces your cursor!", textMobile: "🕹️ Use the joystick to steer — your cat faces the direction you push!", duration: 6 },
+            { text: "⚔️ Point cursor AT the dog, then Left Click! You only hit what you're FACING.", textMobile: "⚔️ Face the dog with the joystick, then tap ⚔️! You only hit what you're FACING.", duration: 7 },
+            { text: "🍖 Collect food for XP and a health boost. Eat often to stay alive!", duration: 6 },
+            { text: "⚡ Space or Right Click to dash out of danger.", textMobile: "⚡ Tap the ⚡ dash button to escape danger!", duration: 5 },
+            { text: "💎 Break chests for Gems — spend them on permanent upgrades in the menu.", duration: 6 }
         ];
         let tutorialIdx = 0, tutorialTimer = 0, tutorialActive = false;
 
         function showTutorial() {
             let el = document.getElementById('tutorial');
             if (tutorialIdx >= tutorialSteps.length) { el.style.display = 'none'; tutorialActive = false; return; }
-            el.innerText = tutorialSteps[tutorialIdx].text;
+            let step = tutorialSteps[tutorialIdx];
+            let isMob = (typeof IS_TOUCH_DEV !== 'undefined' && IS_TOUCH_DEV);
+            el.innerText = (isMob && step.textMobile) ? step.textMobile : step.text;
             el.style.display = 'block';
-            tutorialTimer = tutorialSteps[tutorialIdx].duration;
+            tutorialTimer = step.duration;
         }
 
+        // ── ONBOARDING TUTORIAL ─────────────────────────────────────────────
+        const OB_STEPS = [
+            {
+                icon: '🐱',
+                title: 'Welcome to CatWars!',
+                desc: "You're a cat surrounded by <b>endless dog hordes</b>. Survive, eat, and evolve from a tiny Kitten all the way to a legendary <b>God Cat</b> — 50 levels of power!",
+                forced: true,
+                nextLabel: "Let's go! →"
+            },
+            {
+                icon: '🕹️',
+                title: 'Move to steer',
+                desc: "Your cat <b>follows your cursor</b>. Move the mouse to steer — the cat always faces the direction you point.",
+                extra: "💡 Tip: weaker dogs appear early — chase them first to level up fast.",
+                descMobile: "Use the <b>joystick</b> (bottom-left) to move your cat. The cat always faces the direction you push.",
+                extraMobile: "💡 Tip: weaker dogs appear early — chase them first to level up fast.",
+                nextLabel: 'Got it! →'
+            },
+            {
+                icon: '⚔️',
+                title: 'Face the dog — then attack!',
+                desc: "Your attack hits a <b>cone directly in front of your cat</b>. <b>Point your cursor AT the dog first</b>, then <b>Left Click</b> to swing.<br><br>Swinging when the dog is behind you does nothing!",
+                extra: "💡 Tip: chase a dog until it's in front of you, then click.",
+                descMobile: "Your attack hits a <b>cone directly in front of your cat</b>. Steer with the joystick so the dog is <b>in front of you</b>, then tap the <b>⚔️ button</b> to strike.<br><br>Hitting from behind does nothing!",
+                extraMobile: "💡 Tip: use the joystick to face the dog, then tap ⚔️.",
+                nextLabel: 'Understood! →'
+            },
+            {
+                icon: '🍖',
+                title: 'Eat food to level up',
+                desc: "Food items (fish, meat, bones…) scattered around the map give you <b>XP</b> and restore a little <b>health</b>. Eat often — higher level cats are dramatically stronger!",
+                nextLabel: 'Tasty! →'
+            },
+            {
+                icon: '⚡',
+                title: 'Dash to survive',
+                desc: "Press <b>SPACE</b> or <b>Right-Click</b> to dash away from danger. Dash has a short cooldown — save it for when you're surrounded!",
+                descMobile: "Tap the <b>⚡ dash button</b> (next to the attack button) to dash away from danger. Dash has a short cooldown — save it for tight spots!",
+                nextLabel: 'Ready! →'
+            },
+            {
+                icon: '💎',
+                title: 'Gems = permanent power',
+                desc: "Break <b>chests</b> to earn Gems. Spend them in the main menu on <b>weapon &amp; helmet upgrades</b> that carry over to every future run — making you stronger from the start!",
+                nextLabel: '🗡️ Start Playing!'
+            }
+        ];
+
+        let _obIdx = 0;
+        let _obCallback = null;
+
+        function _obRenderStep(idx) {
+            let s = OB_STEPS[idx];
+            let total = OB_STEPS.length;
+            let isMob = (typeof IS_TOUCH_DEV !== 'undefined' && IS_TOUCH_DEV);
+            // dots
+            let dots = document.getElementById('ob-dots');
+            dots.innerHTML = '';
+            for (let i = 0; i < total; i++) {
+                let d = document.createElement('span');
+                d.className = 'ob-dot' + (i === idx ? ' active' : '');
+                dots.appendChild(d);
+            }
+            document.getElementById('ob-icon').textContent = s.icon;
+            document.getElementById('ob-title').textContent = s.title;
+            let desc  = (isMob && s.descMobile)  ? s.descMobile  : s.desc;
+            let extra = (isMob && s.extraMobile)  ? s.extraMobile : (s.extra || '');
+            let descEl = document.getElementById('ob-desc');
+            descEl.innerHTML = desc + (extra ? '<div class="ob-highlight-box">' + extra + '</div>' : '');
+            // skip button — hidden on forced step
+            let skipBtn = document.getElementById('ob-skip-btn');
+            skipBtn.style.display = s.forced ? 'none' : 'inline-block';
+            // next button label
+            document.getElementById('ob-next-btn').textContent = s.nextLabel || 'Next →';
+        }
+
+        window.advanceOnboarding = function() {
+            _obIdx++;
+            if (_obIdx >= OB_STEPS.length) {
+                window.completeOnboarding();
+            } else {
+                _obRenderStep(_obIdx);
+            }
+        };
+
+        window.skipOnboarding = function() {
+            window.completeOnboarding();
+        };
+
+        window.completeOnboarding = function() {
+            document.getElementById('onboarding-overlay').style.display = 'none';
+            prog.tutorialDone = true;
+            saveProgress();
+            if (typeof _obCallback === 'function') {
+                let cb = _obCallback;
+                _obCallback = null;
+                cb();
+            }
+        };
+
+        // Call this instead of startGame() for new players.
+        // If tutorialDone is already set, fires callback immediately.
+        window.showOnboarding = function(callback) {
+            if (prog.tutorialDone) {
+                if (typeof callback === 'function') callback();
+                return;
+            }
+            _obIdx = 0;
+            _obCallback = callback;
+            document.getElementById('onboarding-overlay').style.display = 'flex';
+            _obRenderStep(0);
+        };
+        // ── END ONBOARDING ──────────────────────────────────────────────────
+
         async function startGame() {
+            // Show onboarding tutorial for first-time players. Onboarding calls
+            // startGame() again when complete/skipped (tutorialDone will be true).
+            if (!prog.tutorialDone) {
+                window.showOnboarding(() => startGame());
+                return;
+            }
+
             // Browser back-gesture / Esc always drops fullscreen. The Play click
             // is a fresh user gesture so we can re-request fullscreen + landscape
             // lock here — fire-and-forget so a denial / non-secure-context doesn't
@@ -5026,7 +5184,7 @@
             
             document.getElementById('tutorial').style.display = 'none';
             tutorialActive = false;
-            if (!prog.tutorialDone) { tutorialActive = true; tutorialIdx = 0; showTutorial(); prog.tutorialDone = true; saveProgress(); }
+            if (!prog.inGameTipsDone) { tutorialActive = true; tutorialIdx = 0; showTutorial(); prog.inGameTipsDone = true; saveProgress(); }
             
             gameState = 'playing'; updateUI(); lastTime = performance.now();
             if (window.notifyGameplayStart) window.notifyGameplayStart();
