@@ -607,6 +607,7 @@
         .card { background: #34495e; border: 2px solid #555; border-radius: 12px; padding: 15px; text-align: center; display: flex; flex-direction: column; align-items: center; color: white; transition: transform 0.2s; position: relative;}
         .card:hover { transform: scale(1.02); }
         .card img { width: 100%; height: 180px; object-fit: contain; margin-bottom: 10px; }
+        .codex-preview-stack img { height: auto; margin-bottom: 0; }
         .card h3 { margin: 0 0 5px 0; font-size: 18px; }
         .card p { margin: 0; font-size: 14px; color: #aaa; }
         .card.locked { background: var(--panel-bg); border-color: var(--panel-light); }
@@ -901,6 +902,80 @@
         .menu-col.side { flex: 1; min-width: 200px; max-width: 320px; }
         .menu-col.center { flex: 2; min-width: 300px; align-items: center; justify-content: flex-start; }
 
+        /* Right column — EvoWars-style codex nav (icon above label, no chunky buttons). */
+        .mm-codex-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            width: 100%;
+            flex-grow: 1;
+        }
+        .mm-codex-tile {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            width: 100%;
+            padding: 8px 6px 6px;
+            margin: 0;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            background: rgba(0, 0, 0, 0.4);
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.07);
+            transition: background 0.15s, transform 0.1s, filter 0.15s;
+            position: relative;
+            font-family: inherit;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .mm-codex-tile:hover {
+            background: rgba(255, 255, 255, 0.1);
+            filter: brightness(1.08);
+            transform: translateY(-1px);
+        }
+        .mm-codex-tile:active { transform: translateY(1px); filter: brightness(0.96); }
+        .mm-codex-tile:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+        .mm-codex-tile-icon {
+            width: 76px;
+            height: 76px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .mm-codex-tile-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.55));
+            pointer-events: none;
+        }
+        .mm-codex-tile-label {
+            font-size: 15px;
+            font-weight: 900;
+            color: #fff;
+            letter-spacing: 0.3px;
+            text-shadow: 1px 1px 0 #000, -1px 1px 0 #000, 1px -1px 0 #000, -1px -1px 0 #000;
+            line-height: 1.15;
+            text-align: center;
+        }
+        #boost-equip-badge.mm-codex-badge {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            background: var(--success);
+            color: #fff;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-weight: bold;
+            border: 2px solid #111;
+            text-transform: uppercase;
+            display: none;
+            pointer-events: none;
+        }
+
         /* Opens Codex → Global ranks (replaces the old right-column shortcut button). */
         button.mm-rank-codex-hit {
             width: 100%;
@@ -1022,22 +1097,11 @@
             #auth-action-btn  { font-size: 12px !important; padding: 8px 10px !important; }
             #auth-section     { padding-top: 8px !important; gap: 6px !important; }
 
-            /* ── RIGHT COLUMN: shrink large icon buttons (UPGRADES, BESTIARY, …) ── */
-            #main-menu .menu-col.side > div > button.btn-main {
-                padding: 9px 10px !important;
-                box-shadow: 0 4px 0 rgba(0,0,0,0.35) !important;
-                gap: 10px !important;
-                border-radius: 12px !important;
-            }
-            #main-menu .menu-col.side > div > button.btn-main > span:first-child {
-                font-size: 24px !important;
-                width: 32px !important;
-            }
-            #main-menu .menu-col.side > div > button.btn-main > span:nth-child(2) {
-                font-size: 13px !important;
-                letter-spacing: 0.5px !important;
-            }
-            #main-menu .menu-col.side > div { gap: 8px !important; }
+            /* ── RIGHT COLUMN: compact codex icon tiles ── */
+            #main-menu .mm-codex-nav { gap: 2px !important; }
+            #main-menu .mm-codex-tile { padding: 5px 4px 4px !important; }
+            #main-menu .mm-codex-tile-icon { width: 52px !important; height: 52px !important; }
+            #main-menu .mm-codex-tile-label { font-size: 12px !important; }
 
             /* ── CENTER COLUMN: shrink main play button and name input ── */
             #btn-start-game {
@@ -1160,23 +1224,11 @@
                 background: rgba(243, 156, 18, 0.12);
             }
 
-            /* Right-column upgrade buttons stack to ~500px (5 × 80px) but the
-               column only has ~304px on a 360-tall phone. Shrink the buttons
-               so the Boosts + Quests rows aren't permanently below the fold. */
-            #main-menu .menu-col.side button.btn-main {
-                padding: 10px 12px !important;
-            }
-            #main-menu .menu-col.side button.btn-main > span:first-child {
-                font-size: 26px !important;
-                width: 38px !important;
-            }
-            #main-menu .menu-col.side button.btn-main > span:nth-child(2) {
-                font-size: 15px !important;
-                letter-spacing: 0.5px !important;
-            }
-            #main-menu .menu-col.side > div {
-                gap: 8px !important;
-            }
+            /* Right-column codex tiles — compact for landscape phone codex tab */
+            #main-menu .mm-codex-tile { padding: 6px 4px 4px !important; }
+            #main-menu .mm-codex-tile-icon { width: 56px !important; height: 56px !important; }
+            #main-menu .mm-codex-tile-label { font-size: 13px !important; }
+            #main-menu .mm-codex-nav { gap: 3px !important; }
 
             /* Subtle fade-out gradient on each scrollable column to hint
                "there's more content below". Pure cosmetic — no JS needed. */
@@ -1353,7 +1405,7 @@
                 <b style="color: #ccc;">CatWars.io</b> — a free browser‑based 2D top‑down survival action game.
                 Solo, Hardcore, Co‑Op and Deathmatch modes · public leaderboards · permanent upgrades.
                 Built as a hobby project — no install, no pay‑to‑win.
-                <span style="display: block; margin-top: 4px; color: #555;">v1.7.2</span>
+                <span style="display: block; margin-top: 4px; color: #555;">v1.7.8</span>
             </footer>
         </div>
     </div>
@@ -1778,35 +1830,31 @@
                 </div>
             </div>
 
-            <!-- RIGHT COLUMN: Upgrades -->
+            <!-- RIGHT COLUMN: Codex shortcuts (EvoWars-style icon tiles) -->
             <div class="menu-col side">
-                <div style="display: flex; flex-direction: column; gap: 14px; flex-grow: 1; justify-content: flex-start; margin-top: 0;">
-                    <button class="btn-main" onclick="openEncyclopedia('cats')" style="background: #3498db; color: #fff; box-shadow: 0 8px 0 #2980b9; width: 100%; padding: 12px 15px; margin: 0; display: flex; align-items: center; justify-content: flex-start; gap: 12px; border-radius: 16px;">
-                        <img src="img/icon-upgrades.png" alt="" style="width: 52px; height: 52px; object-fit: contain; flex-shrink: 0; filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.6));">
-                        <span style="font-size: 20px; font-weight: 900; letter-spacing: 1px;">UPGRADES</span>
+                <nav class="mm-codex-nav" aria-label="Codex">
+                    <button type="button" class="mm-codex-tile" onclick="openEncyclopedia('cats')">
+                        <span class="mm-codex-tile-icon"><img src="img/icon-upgrades.png" alt=""></span>
+                        <span class="mm-codex-tile-label">Upgrades</span>
                     </button>
-                    
-                    <button class="btn-main" onclick="openEncyclopedia('dogs')" style="background: #9b59b6; color: #fff; box-shadow: 0 8px 0 #8e44ad; width: 100%; padding: 12px 15px; margin: 0; display: flex; align-items: center; justify-content: flex-start; gap: 12px; border-radius: 16px;">
-                        <img src="img/icon-bestiary.png" alt="" style="width: 52px; height: 52px; object-fit: contain; flex-shrink: 0; filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.6));">
-                        <span style="font-size: 20px; font-weight: 900; letter-spacing: 1px;">BESTIARY</span>
+                    <button type="button" class="mm-codex-tile" onclick="openEncyclopedia('dogs')">
+                        <span class="mm-codex-tile-icon"><img src="img/icon-bestiary.png" alt=""></span>
+                        <span class="mm-codex-tile-label">Bestiary</span>
                     </button>
-                    
-                    <button class="btn-main" onclick="openEncyclopedia('armory')" style="background: #f1c40f; color: #fff; text-shadow: 1px 1px 2px #000; box-shadow: 0 8px 0 #d68910; width: 100%; padding: 12px 15px; margin: 0; display: flex; align-items: center; justify-content: flex-start; gap: 12px; border-radius: 16px;">
-                        <img src="img/icon-weapons.png" alt="" style="width: 52px; height: 52px; object-fit: contain; flex-shrink: 0; filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.6));">
-                        <span style="font-size: 20px; font-weight: 900; letter-spacing: 1px;">WEAPONS</span>
+                    <button type="button" class="mm-codex-tile" onclick="openEncyclopedia('armory')">
+                        <span class="mm-codex-tile-icon"><img src="img/icon-weapons.png" alt=""></span>
+                        <span class="mm-codex-tile-label">Weapons</span>
                     </button>
-                    
-                    <button class="btn-main" onclick="openEncyclopedia('boosts')" style="background: #e67e22; color: #fff; box-shadow: 0 8px 0 #d35400; width: 100%; padding: 12px 15px; margin: 0; display: flex; align-items: center; justify-content: flex-start; gap: 12px; border-radius: 16px; position: relative;">
-                        <img src="img/icon-boosts.png" alt="" style="width: 52px; height: 52px; object-fit: contain; flex-shrink: 0; filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.6));">
-                        <span style="font-size: 20px; font-weight: 900; letter-spacing: 1px;">BOOSTS</span>
-                        <div id="boost-equip-badge" style="position: absolute; top: -5px; right: -5px; background: var(--success); color: #fff; font-size: 11px; padding: 3px 7px; border-radius: 8px; font-weight: bold; border: 2px solid #111; text-transform: uppercase; display: none;">0/3</div>
+                    <button type="button" class="mm-codex-tile" onclick="openEncyclopedia('boosts')">
+                        <span class="mm-codex-tile-icon"><img src="img/icon-boosts.png" alt=""></span>
+                        <span class="mm-codex-tile-label">Boosts</span>
+                        <span id="boost-equip-badge" class="mm-codex-badge">0/3</span>
                     </button>
-                    
-                    <button class="btn-main" onclick="openEncyclopedia('quests')" style="background: #e74c3c; color: #fff; box-shadow: 0 8px 0 #c0392b; width: 100%; padding: 12px 15px; margin: 0; display: flex; align-items: center; justify-content: flex-start; gap: 12px; border-radius: 16px;">
-                        <img src="img/icon-quests.png" alt="" style="width: 52px; height: 52px; object-fit: contain; flex-shrink: 0; filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.6));">
-                        <span style="font-size: 20px; font-weight: 900; letter-spacing: 1px;">QUESTS</span>
+                    <button type="button" class="mm-codex-tile" onclick="openEncyclopedia('quests')">
+                        <span class="mm-codex-tile-icon"><img src="img/icon-quests.png" alt=""></span>
+                        <span class="mm-codex-tile-label">Quests</span>
                     </button>
-                </div>
+                </nav>
 
                 <!-- About footer — sits inside the right column as a plain flex child; no special positioning needed -->
                 <footer class="menu-about-footer" style="margin-top: 12px; padding: 10px 4px calc(6px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid rgba(255,255,255,0.08); font-size: 11px; line-height: 1.5; color: #888; text-align: center;">
@@ -1822,7 +1870,7 @@
                     <b style="color: #ccc;">CatWars.io</b> — free 2D browser survival game.
                     Hunt food, evolve through <b>50 levels</b>, survive endless dog hordes.
                     Solo · Hardcore · Co‑Op · no install · no pay‑to‑win.
-                    <span style="display: block; margin-top: 4px; color: #555;">v1.7.2</span>
+                    <span style="display: block; margin-top: 4px; color: #555;">v1.7.8</span>
                 </footer>
             </div>
         </div>
@@ -3656,37 +3704,69 @@
                 }
             }
             else if (w.includes('axe')) {
-                // OPRAVA: Sekery už netrčí z ramene vzhůru nohama! (Lvl 18, 19)
+                // Each blade: triangular wing with apex at the socket, concave long sides,
+                // convex curved cutting edge on the far side (matches the reference silhouette).
                 let isColossus = w.includes('colossus');
-                let scale = isColossus ? 1.4 : 1.0;
-                
-                // Násada leží podél ruky dopředu
-                drawHandle(-len*0.3, len*0.9, wid*1.2);
+                let isBattle = w.includes('battleaxe');
+                let isDouble = isColossus || isBattle;
+                let scale = isColossus ? 1.3 : (isBattle ? 1.1 : 1.0);
 
-                let cx = len * 0.75; // Střed ocelové hlavy
-                let ah = wid * 2.2 * scale; // Výška čepele (Y osy)
-                let aw = len * 0.15 * scale; // Šířka čepele 
+                drawHandle(-len*0.3, len*0.9, wid*1.1);
 
-                ctx.fillStyle = metalGrad;
-                ctx.fillRect(cx - wid*0.8, -ah*0.3, wid*1.6, ah*0.6); // Spojka
+                let cx = len * 0.62;
+                // ah = how far the blade reaches perpendicular to the handle
+                // aw = horizontal span of each wing along the handle
+                let ah = wid * (isColossus ? 3.1 : isBattle ? 2.85 : 2.5) * scale;
+                let aw = len * (isColossus ? 0.28 : isBattle ? 0.25 : 0.20) * scale;
+                let sockH = ah * 0.22;
 
-                // Pravá čepel (+Y, směřuje do strany úderu)
-                ctx.fillStyle = bc.dark; 
-                ctx.beginPath(); ctx.moveTo(cx, 0); ctx.lineTo(cx+aw, ah); ctx.lineTo(cx+aw*2.5, ah*0.7); ctx.lineTo(cx+aw*1.5, 0); ctx.fill(); ctx.stroke();
-                ctx.fillStyle = bc.light; 
-                ctx.beginPath(); ctx.moveTo(cx, 0); ctx.lineTo(cx-aw, ah); ctx.lineTo(cx-aw*1.5, ah*0.7); ctx.lineTo(cx-aw*0.5, 0); ctx.fill(); ctx.stroke();
-                ctx.fillStyle = bc.edge;
-                ctx.beginPath(); ctx.moveTo(cx-aw*1.5, ah*0.7); ctx.quadraticCurveTo(cx+aw*0.5, ah*1.2, cx+aw*2.5, ah*0.7); ctx.lineTo(cx+aw*1.5, 0); ctx.lineTo(cx-aw*0.5, 0); ctx.closePath(); ctx.fill(); ctx.stroke();
+                // Socket block (sits between the two blades)
+                ctx.fillStyle = bc.dark;
+                ctx.fillRect(cx - wid*0.85, -sockH, wid*1.7, sockH * 2);
+                ctx.strokeStyle = '#111';
+                ctx.strokeRect(cx - wid*0.85, -sockH, wid*1.7, sockH * 2);
+                // Wooden stub poking out of the socket
+                ctx.fillStyle = '#5c3d1e';
+                ctx.fillRect(cx - wid*0.32, -sockH - wid*0.45, wid*0.64, wid*0.4);
 
-                // Levá čepel (-Y, oboustranné sekery)
-                if (isColossus || w.includes('battleaxe')) {
-                    ctx.fillStyle = bc.dark; 
-                    ctx.beginPath(); ctx.moveTo(cx, 0); ctx.lineTo(cx+aw, -ah); ctx.lineTo(cx+aw*2.5, -ah*0.7); ctx.lineTo(cx+aw*1.5, 0); ctx.fill(); ctx.stroke();
-                    ctx.fillStyle = bc.light; 
-                    ctx.beginPath(); ctx.moveTo(cx, 0); ctx.lineTo(cx-aw, -ah); ctx.lineTo(cx-aw*1.5, -ah*0.7); ctx.lineTo(cx-aw*0.5, 0); ctx.fill(); ctx.stroke();
-                    ctx.fillStyle = bc.edge;
-                    ctx.beginPath(); ctx.moveTo(cx-aw*1.5, -ah*0.7); ctx.quadraticCurveTo(cx+aw*0.5, -ah*1.2, cx+aw*2.5, -ah*0.7); ctx.lineTo(cx+aw*1.5, 0); ctx.lineTo(cx-aw*0.5, 0); ctx.closePath(); ctx.fill(); ctx.stroke();
-                }
+                const drawBladeWing = (sign) => {
+                    let s = sign;
+                    // Apex tucked just inside the socket so the join is hidden
+                    let apexX = cx,                 apexY = sockH * 0.55 * s;
+                    // Outer corners — front (toward weapon tip) is wider than back
+                    let frontX = cx + aw * 1.55,    frontY = ah * s;
+                    let backX  = cx - aw * 0.78,    backY  = ah * s;
+
+                    // Concave side controls — pulled toward the triangle centroid (interior)
+                    let ctlFrontX = cx + aw * 0.48, ctlFrontY = ah * 0.74 * s;
+                    let ctlBackX  = cx - aw * 0.08, ctlBackY  = ah * 0.74 * s;
+                    // Convex cutting-edge control — pushed past the outer corners
+                    let ctlOuterX = cx + aw * 0.5,  ctlOuterY = ah * 1.36 * s;
+
+                    ctx.fillStyle = bc.dark;
+                    ctx.beginPath();
+                    ctx.moveTo(apexX, apexY);
+                    ctx.quadraticCurveTo(ctlFrontX, ctlFrontY, frontX, frontY);
+                    ctx.quadraticCurveTo(ctlOuterX, ctlOuterY, backX, backY);
+                    ctx.quadraticCurveTo(ctlBackX,  ctlBackY,  apexX, apexY);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.stroke();
+
+                    // Bright stripe along the convex cutting edge
+                    ctx.strokeStyle = bc.light;
+                    ctx.lineWidth = Math.max(1.6, wid * 0.22);
+                    ctx.beginPath();
+                    ctx.moveTo(frontX - aw * 0.08, frontY * 0.94);
+                    ctx.quadraticCurveTo(cx + aw * 0.45, ah * 1.22 * s, backX + aw * 0.08, backY * 0.94);
+                    ctx.stroke();
+
+                    ctx.lineWidth = 1.5;
+                    ctx.strokeStyle = '#111';
+                };
+
+                drawBladeWing(1);
+                if (isDouble) drawBladeWing(-1);
             }
             else if (w.includes('hammer')) {
                 // OPRAVA: Kladiva se drží za násadu! (Lvl 12, 30)
@@ -4032,7 +4112,7 @@
             ctx.restore();
         }
 
-        function drawEntity(ctx, isCat, size, color, accent, pattern, attackProgress, weaponType, level, helmetTier = 0, wTierOverride = -1, aura = null) {
+        function drawEntity(ctx, isCat, size, color, accent, pattern, attackProgress, weaponType, level, helmetTier = 0, wTierOverride = -1, aura = null, bodyOnly = false) {
             ctx.save(); 
             
             // NOVÉ: Custom Aury pro bossy a high-level entity
@@ -4113,6 +4193,7 @@
             }
 
             drawFace(ctx, size, color, accent, pattern, isCat, level, helmetTier);
+            if (!bodyOnly) {
             let currentTier = wTierOverride !== -1 ? wTierOverride : (isCat ? (prog.weaponUpgrades[level] || 0) : 0); 
             let sizeMult = isCat ? UPGRADE_SIZE_MULT[currentTier] : 1.0;
             
@@ -4160,12 +4241,13 @@
             ctx.restore();
             
             ctx.restore(); 
+            }
             ctx.restore();
         }
 
-        function getSpriteDataURL(type, level, weaponTier = 0, helmetTier = 0, legendaryType = null) {
+        function getSpriteDataURL(type, level, weaponTier = 0, helmetTier = 0, legendaryType = null, bodyOnly = false) {
             // Legendary key encodes the override so each archetype/level pair gets a unique cached sprite.
-            let key = `${level}_${weaponTier}_${helmetTier}_${legendaryType || ''}`;
+            let key = `${bodyOnly ? 'b:' : ''}${level}_${weaponTier}_${helmetTier}_${legendaryType || ''}`;
             if (spritesCache[type][key]) return spritesCache[type][key];
             
             let tempC = document.createElement('canvas'); tempC.width = 240; tempC.height = 240;
@@ -4182,9 +4264,29 @@
                 renderWeapon = LEGENDARY_WEAPONS[legendaryType].weaponType;
                 renderTier = 5;
             }
-            drawEntity(tCtx, isCat, visSize, cColor, stats.accent, stats.pattern, 0, renderWeapon, level, helmetTier, renderTier, null);
+            drawEntity(tCtx, isCat, visSize, cColor, stats.accent, stats.pattern, 0, renderWeapon, level, helmetTier, renderTier, null, bodyOnly);
             
             let data = tempC.toDataURL(); spritesCache[type][key] = data; return data;
+        }
+
+        /** Codex card: body sprite on top, horizontal weapon strip below (Armory-style). */
+        function buildCodexSpritePreview(type, level, weaponType, weaponTier, helmetTier, legendaryType, locked) {
+            let bodySrc = getSpriteDataURL(type, level, weaponTier, helmetTier, legendaryType, true);
+            let bodyFx = locked ? 'opacity:0.7; filter:brightness(0.2) grayscale(0.8);' : 'filter:drop-shadow(0 5px 8px rgba(0,0,0,0.5));';
+            let html = `<div class="codex-preview-stack" style="width:100%; margin-bottom:10px; box-sizing:border-box;">`;
+            html += `<img src="${bodySrc}" alt="" style="width:100%; height:110px; object-fit:contain; display:block; margin:0; ${bodyFx}">`;
+            if (!locked) {
+                let wType = weaponType, wTier = weaponTier;
+                if (legendaryType && LEGENDARY_WEAPONS[legendaryType]) {
+                    wType = LEGENDARY_WEAPONS[legendaryType].weaponType;
+                    wTier = 5;
+                }
+                let tierColor = UPGRADE_COLORS[wTier] || '#555';
+                let wGlow = wTier > 0 ? `filter:drop-shadow(0px 0px 5px ${tierColor});` : '';
+                html += `<img src="${getWeaponDataURL(wType, wTier, level)}" alt="" style="width:100%; height:70px; object-fit:contain; display:block; margin:0; ${wGlow}">`;
+            }
+            html += `</div>`;
+            return html;
         }
 
         function getWeaponDataURL(weaponType, upgradeTier = 0, level = 1) {
@@ -4667,7 +4769,7 @@
                         let weaponLabel = legKey ? LEGENDARY_WEAPONS[legKey].name.toUpperCase() : stats.weaponType.toUpperCase();
                         
                         let cardContent = `<h3 style="margin: 0 0 5px 0; font-size: 18px;">Lv.${i} ${stats.catName}</h3>`;
-                        cardContent += `<img src="${getSpriteDataURL('cats', i, wTier, hTier, legKey)}" style="width:100%; height:180px; object-fit:contain; margin-bottom: 10px; filter: drop-shadow(0 5px 8px rgba(0,0,0,0.5));">`;
+                        cardContent += buildCodexSpritePreview('cats', i, stats.weaponType, wTier, hTier, legKey, false);
                         cardContent += `<div style="background: rgba(0,0,0,0.4); padding: 6px; border-radius: 8px; width: 100%; box-sizing: border-box; margin-bottom: 12px; line-height: 1.3;">
                                             <strong style="color: ${legKey ? '#ff7ff0' : '#fff'}; font-size: 13px;">${wTierName}${weaponLabel}</strong><br>
                                             <span style="color:#f39c12; font-size: 11px;">${archLabel}</span>
@@ -4715,7 +4817,7 @@
                         card.appendChild(legBtn);
                     } else { 
                         card.innerHTML = `<h3 style="margin: 0 0 5px 0; font-size: 18px;">Lv.${i} ???</h3>`;
-                        card.innerHTML += `<img src="${getSpriteDataURL('cats', i, 0, 0)}" style="width:100%; height:180px; object-fit:contain; opacity:0.7; filter:brightness(0.2) grayscale(0.8); margin: 5px 0;">`;
+                        card.innerHTML += buildCodexSpritePreview('cats', i, stats.weaponType, 0, 0, null, true);
                         card.innerHTML += `<p style="margin-top:10px;">Reach Lv. ${i}</p>`; 
                     }
                     grid.appendChild(card);
@@ -4728,7 +4830,7 @@
                     
                     if (!locked) {
                         let cardContent = `<h3 style="margin: 0 0 5px 0; font-size: 18px;">Lv.${i} ${stats.dogName}</h3>`;
-                        cardContent += `<img src="${getSpriteDataURL('dogs', i, 0, 0)}" style="width:100%; height:180px; object-fit:contain; margin-bottom: 10px; filter: drop-shadow(0 5px 8px rgba(0,0,0,0.5));">`;
+                        cardContent += buildCodexSpritePreview('dogs', i, stats.weaponType, 0, 0, null, false);
                         cardContent += `<div style="background: rgba(0,0,0,0.4); padding: 6px; border-radius: 8px; width: 100%; box-sizing: border-box; margin-bottom: 12px; line-height: 1.3;">
                                             <strong style="color: #fff; font-size: 13px;">${stats.weaponType.toUpperCase()}</strong><br>
                                             <span style="color:#f39c12; font-size: 11px;">${archLabel}</span>
@@ -4737,7 +4839,7 @@
                         card.innerHTML = cardContent;
                     } else { 
                         card.innerHTML = `<h3 style="margin: 0 0 5px 0; font-size: 18px;">Lv.${i} ???</h3>`;
-                        card.innerHTML += `<img src="${getSpriteDataURL('dogs', i, 0, 0)}" style="width:100%; height:180px; object-fit:contain; opacity:0.7; filter:brightness(0.2) grayscale(0.8); margin: 5px 0;">`;
+                        card.innerHTML += buildCodexSpritePreview('dogs', i, stats.weaponType, 0, 0, null, true);
                         card.innerHTML += `<p style="margin-top: 10px;">Defeated: 0</p>`; 
                     }
                     grid.appendChild(card);
