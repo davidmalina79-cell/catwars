@@ -1288,7 +1288,7 @@
     <div id="loading-screen" class="overlay" style="z-index: 400;">
         <div class="panel" style="max-width: 500px; padding: 25px; overflow: hidden;">
             <div class="game-art-banner" style="margin-bottom: 20px;">
-                <img data-src="https://raw.githubusercontent.com/davidmalina79-cell/catwars/main/CatWars2.png" alt="CatWars Battle" loading="lazy" onerror="this.style.display='none';" class="js-banner-img">
+                <img data-src="img/banner.png" alt="CatWars Battle" loading="lazy" onerror="this.style.display='none';" class="js-banner-img">
             </div>
             <h1 style="font-size: 35px; margin-bottom: 10px; color: #fff; text-shadow: 2px 2px 4px #000;">Loading CatWars.io</h1>
             <p style="margin: 0 0 18px; color: #ddd; font-size: 15px; line-height: 1.45; font-weight: bold;">
@@ -1323,7 +1323,7 @@
     <div id="lobby-screen" class="overlay" style="display: none;">
         <div class="lobby-inner">
             <div class="game-art-banner" style="margin-bottom: 20px;">
-                <img data-src="https://raw.githubusercontent.com/davidmalina79-cell/catwars/main/CatWars2.png"
+                <img data-src="img/banner.png"
                      alt="CatWars.io — Free Browser Survival Game"
                      loading="lazy"
                      onerror="this.style.display='none';"
@@ -1353,7 +1353,7 @@
                 <b style="color: #ccc;">CatWars.io</b> — a free browser‑based 2D top‑down survival action game.
                 Solo, Hardcore, Co‑Op and Deathmatch modes · public leaderboards · permanent upgrades.
                 Built as a hobby project — no install, no pay‑to‑win.
-                <span style="display: block; margin-top: 4px; color: #555;">v1.7.1</span>
+                <span style="display: block; margin-top: 4px; color: #555;">v1.7.2</span>
             </footer>
         </div>
     </div>
@@ -1690,7 +1690,7 @@
             <!-- CENTER COLUMN: Play Area -->
             <div class="menu-col center">
                 <div class="game-art-banner" style="margin-bottom: 12px; flex-shrink: 0; width: 100%;">
-                    <img data-src="https://raw.githubusercontent.com/davidmalina79-cell/catwars/main/CatWars2.png" alt="CatWars Battle" loading="lazy" onerror="this.style.display='none';" class="js-banner-img">
+                    <img data-src="img/banner.png" alt="CatWars Battle" loading="lazy" onerror="this.style.display='none';" class="js-banner-img">
                 </div>
                 
                 <input type="text" id="player-nickname" class="nickname-input" placeholder="Enter your name..." autocomplete="off" maxlength="15" style="margin: 0 0 12px 0; width: 100%; max-width: 400px; box-sizing: border-box; flex-shrink: 0;">
@@ -1781,29 +1781,29 @@
             <!-- RIGHT COLUMN: Upgrades -->
             <div class="menu-col side">
                 <div style="display: flex; flex-direction: column; gap: 14px; flex-grow: 1; justify-content: flex-start; margin-top: 0;">
-                    <button class="btn-main" onclick="openEncyclopedia('cats')" style="background: #3498db; color: #fff; box-shadow: 0 8px 0 #2980b9; width: 100%; padding: 18px 15px; margin: 0; display: flex; align-items: center; justify-content: flex-start; gap: 15px; border-radius: 16px;">
-                        <span style="font-size: 40px; line-height: 1; filter: drop-shadow(2px 4px 4px rgba(0,0,0,0.4)); width: 50px; text-align: center;">🐱</span>
+                    <button class="btn-main" onclick="openEncyclopedia('cats')" style="background: #3498db; color: #fff; box-shadow: 0 8px 0 #2980b9; width: 100%; padding: 12px 15px; margin: 0; display: flex; align-items: center; justify-content: flex-start; gap: 12px; border-radius: 16px;">
+                        <img src="img/icon-upgrades.png" alt="" style="width: 52px; height: 52px; object-fit: contain; flex-shrink: 0; filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.6));">
                         <span style="font-size: 20px; font-weight: 900; letter-spacing: 1px;">UPGRADES</span>
                     </button>
                     
-                    <button class="btn-main" onclick="openEncyclopedia('dogs')" style="background: #9b59b6; color: #fff; box-shadow: 0 8px 0 #8e44ad; width: 100%; padding: 18px 15px; margin: 0; display: flex; align-items: center; justify-content: flex-start; gap: 15px; border-radius: 16px;">
-                        <span style="font-size: 40px; line-height: 1; filter: drop-shadow(2px 4px 4px rgba(0,0,0,0.4)); width: 50px; text-align: center;">🐺</span>
+                    <button class="btn-main" onclick="openEncyclopedia('dogs')" style="background: #9b59b6; color: #fff; box-shadow: 0 8px 0 #8e44ad; width: 100%; padding: 12px 15px; margin: 0; display: flex; align-items: center; justify-content: flex-start; gap: 12px; border-radius: 16px;">
+                        <img src="img/icon-bestiary.png" alt="" style="width: 52px; height: 52px; object-fit: contain; flex-shrink: 0; filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.6));">
                         <span style="font-size: 20px; font-weight: 900; letter-spacing: 1px;">BESTIARY</span>
                     </button>
                     
-                    <button class="btn-main" onclick="openEncyclopedia('armory')" style="background: #f1c40f; color: #fff; text-shadow: 1px 1px 2px #000; box-shadow: 0 8px 0 #d68910; width: 100%; padding: 18px 15px; margin: 0; display: flex; align-items: center; justify-content: flex-start; gap: 15px; border-radius: 16px;">
-                        <span style="font-size: 40px; line-height: 1; filter: drop-shadow(2px 4px 4px rgba(0,0,0,0.4)); width: 50px; text-align: center;">⚔️</span>
+                    <button class="btn-main" onclick="openEncyclopedia('armory')" style="background: #f1c40f; color: #fff; text-shadow: 1px 1px 2px #000; box-shadow: 0 8px 0 #d68910; width: 100%; padding: 12px 15px; margin: 0; display: flex; align-items: center; justify-content: flex-start; gap: 12px; border-radius: 16px;">
+                        <img src="img/icon-weapons.png" alt="" style="width: 52px; height: 52px; object-fit: contain; flex-shrink: 0; filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.6));">
                         <span style="font-size: 20px; font-weight: 900; letter-spacing: 1px;">WEAPONS</span>
                     </button>
                     
-                    <button class="btn-main" onclick="openEncyclopedia('boosts')" style="background: #e67e22; color: #fff; box-shadow: 0 8px 0 #d35400; width: 100%; padding: 18px 15px; margin: 0; display: flex; align-items: center; justify-content: flex-start; gap: 15px; border-radius: 16px; position: relative;">
-                        <span style="font-size: 40px; line-height: 1; filter: drop-shadow(2px 4px 4px rgba(0,0,0,0.4)); width: 50px; text-align: center;">🔥</span>
+                    <button class="btn-main" onclick="openEncyclopedia('boosts')" style="background: #e67e22; color: #fff; box-shadow: 0 8px 0 #d35400; width: 100%; padding: 12px 15px; margin: 0; display: flex; align-items: center; justify-content: flex-start; gap: 12px; border-radius: 16px; position: relative;">
+                        <img src="img/icon-boosts.png" alt="" style="width: 52px; height: 52px; object-fit: contain; flex-shrink: 0; filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.6));">
                         <span style="font-size: 20px; font-weight: 900; letter-spacing: 1px;">BOOSTS</span>
                         <div id="boost-equip-badge" style="position: absolute; top: -5px; right: -5px; background: var(--success); color: #fff; font-size: 11px; padding: 3px 7px; border-radius: 8px; font-weight: bold; border: 2px solid #111; text-transform: uppercase; display: none;">0/3</div>
                     </button>
                     
-                    <button class="btn-main" onclick="openEncyclopedia('quests')" style="background: #e74c3c; color: #fff; box-shadow: 0 8px 0 #c0392b; width: 100%; padding: 18px 15px; margin: 0; display: flex; align-items: center; justify-content: flex-start; gap: 15px; border-radius: 16px;">
-                        <span style="font-size: 40px; line-height: 1; filter: drop-shadow(2px 4px 4px rgba(0,0,0,0.4)); width: 50px; text-align: center;">💎</span>
+                    <button class="btn-main" onclick="openEncyclopedia('quests')" style="background: #e74c3c; color: #fff; box-shadow: 0 8px 0 #c0392b; width: 100%; padding: 12px 15px; margin: 0; display: flex; align-items: center; justify-content: flex-start; gap: 12px; border-radius: 16px;">
+                        <img src="img/icon-quests.png" alt="" style="width: 52px; height: 52px; object-fit: contain; flex-shrink: 0; filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.6));">
                         <span style="font-size: 20px; font-weight: 900; letter-spacing: 1px;">QUESTS</span>
                     </button>
                 </div>
@@ -1822,7 +1822,7 @@
                     <b style="color: #ccc;">CatWars.io</b> — free 2D browser survival game.
                     Hunt food, evolve through <b>50 levels</b>, survive endless dog hordes.
                     Solo · Hardcore · Co‑Op · no install · no pay‑to‑win.
-                    <span style="display: block; margin-top: 4px; color: #555;">v1.7.1</span>
+                    <span style="display: block; margin-top: 4px; color: #555;">v1.7.2</span>
                 </footer>
             </div>
         </div>
