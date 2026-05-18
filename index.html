@@ -1,4 +1,28 @@
 <!DOCTYPE html>
+<!--
+    ================================================================================
+    CRAZYGAMES BUILD CHECKLIST — verify before every CrazyGames resubmission.
+    The same index.html serves both catwars.io and the CrazyGames iframe; the
+    `IS_CRAZYGAMES` detection in the first <head> script branches the runtime.
+
+    When iframed on crazygames.com, ALL of these must hold:
+      [ ] Console logs "CrazyGames host detected" within ~50 ms of load.
+      [ ] DevTools Network tab shows NO requests to:
+            firebaseio.com, identitytoolkit.googleapis.com,
+            firestore.googleapis.com, googletagmanager.com, gstatic.com/firebasejs
+      [ ] Loading screen disappears in < 1 s (no fake 85%-then-wait progress bar).
+      [ ] First interactive screen = single big PLAY button (#cg-landing),
+          NOT the 3-column main menu. No nickname input, no mode selector.
+      [ ] Auth section (#auth-section) is hidden (CSS rule, html.crazygames).
+      [ ] Banner image is NOT loaded from raw.githubusercontent.com (CSS rule).
+      [ ] Death-screen title reads DEFEATED, not WASTED.
+      [ ] gameplayStart / gameplayStop SDK calls fire on run start/end.
+      [ ] Rewarded ads route through CrazyGames SDK (no AdSense in iframe).
+
+    Tier-3 acceptance test: open at 800x450 in Chrome devtools, play a full run,
+    verify no HUD element overlaps or gets clipped.
+    ================================================================================
+-->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -12,21 +36,11 @@
     <meta name="apple-mobile-web-app-title" content="CatWars.io">
     <!-- Tab title: brand only — do not append feature/marketing phrases. -->
     <title>CatWars.io</title>
-    
-    <!-- Google tag (gtag.js) GA4 — match Admin → Data streams → Measurement ID -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R74QC0ZMG5"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-        gtag('config', 'G-R74QC0ZMG5', { send_page_view: true });
-    </script>
 
-    <!-- CrazyGames distribution gate.
-         When the game is iframed on a crazygames.com page (e.g. crazygames.com/game/catwars-io)
-         we load the CrazyGames SDK v3 and route rewarded-ad / mid-game-break calls through
-         it INSTEAD of AdSense. On catwars.io directly nothing changes — AdSense runs as today.
-         Detection MUST run before AdSense / game scripts so they can branch off it. -->
+    <!-- CrazyGames distribution gate — MUST run first so GA4 / AdSense / Firebase
+         can branch on window.IS_CRAZYGAMES. When iframed on crazygames.com we load
+         their SDK v3 and route ads through it, and we skip every external network
+         (GA4, Firebase, AdSense, hot-linked banner) to keep the iframe clean. -->
     <script>
         (function () {
             try {
@@ -87,6 +101,50 @@
                 document.head.appendChild(sdk);
             }
         })();
+    </script>
+
+    <!-- Banner image lazy-loader. The 7 MB hot-linked GitHub-raw banner ships
+         with data-src instead of src, so the browser never fetches it until we
+         explicitly opt-in. We opt-in only outside the CrazyGames iframe; on
+         CrazyGames the banner is also hidden by CSS, so it stays a pure no-op. -->
+    <script>
+        (function () {
+            if (window.IS_CRAZYGAMES) return; // CrazyGames: never fetch the banner.
+            function hydrateBanners() {
+                var imgs = document.querySelectorAll('img.js-banner-img[data-src]');
+                for (var i = 0; i < imgs.length; i++) {
+                    var img = imgs[i];
+                    if (!img.src) img.src = img.getAttribute('data-src');
+                }
+            }
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', hydrateBanners, { once: true });
+            } else {
+                hydrateBanners();
+            }
+        })();
+    </script>
+
+    <!-- Google Analytics (gtag.js) GA4 — SKIPPED inside CrazyGames iframe.
+         CrazyGames recommends ByteBrew for analytics and gets nervous about a
+         long external-script list in the iframe. We dynamically inject the
+         gtag loader only on catwars.io / non-CrazyGames hosts. The `gtag`
+         function is always defined as a no-op fallback so existing call sites
+         (e.g. gtag('event', 'game_start', ...)) don't crash either way. -->
+    <script>
+        if (!window.IS_CRAZYGAMES) {
+            var gaScript = document.createElement('script');
+            gaScript.async = true;
+            gaScript.src = 'https://www.googletagmanager.com/gtag/js?id=G-R74QC0ZMG5';
+            document.head.appendChild(gaScript);
+
+            window.dataLayer = window.dataLayer || [];
+            window.gtag = function () { window.dataLayer.push(arguments); };
+            window.gtag('js', new Date());
+            window.gtag('config', 'G-R74QC0ZMG5', { send_page_view: true });
+        } else {
+            window.gtag = function () { /* CrazyGames: analytics disabled */ };
+        }
     </script>
 
     <!-- Google AdSense + H5 Games Ads (Ad Placement API) — deferred.
@@ -229,6 +287,69 @@
         html.crazygames #auth-section,
         html.crazygames #login-screen {
             display: none !important;
+        }
+
+        /* CrazyGames: hide the 7 MB GitHub-raw banner everywhere it appears
+           (loading screen, lobby, main menu). The hot-link is slow, off-host,
+           and was a "looks broken" risk during QA. The dedicated CrazyGames
+           landing screen (#cg-landing) ships its own inline title instead. */
+        html.crazygames .game-art-banner {
+            display: none !important;
+        }
+
+        /* CrazyGames landing screen — replaces the full 3-column main menu
+           with a single CTA so a reviewer lands in gameplay within one click.
+           The full menu still exists and is reachable from the in-game pause
+           overlay and the death screen. */
+        #cg-landing.overlay {
+            background: radial-gradient(ellipse at center, #1f2d3d 0%, #0c1218 70%);
+        }
+        .cg-landing-inner {
+            max-width: 520px;
+            width: 92%;
+            padding: 32px 28px;
+            background: rgba(0,0,0,0.55);
+            border: 3px solid var(--primary);
+            border-radius: 22px;
+            text-align: center;
+            box-shadow: 0 0 60px rgba(52,152,219,0.25);
+        }
+        .cg-landing-title {
+            font-size: clamp(34px, 7vw, 56px);
+            font-weight: 900;
+            color: var(--primary-hover);
+            text-shadow: 3px 3px 0 #000, 0 0 24px rgba(52,152,219,0.4);
+            margin: 0 0 6px 0;
+            letter-spacing: 2px;
+        }
+        .cg-landing-tagline {
+            color: #ddd;
+            font-size: clamp(14px, 2.3vw, 17px);
+            margin: 0 0 22px 0;
+            font-weight: bold;
+            line-height: 1.45;
+        }
+        #cg-play-btn {
+            font-size: clamp(26px, 4.5vw, 34px);
+            padding: 18px 60px;
+            background: var(--success);
+            color: #fff;
+            border: none;
+            border-radius: 16px;
+            cursor: pointer;
+            font-weight: 900;
+            box-shadow: 0 8px 0 #27ae60, 0 0 40px rgba(46,204,113,0.35);
+            letter-spacing: 2px;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+        #cg-play-btn:hover  { transform: translateY(2px); box-shadow: 0 6px 0 #27ae60, 0 0 30px rgba(46,204,113,0.3); }
+        #cg-play-btn:active { transform: translateY(5px); box-shadow: 0 3px 0 #27ae60; }
+        .cg-landing-hint {
+            margin-top: 18px;
+            color: #888;
+            font-size: 12px;
+            line-height: 1.5;
         }
         
         canvas { display: block; width: 100%; height: 100%; }
@@ -1147,7 +1268,7 @@
     <div id="loading-screen" class="overlay" style="z-index: 400;">
         <div class="panel" style="max-width: 500px; padding: 25px; overflow: hidden;">
             <div class="game-art-banner" style="margin-bottom: 20px;">
-                <img src="https://raw.githubusercontent.com/davidmalina79-cell/catwars/main/CatWars2.png" alt="CatWars Battle" onerror="this.style.display='none';">
+                <img data-src="https://raw.githubusercontent.com/davidmalina79-cell/catwars/main/CatWars2.png" alt="CatWars Battle" loading="lazy" onerror="this.style.display='none';" class="js-banner-img">
             </div>
             <h1 style="font-size: 35px; margin-bottom: 10px; color: #fff; text-shadow: 2px 2px 4px #000;">Loading CatWars.io</h1>
             <p style="margin: 0 0 18px; color: #ddd; font-size: 15px; line-height: 1.45; font-weight: bold;">
@@ -1182,9 +1303,11 @@
     <div id="lobby-screen" class="overlay" style="display: none;">
         <div class="lobby-inner">
             <div class="game-art-banner" style="margin-bottom: 20px;">
-                <img src="https://raw.githubusercontent.com/davidmalina79-cell/catwars/main/CatWars2.png"
+                <img data-src="https://raw.githubusercontent.com/davidmalina79-cell/catwars/main/CatWars2.png"
                      alt="CatWars.io — Free Browser Survival Game"
-                     onerror="this.style.display='none';">
+                     loading="lazy"
+                     onerror="this.style.display='none';"
+                     class="js-banner-img">
             </div>
             <button id="lobby-play-btn" onclick="window.enterFromLobby()"
                     style="font-size: 32px; padding: 20px 70px; background: var(--success); color: #fff;
@@ -1210,8 +1333,24 @@
                 <b style="color: #ccc;">CatWars.io</b> — a free browser‑based 2D top‑down survival action game.
                 Solo, Hardcore, Co‑Op and Deathmatch modes · public leaderboards · permanent upgrades.
                 Built as a hobby project — no install, no pay‑to‑win.
-                <span style="display: block; margin-top: 4px; color: #555;">v1.6.13</span>
+                <span style="display: block; margin-top: 4px; color: #555;">v1.7.0</span>
             </footer>
+        </div>
+    </div>
+
+    <!-- CrazyGames landing screen — minimal "land in gameplay in 1 click" overlay.
+         Shown INSTEAD of the lobby + main menu when window.IS_CRAZYGAMES is true.
+         The full menu is still reachable via pause / death screens. -->
+    <div id="cg-landing" class="overlay" style="display: none;">
+        <div class="cg-landing-inner">
+            <h1 class="cg-landing-title">CatWars.io</h1>
+            <p class="cg-landing-tagline">
+                Stack <b>Hardcore</b> modifiers for a 5× gem multiplier · Co-Op with 8 AI cats · Deathmatch PvP · Legendary Forge
+            </p>
+            <button id="cg-play-btn" onclick="window.startGameFromCgLanding()">🗡️ PLAY</button>
+            <div class="cg-landing-hint">
+                Move with mouse · Left click to attack · Space / Right click to dash
+            </div>
         </div>
     </div>
 
@@ -1517,7 +1656,7 @@
             <!-- CENTER COLUMN: Play Area -->
             <div class="menu-col center">
                 <div class="game-art-banner" style="margin-bottom: 12px; flex-shrink: 0; width: 100%;">
-                    <img src="https://raw.githubusercontent.com/davidmalina79-cell/catwars/main/CatWars2.png" alt="CatWars Battle" onerror="this.style.display='none';">
+                    <img data-src="https://raw.githubusercontent.com/davidmalina79-cell/catwars/main/CatWars2.png" alt="CatWars Battle" loading="lazy" onerror="this.style.display='none';" class="js-banner-img">
                 </div>
                 
                 <input type="text" id="player-nickname" class="nickname-input" placeholder="Enter your name..." autocomplete="off" maxlength="15" style="margin: 0 0 12px 0; width: 100%; max-width: 400px; box-sizing: border-box; flex-shrink: 0;">
@@ -1649,7 +1788,7 @@
                     <b style="color: #ccc;">CatWars.io</b> — free 2D browser survival game.
                     Hunt food, evolve through <b>50 levels</b>, survive endless dog hordes.
                     Solo · Hardcore · Co‑Op · no install · no pay‑to‑win.
-                    <span style="display: block; margin-top: 4px; color: #555;">v1.6.13</span>
+                    <span style="display: block; margin-top: 4px; color: #555;">v1.7.0</span>
                 </footer>
             </div>
         </div>
@@ -1808,7 +1947,7 @@
     <!-- DEATH SCREEN -->
     <div id="death-screen" class="overlay" style="display: none; background: rgba(0, 0, 0, 0.85); z-index: 150;">
         <div class="panel" id="ds-panel" style="border-color: var(--danger); max-width: 450px;">
-            <h1 id="ds-title" style="color: var(--danger); margin-bottom: 10px; font-size: 45px;">WASTED</h1>
+            <h1 id="ds-title" style="color: var(--danger); margin-bottom: 10px; font-size: 45px;">DEFEATED</h1>
             <p id="ds-subtitle" style="font-size: 18px; color: #ddd; margin-bottom: 15px;">A dog ended your meow-journey.</p>
 
             <div style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 12px; margin-bottom: 14px;">
@@ -4046,10 +4185,16 @@
         window._lobbyShown = false;
 
         // Called by both loading-completion paths (Firebase auth + offline fallback).
-        // On CrazyGames the game is already in an iframe shell — skip lobby entirely.
+        // On CrazyGames we route first-time visitors through the minimal #cg-landing
+        // overlay so the reviewer hits the giant PLAY button immediately instead of
+        // the 3-column main menu (CrazyGames quality guideline: "land directly in
+        // gameplay, max 1 click"). Returning players (totalKills > 0) keep the full
+        // menu — they want the upgrades / codex / boosts panels they earned.
         window.showLobby = function() {
             if (document.documentElement.classList.contains('crazygames')) {
-                document.getElementById('main-menu').style.display = 'flex';
+                let isReturning = window.prog && (window.prog.totalKills || 0) > 0;
+                document.getElementById('cg-landing').style.display = isReturning ? 'none' : 'flex';
+                document.getElementById('main-menu').style.display = isReturning ? 'flex' : 'none';
                 return;
             }
             // Desktop / mouse-and-keyboard users — skip the lobby entirely. The
@@ -4109,6 +4254,23 @@
             // Enables the CSS rotate-overlay on portrait mobile
             document.body.classList.add('post-lobby');
             await window.requestFullscreenAndLandscape();
+        };
+
+        // CrazyGames landing PLAY click — go straight into a Solo run with the
+        // saved nickname (or "Player" for first-time visitors). startGame() reads
+        // #player-nickname.value, which lives inside the hidden #main-menu, so we
+        // make sure it has a value before kicking off the run. We also force Solo
+        // mode via selectMode() so the (invisible) mode picker doesn't sneak the
+        // player into Hardcore / Co-Op / DM on their very first click.
+        window.startGameFromCgLanding = async function() {
+            document.getElementById('cg-landing').style.display = 'none';
+            let nickInput = document.getElementById('player-nickname');
+            if (nickInput) {
+                let saved = (window.prog && window.prog.nickname) ? window.prog.nickname.trim() : '';
+                nickInput.value = saved || 'Player';
+            }
+            try { selectMode('solo'); } catch (e) { /* selectMode may not be ready yet — solo is already the default. */ }
+            await window.startGame();
         };
         // ── END LOBBY ──────────────────────────────────────────────────────
 
@@ -4236,15 +4398,20 @@
             </tr>`;
         };
 
-        function goToMenu() { 
+        function goToMenu() {
             if (window.notifyGameplayStop) window.notifyGameplayStop();
-            document.getElementById('game-ui').style.display = 'none'; 
+            document.getElementById('game-ui').style.display = 'none';
             document.getElementById('encyclopedia').style.display = 'none'; document.getElementById('dash-container').style.display = 'none'; document.getElementById('joystick-zone').style.display = 'none'; document.getElementById('attack-btn').style.display = 'none';
             document.getElementById('minimap').style.display = 'none'; document.getElementById('boss-arrow').style.display = 'none';
             document.getElementById('pause-btn').style.display = 'none'; document.getElementById('tutorial').style.display = 'none';
-            document.getElementById('pause-overlay').style.display = 'none'; 
-            document.getElementById('main-menu').style.display = 'flex'; document.body.classList.remove('low-hp'); 
-            gameState = 'menu'; updateMenuStats(); 
+            document.getElementById('pause-overlay').style.display = 'none';
+            // After a run ends, even CrazyGames players see the full menu — they've
+            // earned access to upgrades / codex / boosts. The minimal #cg-landing
+            // is strictly first-impression only (see showLobby).
+            let cgLanding = document.getElementById('cg-landing');
+            if (cgLanding) cgLanding.style.display = 'none';
+            document.getElementById('main-menu').style.display = 'flex'; document.body.classList.remove('low-hp');
+            gameState = 'menu'; updateMenuStats();
         }
         window.goToMenu = goToMenu;
         
@@ -6321,7 +6488,7 @@
             } else {
                 panel.style.borderColor = 'var(--danger)';
                 panel.style.boxShadow = '0 0 50px rgba(0,0,0,0.8)';
-                title.innerText = "WASTED";
+                title.innerText = "DEFEATED";
                 title.style.color = 'var(--danger)';
                 title.style.textShadow = 'none';
                 subtitle.innerText = "A dog ended your meow-journey.";
@@ -6504,27 +6671,105 @@
     <!-- ================================================================================================= -->
     <!-- ================================= MODULE: FIREBASE / AUTH ======================================= -->
     <!-- ================================================================================================= -->
+    <!--
+      This module historically used static `import` statements which always fetch
+      gstatic.com/firebasejs even when we don't want Firebase to run (CrazyGames
+      iframe — third-party cookies + IndexedDB are unreliable there and external
+      auth is forbidden by their guidelines).
+
+      We now wrap the whole module body in an async IIFE so we can:
+        • Short-circuit on IS_CRAZYGAMES and run a pure-localStorage session with
+          zero external network. Firebase / Firestore modules are NEVER downloaded.
+        • Use dynamic import() to lazy-fetch Firebase only on catwars.io + beta.
+        • Kill the old fake "85% then wait" loading-bar ramp — it screamed
+          'fake progress' to CrazyGames QA. The bar is now bound to real
+          milestones: 30% on module start, 100% the moment session is ready.
+    -->
     <script type="module">
-        let loadProgress = 0;
+    (async () => {
         const loadBar = document.getElementById('loading-bar-fill');
         const loadText = document.getElementById('loading-status-text');
-        
-        let loadInterval = setInterval(() => {
-            if (loadProgress < 85) {
-                loadProgress += Math.random() * 15;
-                if(loadBar) loadBar.style.width = Math.min(loadProgress, 85) + '%';
-            }
-        }, 300);
 
+        function setLoadProgress(pct, text) {
+            if (loadBar) loadBar.style.width = Math.max(0, Math.min(100, pct)) + '%';
+            if (loadText && text) loadText.innerText = text;
+        }
         function completeLoading() {
-            clearInterval(loadInterval);
-            if(loadBar) loadBar.style.width = '100%';
-            if(loadText) loadText.innerText = "Welcome!";
+            setLoadProgress(100, "Welcome!");
         }
 
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, signInWithPopup, GoogleAuthProvider, EmailAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, linkWithCredential, linkWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, initializeFirestore, doc, setDoc, getDoc, collection, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        setLoadProgress(25, "Booting…");
+
+        // ── CrazyGames short-circuit ─────────────────────────────────────────
+        // No Firebase, no Firestore, no Google Auth. Pure offline guest using
+        // localStorage. The Firebase modules below are never fetched.
+        if (window.IS_CRAZYGAMES) {
+            console.log("[CatWars] CrazyGames build — skipping Firebase, running offline-guest.");
+
+            // Stub every Firebase-dependent global so the rest of the codebase
+            // (login modal handlers, cloud save, leaderboard) becomes a no-op.
+            window.openLoginModal     = () => {};
+            window.closeLoginModal    = () => {};
+            window.handleAuthAction   = () => {};
+            window.loginAsGuest       = () => {};
+            window.loginWithGoogle    = () => {};
+            window.loginWithPassword  = () => {};
+            window.registerWithPassword = () => {};
+            window.logout             = () => {};
+            window.loadCloudProgress  = async () => {};
+            window.fetchFromFirestore = null;
+            window.saveToFirestore    = null;
+            window.fetchLeaderboard   = async () => [];
+            window.updateAuthUI       = () => {};
+
+            window.startLocalSession = () => {
+                if (window._sessionStarted) return;
+                window._sessionStarted = true;
+                window.currentUserUid = 'cg_guest';
+
+                let local = localStorage.getItem('catwars_save_cg_guest');
+                if (local) {
+                    try { window.prog = { ...window.defaultProg, ...JSON.parse(local) }; }
+                    catch (e) { window.prog = { ...window.defaultProg }; }
+                } else {
+                    window.prog = { ...window.defaultProg };
+                }
+                if (!window.prog.nickname) window.prog.nickname = 'Player';
+
+                if (typeof rollDailyQuestsIfNeeded === 'function') rollDailyQuestsIfNeeded();
+                if (typeof updateMenuStats === 'function') updateMenuStats();
+
+                completeLoading();
+                let ls = document.getElementById('loading-screen');
+                if (ls) ls.style.display = 'none';
+                let lg = document.getElementById('login-screen');
+                if (lg) lg.style.display = 'none';
+
+                if (window.startApp) { window.startApp(); window.startApp = null; }
+                window.showLobby();
+            };
+
+            window.startLocalSession();
+            return; // ← critical: skip every Firebase code path below.
+        }
+        // ── End CrazyGames short-circuit ────────────────────────────────────
+
+        // catwars.io / beta: lazy-fetch Firebase modules. Same named bindings
+        // as the original static imports so the existing init code below works
+        // unchanged.
+        setLoadProgress(45, "Connecting…");
+        const [{ initializeApp },
+               { getAuth, signInAnonymously, signInWithCustomToken, signInWithPopup,
+                 GoogleAuthProvider, EmailAuthProvider, signInWithEmailAndPassword,
+                 createUserWithEmailAndPassword, linkWithCredential, linkWithPopup,
+                 onAuthStateChanged, signOut },
+               { getFirestore, initializeFirestore, doc, setDoc, getDoc, collection,
+                 getDocs, query, orderBy, limit }] = await Promise.all([
+            import("https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js"),
+            import("https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js"),
+            import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js"),
+        ]);
+        setLoadProgress(70, "Almost ready…");
 
         console.log("[CatWars] Initializing Firebase...");
         let isCanvasEnv = typeof __firebase_config !== 'undefined';
@@ -7048,6 +7293,26 @@
              document.getElementById('loading-screen').style.display = 'none';
              window.startLocalSession();
         }
+    })().catch(err => {
+        // Hard fail bootstrap (e.g. CDN blocked Firebase imports). Fall back to
+        // a pure-offline guest session so the player still gets into the game
+        // instead of staring at the loading screen forever.
+        console.error("[CatWars] Module bootstrap failed:", err);
+        try {
+            const ls = document.getElementById('loading-screen');
+            if (ls) ls.style.display = 'none';
+            if (typeof window.startLocalSession === 'function') {
+                window.startLocalSession();
+            } else {
+                // No stub set yet — define a minimal one inline so the rest of
+                // the game can still mount.
+                window.currentUserUid = 'offline_guest';
+                window.prog = { ...window.defaultProg };
+                if (window.startApp) { window.startApp(); window.startApp = null; }
+                if (typeof window.showLobby === 'function') window.showLobby();
+            }
+        } catch (e2) { console.error("[CatWars] Emergency fallback also failed:", e2); }
+    });
     </script>
 </body>
 </html>
