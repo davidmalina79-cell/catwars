@@ -1405,7 +1405,7 @@
                 <b style="color: #ccc;">CatWars.io</b> — a free browser‑based 2D top‑down survival action game.
                 Solo, Hardcore, Co‑Op and Deathmatch modes · public leaderboards · permanent upgrades.
                 Built as a hobby project — no install, no pay‑to‑win.
-                <span style="display: block; margin-top: 4px; color: #555;">v1.7.8</span>
+                <span style="display: block; margin-top: 4px; color: #555;">v1.7.9</span>
             </footer>
         </div>
     </div>
@@ -1870,7 +1870,7 @@
                     <b style="color: #ccc;">CatWars.io</b> — free 2D browser survival game.
                     Hunt food, evolve through <b>50 levels</b>, survive endless dog hordes.
                     Solo · Hardcore · Co‑Op · no install · no pay‑to‑win.
-                    <span style="display: block; margin-top: 4px; color: #555;">v1.7.8</span>
+                    <span style="display: block; margin-top: 4px; color: #555;">v1.7.9</span>
                 </footer>
             </div>
         </div>
@@ -4083,32 +4083,26 @@
                 drawHelmet(ctx, size, helmetTier, variantId);
             }
 
-            let catStats = evolutions[Math.min(level - 1, 49)];
-            let variantId = getHelmetVariant(catStats.catName);
-            let helmetOccludesEyes = isCat && helmetTier >= 3 && [3,4,5].includes(variantId);
+            let eyeColor = '#ffffff'; let glowColor = null;
+            if (level >= 45) { eyeColor = '#ffd700'; glowColor = '#ffaa00'; } else if (level >= 30) { eyeColor = '#00ffff'; glowColor = '#0088ff'; } if (level === 40) { eyeColor = '#ff3333'; glowColor = '#ff0000'; }
             
-            if (!helmetOccludesEyes) {
-                let eyeColor = '#ffffff'; let glowColor = null;
-                if (level >= 45) { eyeColor = '#ffd700'; glowColor = '#ffaa00'; } else if (level >= 30) { eyeColor = '#00ffff'; glowColor = '#0088ff'; } if (level === 40) { eyeColor = '#ff3333'; glowColor = '#ff0000'; } 
-                
-                ctx.fillStyle = eyeColor;
-                if (glowColor) { ctx.shadowColor = glowColor; ctx.shadowBlur = 15; }
-                
-                // Základ očí
-                ctx.beginPath(); ctx.arc(size*0.2, -size*0.4, size*0.22, 0, Math.PI*2); ctx.fill(); 
-                ctx.beginPath(); ctx.arc(size*0.2, size*0.4, size*0.22, 0, Math.PI*2); ctx.fill();
-                
-                // Zorničky a odlesk aplikované pro VŠECHNY levely
-                ctx.fillStyle = 'black'; 
-                ctx.beginPath(); ctx.arc(size*0.3, -size*0.4, size*0.12, 0, Math.PI*2); ctx.fill(); 
-                ctx.beginPath(); ctx.arc(size*0.3, size*0.4, size*0.12, 0, Math.PI*2); ctx.fill(); 
-                
-                ctx.fillStyle = 'white'; 
-                ctx.beginPath(); ctx.arc(size*0.32, -size*0.43, size*0.04, 0, Math.PI*2); ctx.fill(); 
-                ctx.beginPath(); ctx.arc(size*0.32, size*0.37, size*0.04, 0, Math.PI*2); ctx.fill(); 
-                
-                ctx.shadowBlur = 0;
-            }
+            ctx.fillStyle = eyeColor;
+            if (glowColor) { ctx.shadowColor = glowColor; ctx.shadowBlur = 15; }
+            
+            // Základ očí
+            ctx.beginPath(); ctx.arc(size*0.2, -size*0.4, size*0.22, 0, Math.PI*2); ctx.fill(); 
+            ctx.beginPath(); ctx.arc(size*0.2, size*0.4, size*0.22, 0, Math.PI*2); ctx.fill();
+            
+            // Zorničky a odlesk aplikované pro VŠECHNY levely
+            ctx.fillStyle = 'black'; 
+            ctx.beginPath(); ctx.arc(size*0.3, -size*0.4, size*0.12, 0, Math.PI*2); ctx.fill(); 
+            ctx.beginPath(); ctx.arc(size*0.3, size*0.4, size*0.12, 0, Math.PI*2); ctx.fill(); 
+            
+            ctx.fillStyle = 'white'; 
+            ctx.beginPath(); ctx.arc(size*0.32, -size*0.43, size*0.04, 0, Math.PI*2); ctx.fill(); 
+            ctx.beginPath(); ctx.arc(size*0.32, size*0.37, size*0.04, 0, Math.PI*2); ctx.fill(); 
+            
+            ctx.shadowBlur = 0;
             ctx.restore();
         }
 
