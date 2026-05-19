@@ -1405,7 +1405,7 @@
                 <b style="color: #ccc;">CatWars.io</b> — a free browser‑based 2D top‑down survival action game.
                 Solo, Hardcore, Co‑Op and Deathmatch modes · public leaderboards · permanent upgrades.
                 Built as a hobby project — no install, no pay‑to‑win.
-                <span style="display: block; margin-top: 4px; color: #555;">v1.7.9</span>
+                <span style="display: block; margin-top: 4px; color: #555;">v1.7.26</span>
             </footer>
         </div>
     </div>
@@ -1830,31 +1830,35 @@
                 </div>
             </div>
 
-            <!-- RIGHT COLUMN: Codex shortcuts (EvoWars-style icon tiles) -->
+            <!-- RIGHT COLUMN: Upgrades -->
             <div class="menu-col side">
-                <nav class="mm-codex-nav" aria-label="Codex">
-                    <button type="button" class="mm-codex-tile" onclick="openEncyclopedia('cats')">
-                        <span class="mm-codex-tile-icon"><img src="img/icon-upgrades.png" alt=""></span>
-                        <span class="mm-codex-tile-label">Upgrades</span>
+                <div style="display: flex; flex-direction: column; gap: 14px; flex-grow: 1; justify-content: flex-start; margin-top: 0;">
+                    <button class="btn-main" onclick="openEncyclopedia('cats')" style="background: #3498db; color: #fff; box-shadow: 0 8px 0 #2980b9; width: 100%; padding: 18px 15px; margin: 0; display: flex; align-items: center; justify-content: flex-start; gap: 15px; border-radius: 16px;">
+                        <span style="font-size: 40px; line-height: 1; filter: drop-shadow(2px 4px 4px rgba(0,0,0,0.4)); width: 50px; text-align: center;">🐱</span>
+                        <span style="font-size: 20px; font-weight: 900; letter-spacing: 1px;">UPGRADES</span>
                     </button>
-                    <button type="button" class="mm-codex-tile" onclick="openEncyclopedia('dogs')">
-                        <span class="mm-codex-tile-icon"><img src="img/icon-bestiary.png" alt=""></span>
-                        <span class="mm-codex-tile-label">Bestiary</span>
+
+                    <button class="btn-main" onclick="openEncyclopedia('dogs')" style="background: #9b59b6; color: #fff; box-shadow: 0 8px 0 #8e44ad; width: 100%; padding: 18px 15px; margin: 0; display: flex; align-items: center; justify-content: flex-start; gap: 15px; border-radius: 16px;">
+                        <span style="font-size: 40px; line-height: 1; filter: drop-shadow(2px 4px 4px rgba(0,0,0,0.4)); width: 50px; text-align: center;">🐺</span>
+                        <span style="font-size: 20px; font-weight: 900; letter-spacing: 1px;">BESTIARY</span>
                     </button>
-                    <button type="button" class="mm-codex-tile" onclick="openEncyclopedia('armory')">
-                        <span class="mm-codex-tile-icon"><img src="img/icon-weapons.png" alt=""></span>
-                        <span class="mm-codex-tile-label">Weapons</span>
+
+                    <button class="btn-main" onclick="openEncyclopedia('armory')" style="background: #f1c40f; color: #fff; text-shadow: 1px 1px 2px #000; box-shadow: 0 8px 0 #d68910; width: 100%; padding: 18px 15px; margin: 0; display: flex; align-items: center; justify-content: flex-start; gap: 15px; border-radius: 16px;">
+                        <span style="font-size: 40px; line-height: 1; filter: drop-shadow(2px 4px 4px rgba(0,0,0,0.4)); width: 50px; text-align: center;">⚔️</span>
+                        <span style="font-size: 20px; font-weight: 900; letter-spacing: 1px;">WEAPONS</span>
                     </button>
-                    <button type="button" class="mm-codex-tile" onclick="openEncyclopedia('boosts')">
-                        <span class="mm-codex-tile-icon"><img src="img/icon-boosts.png" alt=""></span>
-                        <span class="mm-codex-tile-label">Boosts</span>
-                        <span id="boost-equip-badge" class="mm-codex-badge">0/3</span>
+
+                    <button class="btn-main" onclick="openEncyclopedia('boosts')" style="background: #e67e22; color: #fff; box-shadow: 0 8px 0 #d35400; width: 100%; padding: 18px 15px; margin: 0; display: flex; align-items: center; justify-content: flex-start; gap: 15px; border-radius: 16px; position: relative;">
+                        <span style="font-size: 40px; line-height: 1; filter: drop-shadow(2px 4px 4px rgba(0,0,0,0.4)); width: 50px; text-align: center;">🔥</span>
+                        <span style="font-size: 20px; font-weight: 900; letter-spacing: 1px;">BOOSTS</span>
+                        <div id="boost-equip-badge" style="position: absolute; top: -5px; right: -5px; background: var(--success); color: #fff; font-size: 11px; padding: 3px 7px; border-radius: 8px; font-weight: bold; border: 2px solid #111; text-transform: uppercase; display: none;">0/3</div>
                     </button>
-                    <button type="button" class="mm-codex-tile" onclick="openEncyclopedia('quests')">
-                        <span class="mm-codex-tile-icon"><img src="img/icon-quests.png" alt=""></span>
-                        <span class="mm-codex-tile-label">Quests</span>
+
+                    <button class="btn-main" onclick="openEncyclopedia('quests')" style="background: #e74c3c; color: #fff; box-shadow: 0 8px 0 #c0392b; width: 100%; padding: 18px 15px; margin: 0; display: flex; align-items: center; justify-content: flex-start; gap: 15px; border-radius: 16px;">
+                        <span style="font-size: 40px; line-height: 1; filter: drop-shadow(2px 4px 4px rgba(0,0,0,0.4)); width: 50px; text-align: center;">💎</span>
+                        <span style="font-size: 20px; font-weight: 900; letter-spacing: 1px;">QUESTS</span>
                     </button>
-                </nav>
+                </div>
 
                 <!-- About footer — sits inside the right column as a plain flex child; no special positioning needed -->
                 <footer class="menu-about-footer" style="margin-top: 12px; padding: 10px 4px calc(6px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid rgba(255,255,255,0.08); font-size: 11px; line-height: 1.5; color: #888; text-align: center;">
@@ -1870,7 +1874,7 @@
                     <b style="color: #ccc;">CatWars.io</b> — free 2D browser survival game.
                     Hunt food, evolve through <b>50 levels</b>, survive endless dog hordes.
                     Solo · Hardcore · Co‑Op · no install · no pay‑to‑win.
-                    <span style="display: block; margin-top: 4px; color: #555;">v1.7.9</span>
+                    <span style="display: block; margin-top: 4px; color: #555;">v1.7.26</span>
                 </footer>
             </div>
         </div>
@@ -2239,6 +2243,23 @@
             wide:     { cdMult: 1.2, dmgMult: 0.8, reachMult: 1.1, knockback: 80, sweepAngle: Math.PI / 1.5 },
             reach:    { cdMult: 1.15, dmgMult: 0.85, reachMult: 1.35, knockback: 250, sweepAngle: Math.PI / 2.5 },
         };
+
+        // UI helpers — sweepAngle is half-cone; display full attack arc in degrees.
+        function getArchSweepDegrees(archKey) {
+            return Math.round((ARCH_STATS[archKey].sweepAngle * 2 * 180) / Math.PI);
+        }
+        function formatArchCdMult(cdMult) {
+            if (cdMult < 1) return `${cdMult}× (Faster)`;
+            if (cdMult > 1) return `${cdMult}× (Slower)`;
+            return `${cdMult}×`;
+        }
+        function getKnockbackLabel(kb) {
+            if (kb <= 30) return 'None';
+            if (kb <= 90) return 'Very Low';
+            if (kb <= 180) return 'Low';
+            if (kb <= 350) return 'Medium';
+            return 'High';
+        }
 
         const BOSS_VARIANTS = [
             { name: '⚡ SWIFT BOSS', hpMult: 0.6, dmgMult: 0.7, cdMult: 1.3, windupMs: 350, speedMult: 1.6, sizeMult: 1.0, color: '#00d4ff', accent: '#111111', pattern: 'demon', alert: '⚡ SWIFT BOSS!', weapon: 'twin blades', ability: 'dash', aura: 'swift' },
@@ -3321,9 +3342,163 @@
         const spritesCache = { cats: {}, dogs: {} };
         const weaponCache = {};
 
+        // Hamon-style wiggle along the flat of a katana blade (great katana only).
+        function drawKatanaHamon(ctx, x0, x1, yBase, amp, waveCount, color, lineWidth) {
+            if (x1 <= x0) return;
+            ctx.save();
+            ctx.strokeStyle = color;
+            ctx.lineWidth = lineWidth || 1.2;
+            ctx.lineJoin = 'round';
+            ctx.lineCap = 'round';
+            let n = Math.max(14, Math.floor((x1 - x0) / 3));
+            ctx.beginPath();
+            for (let i = 0; i <= n; i++) {
+                let t = i / n;
+                let x = x0 + (x1 - x0) * t;
+                let y = yBase + Math.sin(t * Math.PI * 2 * waveCount) * amp;
+                if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        // Etched runes + ∞ marks on the Infinity Blade (God Cat Lv.50).
+        function drawBladeRuneGlyph(ctx, x, y, s, variant, color, lineW) {
+            ctx.save();
+            ctx.strokeStyle = color;
+            ctx.lineWidth = lineW || Math.max(1, s * 0.14);
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.beginPath();
+            let v = variant % 6;
+            if (v === 0) {
+                ctx.moveTo(x, y - s); ctx.lineTo(x, y + s);
+                ctx.moveTo(x, y - s * 0.15); ctx.lineTo(x - s * 0.6, y - s * 0.55);
+                ctx.moveTo(x, y - s * 0.15); ctx.lineTo(x + s * 0.6, y - s * 0.55);
+                ctx.moveTo(x, y + s * 0.25); ctx.lineTo(x - s * 0.45, y + s * 0.65);
+                ctx.moveTo(x, y + s * 0.25); ctx.lineTo(x + s * 0.45, y + s * 0.65);
+            } else if (v === 1) {
+                ctx.moveTo(x, y - s); ctx.lineTo(x + s * 0.7, y); ctx.lineTo(x, y + s); ctx.lineTo(x - s * 0.7, y); ctx.closePath();
+            } else if (v === 2) {
+                ctx.moveTo(x - s * 0.55, y - s * 0.55); ctx.lineTo(x + s * 0.55, y + s * 0.55);
+                ctx.moveTo(x + s * 0.55, y - s * 0.55); ctx.lineTo(x - s * 0.55, y + s * 0.55);
+                ctx.moveTo(x, y - s * 0.35); ctx.lineTo(x, y + s * 0.35);
+            } else if (v === 3) {
+                ctx.moveTo(x - s * 0.5, y); ctx.lineTo(x, y - s * 0.85); ctx.lineTo(x + s * 0.5, y); ctx.lineTo(x, y + s * 0.85); ctx.closePath();
+            } else if (v === 4) {
+                ctx.moveTo(x + s * 0.32, y);
+                ctx.arc(x - s * 0.32, y, s * 0.32, -Math.PI / 2, Math.PI / 2);
+                ctx.arc(x + s * 0.32, y, s * 0.32, Math.PI / 2, -Math.PI / 2);
+            } else {
+                ctx.moveTo(x - s * 0.65, y - s * 0.35); ctx.lineTo(x - s * 0.65, y + s * 0.35);
+                ctx.moveTo(x - s * 0.65, y - s * 0.35); ctx.lineTo(x + s * 0.5, y - s * 0.35);
+                ctx.moveTo(x - s * 0.2, y - s * 0.35); ctx.lineTo(x - s * 0.2, y + s * 0.35);
+                ctx.moveTo(x - s * 0.2, y + s * 0.35); ctx.lineTo(x + s * 0.65, y + s * 0.35);
+            }
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        function drawInfinityBladeRunes(ctx, x0, x1, wid, isUpgraded) {
+            let bladeLen = x1 - x0;
+            if (bladeLen <= 0) return;
+            let s = wid * 0.26;
+            let lw = Math.max(1, s * 0.13);
+            let primary = isUpgraded ? '#00eaff' : '#777777';
+            let accent = isUpgraded ? '#ffd700' : '#999999';
+            let slots = [0.14, 0.30, 0.46, 0.62, 0.78];
+            let variants = [0, 2, 4, 1, 3];
+            ctx.save();
+            if (isUpgraded) { ctx.shadowColor = primary; ctx.shadowBlur = 6; }
+            for (let i = 0; i < slots.length; i++) {
+                let x = x0 + bladeLen * slots[i];
+                let glyphS = s * (i === 2 ? 1.15 : 1);
+                let glyphColor = i === 2 ? accent : primary;
+                drawBladeRuneGlyph(ctx, x, -wid * 0.72, glyphS, variants[i], glyphColor, lw * (i === 2 ? 1.1 : 1));
+                drawBladeRuneGlyph(ctx, x, wid * 0.72, glyphS, (variants[i] + 3) % 6, glyphColor, lw * 0.92);
+            }
+            ctx.shadowBlur = 0;
+            ctx.strokeStyle = isUpgraded ? 'rgba(0,234,255,0.45)' : 'rgba(120,120,120,0.5)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            for (let t = 0.08; t <= 0.92; t += 0.06) {
+                let x = x0 + bladeLen * t;
+                ctx.moveTo(x, -wid * 0.08); ctx.lineTo(x + bladeLen * 0.02, -wid * 0.08);
+                ctx.moveTo(x, wid * 0.08); ctx.lineTo(x + bladeLen * 0.02, wid * 0.08);
+            }
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        // Curved soul-energy lines along the Soul Reaper scythe blade.
+        function drawSoulReaperLines(ctx, len, wid, baseColor, isUpgraded) {
+            const sampleQuad = (p0, cp, p1, t) => {
+                let u = 1 - t;
+                return {
+                    x: u * u * p0.x + 2 * u * t * cp.x + t * t * p1.x,
+                    y: u * u * p0.y + 2 * u * t * cp.y + t * t * p1.y
+                };
+            };
+            const mixPt = (a, b, k) => ({ x: a.x + (b.x - a.x) * k, y: a.y + (b.y - a.y) * k });
+            const bladeCurve = (k, t) => {
+                let p0 = mixPt(inner0, outer0, k);
+                let cp = mixPt(innerCp, outerCp, k);
+                let p1 = mixPt(inner1, outer1, k);
+                return sampleQuad(p0, cp, p1, t);
+            };
+
+            // Match the scythe light-facet outline; lines stay between inner belly and outer edge.
+            let outer0 = { x: len * 0.95, y: -wid * 0.8 };
+            let outerCp = { x: len * 1.2, y: -wid * 4.0 };
+            let outer1 = { x: len * 0.4, y: -wid * 5.0 };
+            let inner0 = { x: len * 0.87, y: -wid * 0.78 };
+            let innerCp = { x: len * 1.0, y: -wid * 2.5 };
+            let inner1 = { x: len * 0.52, y: -wid * 4.45 };
+
+            let lineColor = shade(baseColor, 42);
+            let tickColor = shade(baseColor, 24);
+
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(len * 0.85, -wid * 0.8);
+            ctx.lineTo(len * 0.95, -wid * 0.8);
+            ctx.quadraticCurveTo(len * 1.2, -wid * 4.0, len * 0.4, -wid * 5.0);
+            ctx.quadraticCurveTo(len * 0.9, -wid * 2.5, len * 0.85, -wid * 0.8);
+            ctx.closePath();
+            ctx.clip();
+
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            if (isUpgraded) { ctx.shadowColor = lineColor; ctx.shadowBlur = 4; }
+            ctx.strokeStyle = lineColor;
+            ctx.lineWidth = 1.1;
+            let stripes = [0.24, 0.38, 0.52, 0.66, 0.80];
+            for (let k of stripes) {
+                ctx.beginPath();
+                let n = 16;
+                for (let i = 0; i <= n; i++) {
+                    let pt = bladeCurve(k, 0.04 + (i / n) * 0.92);
+                    if (i === 0) ctx.moveTo(pt.x, pt.y); else ctx.lineTo(pt.x, pt.y);
+                }
+                ctx.stroke();
+            }
+            ctx.shadowBlur = 0;
+            ctx.strokeStyle = tickColor;
+            ctx.lineWidth = 0.95;
+            for (let t = 0.16; t <= 0.88; t += 0.12) {
+                let ptIn = bladeCurve(0.28, t);
+                let ptOut = bladeCurve(0.76, t);
+                ctx.beginPath();
+                ctx.moveTo(ptIn.x, ptIn.y);
+                ctx.lineTo(ptOut.x, ptOut.y);
+                ctx.stroke();
+            }
+            ctx.restore();
+        }
+
         // Legendary tier (5) — flat-shaded geometry, no shadowBlur/globalAlpha/gradients.
         // 5 archetypes × 5 level brackets = 25 visual variants.
-        function drawLegendaryWeaponShape(ctx, len, wid, archetype, level) {
+        function drawLegendaryWeaponShape(ctx, len, wid, archetype, level, weaponType) {
             let b = getLegendaryBracket(level);
             let p = LEGENDARY_PALETTES[b];
             ctx.lineWidth = 1.5;
@@ -3413,14 +3588,35 @@
 
             // -------- REACH → KATANA --------
             if (archetype === 'reach') {
-                drawHilt();
-                ctx.fillStyle = p.edge;
-                ctx.beginPath(); ctx.arc(len*0.20, 0, wid*1.1, 0, Math.PI*2); ctx.fill(); ctx.stroke();
-                let bs = len*0.22, be = len;
+                // Traditional katana: handle = 1/3 of total length, blade = 2/3 (tip stays at len).
+                let hLen = len / 2;
+                ctx.fillStyle = p.dark;
+                ctx.fillRect(-hLen, -wid*0.45, hLen, wid*0.9);
+                ctx.strokeRect(-hLen, -wid*0.45, hLen, wid*0.9);
+                ctx.fillStyle = p.secondary;
+                ctx.beginPath();
                 if (b === 0) {
+                    ctx.arc(-hLen + len*0.06, 0, wid*0.55, 0, Math.PI*2);
+                } else if (b === 1) {
+                    ctx.rect(-hLen + len*0.02, -wid*0.65, wid*0.85, wid*1.3);
+                } else if (b === 2) {
+                    ctx.moveTo(-hLen, -wid*0.75); ctx.lineTo(-hLen + len*0.20, 0);
+                    ctx.lineTo(-hLen,  wid*0.75); ctx.closePath();
+                } else if (b === 3) {
+                    ctx.moveTo(-hLen + len*0.02, 0); ctx.lineTo(-hLen + len*0.17, -wid*0.95);
+                    ctx.lineTo(-hLen + len*0.26, 0); ctx.lineTo(-hLen + len*0.17, wid*0.95); ctx.closePath();
+                } else {
+                    ctx.arc(-hLen + len*0.06, 0, wid*0.65, 0, Math.PI*2);
+                }
+                ctx.fill(); ctx.stroke();
+                ctx.fillStyle = p.edge;
+                ctx.beginPath(); ctx.arc(0, 0, wid*1.1, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+                let bs = len*0.03, be = len;
+                if (b === 0) {
+                    let bw = wid * 0.55;
                     ctx.fillStyle = p.primary;
                     ctx.beginPath();
-                    ctx.moveTo(bs,-wid*0.75); ctx.lineTo(be*0.9,-wid*0.35); ctx.lineTo(be,0); ctx.lineTo(be*0.9,wid*0.75); ctx.lineTo(bs,wid*0.75); ctx.closePath();
+                    ctx.moveTo(bs,-bw); ctx.lineTo(be*0.88,-bw); ctx.lineTo(be,0); ctx.lineTo(be*0.88,bw); ctx.lineTo(bs,bw); ctx.closePath();
                     ctx.fill(); ctx.stroke();
                 } else if (b === 1) {
                     ctx.fillStyle = p.primary;
@@ -3439,32 +3635,39 @@
                     ctx.fillStyle = p.edge;
                     ctx.fillRect(bs+(be-bs)*0.05, -wid*0.15, (be-bs)*0.85, wid*0.30);
                 } else if (b === 3) {
+                    let bw = wid * 0.55;
                     ctx.fillStyle = p.dark;
                     ctx.beginPath();
-                    ctx.moveTo(bs,-wid*0.4); ctx.lineTo(be,-wid*0.05); ctx.lineTo(be, wid*0.05);
+                    ctx.moveTo(bs,-bw); ctx.lineTo(be,-bw*0.12); ctx.lineTo(be, bw*0.12);
                     let steps = 6;
                     let segL = (be - bs) / steps;
                     for (let i = steps; i >= 0; i--) {
                         let x = bs + i*segL;
-                        ctx.lineTo(x, (i % 2 === 0) ? wid*0.85 : wid*0.45);
+                        ctx.lineTo(x, (i % 2 === 0) ? bw : bw*0.55);
                     }
                     ctx.closePath();
                     ctx.fill(); ctx.stroke();
                     ctx.fillStyle = p.primary;
-                    ctx.fillRect(bs+(be-bs)*0.1, -wid*0.1, (be-bs)*0.8, wid*0.18);
+                    ctx.fillRect(bs+(be-bs)*0.1, -bw*0.12, (be-bs)*0.8, bw*0.24);
                 } else {
+                    let bw = wid * 0.55;
                     ctx.fillStyle = p.primary;
                     ctx.beginPath();
-                    ctx.moveTo(bs,-wid*0.6); ctx.lineTo(bs+(be-bs)*0.32,-wid*0.4); ctx.lineTo(bs+(be-bs)*0.32,wid*0.4); ctx.lineTo(bs,wid*0.6); ctx.closePath();
+                    ctx.moveTo(bs,-bw); ctx.lineTo(bs+(be-bs)*0.32,-bw); ctx.lineTo(bs+(be-bs)*0.32,bw); ctx.lineTo(bs,bw); ctx.closePath();
                     ctx.fill(); ctx.stroke();
                     ctx.fillStyle = p.secondary;
                     ctx.beginPath();
-                    ctx.moveTo(bs+(be-bs)*0.32,-wid*0.4); ctx.lineTo(bs+(be-bs)*0.7,-wid*0.25); ctx.lineTo(bs+(be-bs)*0.7,wid*0.25); ctx.lineTo(bs+(be-bs)*0.32,wid*0.4); ctx.closePath();
+                    ctx.moveTo(bs+(be-bs)*0.32,-bw); ctx.lineTo(bs+(be-bs)*0.7,-bw*0.45); ctx.lineTo(bs+(be-bs)*0.7,bw*0.45); ctx.lineTo(bs+(be-bs)*0.32,bw); ctx.closePath();
                     ctx.fill(); ctx.stroke();
                     ctx.fillStyle = p.edge;
                     ctx.beginPath();
-                    ctx.moveTo(bs+(be-bs)*0.7,-wid*0.25); ctx.lineTo(be,0); ctx.lineTo(bs+(be-bs)*0.7,wid*0.25); ctx.closePath();
+                    ctx.moveTo(bs+(be-bs)*0.7,-bw*0.45); ctx.lineTo(be,0); ctx.lineTo(bs+(be-bs)*0.7,bw*0.45); ctx.closePath();
                     ctx.fill(); ctx.stroke();
+                }
+                let wLow = (weaponType || '').toLowerCase();
+                if (wLow.includes('great') && wLow.includes('katana')) {
+                    let hbw = wid * 0.55;
+                    drawKatanaHamon(ctx, bs + (be - bs) * 0.05, be * 0.86, hbw * 0.22, hbw * 0.13, 11, p.edge, 1.3);
                 }
                 return;
             }
@@ -3643,7 +3846,7 @@
         function drawWeaponShape(ctx, len, wid, weaponType, colorBase, upgradeTier, level) {
             // Tier 5 = Legendary. Bracket geometry is driven entirely by `level` (1-50), 5 brackets.
             if (upgradeTier === 5) {
-                drawLegendaryWeaponShape(ctx, len, wid, getWeaponArchetype(weaponType), level || 1);
+                drawLegendaryWeaponShape(ctx, len, wid, getWeaponArchetype(weaponType), level || 1, weaponType);
                 return;
             }
             let w = (weaponType || 'stick').toLowerCase();
@@ -3711,8 +3914,6 @@
                 let isDouble = isColossus || isBattle;
                 let scale = isColossus ? 1.3 : (isBattle ? 1.1 : 1.0);
 
-                drawHandle(-len*0.3, len*0.9, wid*1.1);
-
                 let cx = len * 0.62;
                 // ah = how far the blade reaches perpendicular to the handle
                 // aw = horizontal span of each wing along the handle
@@ -3720,28 +3921,25 @@
                 let aw = len * (isColossus ? 0.28 : isBattle ? 0.25 : 0.20) * scale;
                 let sockH = ah * 0.22;
 
+                // Haft stops at the socket — do not run wood through the head (was len*0.9).
+                drawHandle(-len*0.3, cx - wid * 0.85, wid * 1.1);
+
                 // Socket block (sits between the two blades)
                 ctx.fillStyle = bc.dark;
                 ctx.fillRect(cx - wid*0.85, -sockH, wid*1.7, sockH * 2);
                 ctx.strokeStyle = '#111';
                 ctx.strokeRect(cx - wid*0.85, -sockH, wid*1.7, sockH * 2);
-                // Wooden stub poking out of the socket
-                ctx.fillStyle = '#5c3d1e';
-                ctx.fillRect(cx - wid*0.32, -sockH - wid*0.45, wid*0.64, wid*0.4);
 
                 const drawBladeWing = (sign) => {
                     let s = sign;
-                    // Apex tucked just inside the socket so the join is hidden
-                    let apexX = cx,                 apexY = sockH * 0.55 * s;
-                    // Outer corners — front (toward weapon tip) is wider than back
-                    let frontX = cx + aw * 1.55,    frontY = ah * s;
-                    let backX  = cx - aw * 0.78,    backY  = ah * s;
+                    // Wide crescents hang below the socket (s=+1); compact wing above (s=-1).
+                    let apexX = cx,                 apexY = -sockH * 0.55 * s;
+                    let frontX = cx - aw * 1.55,    frontY = -ah * s;
+                    let backX  = cx + aw * 0.78,    backY  = -ah * s;
 
-                    // Concave side controls — pulled toward the triangle centroid (interior)
-                    let ctlFrontX = cx + aw * 0.48, ctlFrontY = ah * 0.74 * s;
-                    let ctlBackX  = cx - aw * 0.08, ctlBackY  = ah * 0.74 * s;
-                    // Convex cutting-edge control — pushed past the outer corners
-                    let ctlOuterX = cx + aw * 0.5,  ctlOuterY = ah * 1.36 * s;
+                    let ctlFrontX = cx - aw * 0.48, ctlFrontY = -ah * 0.74 * s;
+                    let ctlBackX  = cx + aw * 0.08, ctlBackY  = -ah * 0.74 * s;
+                    let ctlOuterX = cx - aw * 0.5,  ctlOuterY = -ah * 1.36 * s;
 
                     ctx.fillStyle = bc.dark;
                     ctx.beginPath();
@@ -3753,12 +3951,11 @@
                     ctx.fill();
                     ctx.stroke();
 
-                    // Bright stripe along the convex cutting edge
                     ctx.strokeStyle = bc.light;
                     ctx.lineWidth = Math.max(1.6, wid * 0.22);
                     ctx.beginPath();
-                    ctx.moveTo(frontX - aw * 0.08, frontY * 0.94);
-                    ctx.quadraticCurveTo(cx + aw * 0.45, ah * 1.22 * s, backX + aw * 0.08, backY * 0.94);
+                    ctx.moveTo(frontX + aw * 0.08, frontY * 0.94);
+                    ctx.quadraticCurveTo(cx - aw * 0.45, -ah * 1.22 * s, backX - aw * 0.08, backY * 0.94);
                     ctx.stroke();
 
                     ctx.lineWidth = 1.5;
@@ -3830,6 +4027,9 @@
                 // Čepel kosy
                 ctx.fillStyle = bc.light; ctx.beginPath(); ctx.moveTo(len*0.85, -wid*0.8); ctx.lineTo(len*0.95, -wid*0.8); ctx.quadraticCurveTo(len*1.2, -wid*4.0, len*0.4, -wid*5.0); ctx.quadraticCurveTo(len*0.9, -wid*2.5, len*0.85, -wid*0.8); ctx.fill(); ctx.stroke();
                 ctx.fillStyle = bc.dark; ctx.beginPath(); ctx.moveTo(len*0.85, -wid*0.8); ctx.quadraticCurveTo(len*1.0, -wid*2.5, len*0.5, -wid*4.5); ctx.quadraticCurveTo(len*0.9, -wid*2.5, len*0.85, -wid*0.8); ctx.fill();
+                if (w.includes('soul reaper')) {
+                    drawSoulReaperLines(ctx, len, wid, bc.light, isUpgraded);
+                }
             }
             else if (w.includes('godslayer') || w.includes('infinity blade')) {
                 drawHandle(-len*0.2, len*0.2, wid*1.5);
@@ -3841,6 +4041,9 @@
                 ctx.strokeStyle = isUpgraded ? '#0ff' : '#555'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(bStart, 0); ctx.lineTo(bEnd - len*0.1, 0); ctx.stroke(); ctx.lineWidth = 1.5; ctx.strokeStyle = '#111';
                 ctx.fillStyle = bc.light; ctx.beginPath(); ctx.moveTo(bStart, -wid*0.5); ctx.lineTo(bStart + len*0.1, -wid*1.4); ctx.lineTo(bEnd - len*0.2, -wid*1.2); ctx.lineTo(bEnd, 0); ctx.lineTo(bEnd - len*0.1, -wid*0.4); ctx.lineTo(bStart, 0); ctx.closePath(); ctx.fill(); ctx.stroke();
                 ctx.fillStyle = bc.dark; ctx.beginPath(); ctx.moveTo(bStart, wid*0.5); ctx.lineTo(bStart + len*0.1, wid*1.4); ctx.lineTo(bEnd - len*0.2, wid*1.2); ctx.lineTo(bEnd, 0); ctx.lineTo(bEnd - len*0.1, wid*0.4); ctx.lineTo(bStart, 0); ctx.closePath(); ctx.fill(); ctx.stroke();
+                if (w.includes('infinity blade')) {
+                    drawInfinityBladeRunes(ctx, bStart, bEnd - len * 0.05, wid, isUpgraded);
+                }
             }
             else if (w === 'broadsword') {
                 drawHandle(-len*0.2, len*0.15, wid*1.4);
@@ -3899,15 +4102,36 @@
                 if (isTwin) drawStraightBlade(bStart, bEnd, bWid, -1);
             }
             else if (w.includes('katana') || w.includes('naginata') || w.includes('cutlass')) {
-                // OPRAVA: Naginata už se nedrží na samém konci (Lvl 16, 26)
                 let isPole = w.includes('naginata');
-                drawHandle(-len*0.4, isPole ? len*0.7 : len*0.2, wid*1.0);
+                if (isPole) {
+                    drawHandle(-len*0.4, len*0.7, wid*1.0);
+                } else {
+                    // Traditional katana: handle = 1/3 of total length, blade = 2/3 (tip stays at len).
+                    drawHandle(-len/2, 0, wid*1.0);
+                }
 
-                let bStart = isPole ? len*0.7 : len*0.2;
+                let bStart = isPole ? len*0.7 : len*0.03;
                 ctx.fillStyle = '#111'; ctx.fillRect(bStart - wid*0.5, -wid*1.2, wid*0.4, wid*2.4);
 
-                ctx.fillStyle = bc.light; ctx.beginPath(); ctx.moveTo(bStart, 0); ctx.quadraticCurveTo(bStart + len*0.2, wid*0.6, len*0.85, wid*0.3); ctx.lineTo(len, -wid*0.1); ctx.lineTo(len*0.85, -wid*0.5); ctx.quadraticCurveTo(bStart + len*0.2, -wid*0.2, bStart, -wid*0.4); ctx.fill(); ctx.stroke();
-                ctx.strokeStyle = bc.edge; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(bStart, 0); ctx.quadraticCurveTo(bStart + len*0.2, wid*0.4, len*0.9, -wid*0.1); ctx.stroke();
+                let bw = wid * 0.55;
+                let tipStart = len * 0.88;
+                ctx.fillStyle = bc.light;
+                ctx.beginPath();
+                ctx.moveTo(bStart, -bw);
+                ctx.lineTo(tipStart, -bw);
+                ctx.lineTo(len, -wid * 0.08);
+                ctx.lineTo(tipStart, bw);
+                ctx.lineTo(bStart, bw);
+                ctx.closePath();
+                ctx.fill(); ctx.stroke();
+                ctx.strokeStyle = bc.edge; ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(bStart, -bw);
+                ctx.quadraticCurveTo(bStart + len * 0.35, -bw * 0.92, len * 0.92, -wid * 0.08);
+                ctx.stroke();
+                if (w.includes('great') && w.includes('katana')) {
+                    drawKatanaHamon(ctx, bStart + len * 0.04, tipStart - len * 0.02, bw * 0.22, bw * 0.13, 11, isUpgraded ? bc.edge : '#999999', 1.3);
+                }
             }
             else if (w.includes('spear')) {
                 drawHandle(-len*0.4, len*0.75, wid*1.0);
@@ -4249,7 +4473,8 @@
             
             let stats = evolutions[Math.min(level - 1, 49)];
             let isCat = type === 'cats'; let cColor = isCat ? stats.catColor : stats.dogColor;
-            let visSize = (22 + Math.min(level, 50) * 0.35) * 1.35; 
+            let maxVisSize = (22 + 50 * 0.35) * 1.35;
+            let visSize = bodyOnly ? maxVisSize : (22 + Math.min(level, 50) * 0.35) * 1.35; 
             tCtx.rotate(Math.PI / 2); 
             
             let renderWeapon = stats.weaponType;
@@ -4277,19 +4502,52 @@
                 }
                 let tierColor = UPGRADE_COLORS[wTier] || '#555';
                 let wGlow = wTier > 0 ? `filter:drop-shadow(0px 0px 5px ${tierColor});` : '';
-                html += `<img src="${getWeaponDataURL(wType, wTier, level)}" alt="" style="width:100%; height:70px; object-fit:contain; display:block; margin:0; ${wGlow}">`;
+                html += `<div style="display:flex; align-items:center; justify-content:center; width:100%; height:76px; box-sizing:border-box;"><img src="${getWeaponDataURL(wType, wTier, level)}" alt="" style="max-width:100%; max-height:76px; width:auto; height:auto; object-fit:contain; display:block; margin:0; ${wGlow}"></div>`;
             }
             html += `</div>`;
             return html;
         }
 
+        function getWeaponPreviewLayout(weaponType, wLen, wWid) {
+            let w = (weaponType || '').toLowerCase();
+            let canvasW = 400;
+            let canvasH = 200;
+            let offsetX = wLen * 0.4;
+            if (w.includes('twin')) offsetX = wLen * 0.1;
+            else if (w.includes('staff') || w.includes('stick')) offsetX = wLen * 0.5;
+            else if (w.includes('katana') || w.includes('naginata') || w.includes('cutlass')) offsetX = wLen * 0.28;
+
+            let offsetY = 0;
+            if (w.includes('scythe') || w.includes('reaper')) {
+                canvasH = 280;
+                offsetY = wWid * 0.45;
+            } else if (w.includes('axe') || w.includes('cleaver')) {
+                canvasH = 260;
+                offsetY = wWid * 0.4;
+            } else if (w.includes('godslayer') || w.includes('infinity')) {
+                canvasH = 230;
+                offsetY = wWid * 0.55;
+            } else if (w.includes('naginata')) {
+                canvasH = 220;
+                offsetY = wWid * 0.3;
+            } else if (w.includes('hammer') || w.includes('mace') || w.includes('star') || w.includes('morningstar') || w.includes('warhammer')) {
+                canvasH = 220;
+                offsetY = wWid * 0.3;
+            } else if (w.includes('twin')) {
+                canvasH = 210;
+                offsetY = wWid * 0.35;
+            } else if (w.includes('spear') || w.includes('lightsaber') || w.includes('holy')) {
+                canvasH = 210;
+                offsetY = wWid * 0.2;
+            }
+
+            return { canvasW, canvasH, offsetX, offsetY };
+        }
+
         function getWeaponDataURL(weaponType, upgradeTier = 0, level = 1) {
             // Level only matters for Legendary (tier 5) bracket geometry — included in key so caches stay correct.
-            let key = `${weaponType}_${upgradeTier}_${upgradeTier === 5 ? getLegendaryBracket(level) : 0}`;
+            let key = `${weaponType}_${upgradeTier}_${upgradeTier === 5 ? getLegendaryBracket(level) : 0}_pv2`;
             if (weaponCache[key]) return weaponCache[key];
-            
-            let tempC = document.createElement('canvas'); tempC.width = 400; tempC.height = 140;
-            let tCtx = tempC.getContext('2d'); 
             
             let size = 42; 
             let arch = getWeaponArchetype(weaponType); let archStats = ARCH_STATS[arch];
@@ -4297,13 +4555,13 @@
             let wLen = (size * 2.5) * archStats.reachMult * sizeMult; 
             let wWid = Math.max(6, size * 0.22) * sizeMult;
 
-            // Dynamický posun pro vycentrování v plátně
-            let w = (weaponType || '').toLowerCase();
-            let offsetX = wLen * 0.4; // Těžiště většiny zbraní
-            if (w.includes('twin')) offsetX = wLen * 0.1;
-            else if (w.includes('staff') || w.includes('stick')) offsetX = wLen * 0.5;
+            let layout = getWeaponPreviewLayout(weaponType, wLen, wWid);
+            let tempC = document.createElement('canvas');
+            tempC.width = layout.canvasW;
+            tempC.height = layout.canvasH;
+            let tCtx = tempC.getContext('2d');
 
-            tCtx.translate(200 - offsetX, 70); 
+            tCtx.translate(layout.canvasW / 2 - layout.offsetX, layout.canvasH / 2 + layout.offsetY);
 
             drawWeaponShape(tCtx, wLen, wWid, weaponType, '#ffffff', upgradeTier, level);
             let data = tempC.toDataURL(); weaponCache[key] = data; return data;
@@ -4692,15 +4950,25 @@
             }
 
             if (tab === 'armory') {
+                const archOrder = ['balanced', 'fast', 'heavy', 'wide', 'reach'];
+                const archDisplay = {
+                    balanced: '⚔️ Balanced',
+                    fast: '⚡ Fast',
+                    heavy: '🔨 Heavy',
+                    wide: '🌀 Wide',
+                    reach: '➡️ Reach'
+                };
+                let archRows = archOrder.map(key => {
+                    let s = ARCH_STATS[key];
+                    return `<tr><td style="color:var(--primary); font-weight:bold;">${archDisplay[key]}</td>` +
+                        `<td>${formatArchCdMult(s.cdMult)}</td><td>${s.dmgMult}×</td><td>${s.reachMult}×</td>` +
+                        `<td>${getArchSweepDegrees(key)}°</td><td>${getKnockbackLabel(s.knockback)}</td></tr>`;
+                }).join('');
                 let html = `
                     <h3 style="margin-top:0; color:#fff;">🛡️ Weapon Archetypes</h3>
                     <table class="stats-table">
                         <tr><th>Archetype</th><th>Speed (CD)</th><th>Damage</th><th>Reach</th><th>Angle</th><th>Knockback</th></tr>
-                        <tr><td style="color:var(--primary); font-weight:bold;">⚔️ Balanced</td><td>1.0x</td><td>1.0x</td><td>1.0x</td><td>180°</td><td>Low</td></tr>
-                        <tr><td style="color:var(--primary); font-weight:bold;">⚡ Fast</td><td>0.6x (Faster)</td><td>0.85x</td><td>0.9x</td><td>120°</td><td>None</td></tr>
-                        <tr><td style="color:var(--primary); font-weight:bold;">🔨 Heavy</td><td>1.45x (Slower)</td><td>1.55x</td><td>1.0x</td><td>163°</td><td>High</td></tr>
-                        <tr><td style="color:var(--primary); font-weight:bold;">🌀 Wide</td><td>1.1x</td><td>0.9x</td><td>1.1x</td><td>240°</td><td>Very Low</td></tr>
-                        <tr><td style="color:var(--primary); font-weight:bold;">➡️ Reach</td><td>1.0x</td><td>1.0x</td><td>1.35x</td><td>144°</td><td>Medium</td></tr>
+                        ${archRows}
                     </table>
                     
                     <h3 style="color:#fff; margin-top: 30px;">🗡️ Weapon Evolution Gallery</h3>
@@ -4730,15 +4998,93 @@
                         tierCard.style.border = `2px solid ${borderColor}`; tierCard.style.borderRadius = '8px'; tierCard.style.padding = '10px'; tierCard.style.minWidth = '160px'; tierCard.style.textAlign = 'center'; tierCard.style.flex = '1';
                         if(tier >= 3) tierCard.style.boxShadow = `inset 0 0 15px ${borderColor}40`;
                         
-                        let img = document.createElement('img'); img.src = getWeaponDataURL(w, tier); img.style.width = '100%'; img.style.height = '70px'; img.style.objectFit = 'contain';
+                        let imgWrap = document.createElement('div');
+                        imgWrap.style.cssText = 'display:flex; align-items:center; justify-content:center; width:100%; height:80px; box-sizing:border-box;';
+                        let img = document.createElement('img'); img.src = getWeaponDataURL(w, tier); img.style.maxWidth = '100%'; img.style.maxHeight = '80px'; img.style.width = 'auto'; img.style.height = 'auto'; img.style.objectFit = 'contain';
                         if(tier > 0) img.style.filter = `drop-shadow(0px 0px 5px ${borderColor})`;
+                        imgWrap.appendChild(img);
                         
                         let tierName = document.createElement('div'); tierName.style.fontWeight = 'bold'; tierName.style.fontSize = '14px'; tierName.style.marginTop = '5px'; tierName.style.color = borderColor === '#555' ? '#ccc' : borderColor; tierName.innerText = WEAPON_TIERS[tier];
                         let stats = document.createElement('div'); stats.style.fontSize = '12px'; stats.style.color = '#aaa'; stats.style.marginTop = '5px'; stats.innerHTML = `Dmg: <b>${UPGRADE_MULT[tier]}x</b><br>Reach: <b>${UPGRADE_SIZE_MULT[tier]}x</b>`;
                         
-                        tierCard.appendChild(img); tierCard.appendChild(tierName); tierCard.appendChild(stats); evolutionFlex.appendChild(tierCard);
+                        tierCard.appendChild(imgWrap); tierCard.appendChild(tierName); tierCard.appendChild(stats); evolutionFlex.appendChild(tierCard);
                     }
                     weaponRow.appendChild(evolutionFlex); container.appendChild(weaponRow);
+                });
+
+                // ── Legendary Weapon Sets (5 weapons × 5 brackets = 25 unique forms) ─
+                let legSection = document.createElement('div');
+                legSection.innerHTML = `<h3 style="color:#fde047; margin-top:30px; margin-bottom:4px;">🌟 Legendary Weapon Sets</h3>
+                    <p style="color:#aaa; font-size:13px; margin:0 0 16px 0;">5 weapons × 5 level brackets = <b style="color:#ff3df7;">25 unique forms</b>. Each bracket changes the color palette <i>and</i> hilt/guard geometry. Unlocked at <b style="color:#00ffff;">Diamond</b> weapon. Cost: Level × 1 000 💎. All apply <b style="color:#ff3df7;">7×</b> base damage × archetype multiplier.</p>`;
+                container.appendChild(legSection);
+
+                // Bracket metadata
+                const bracketLevels = [5, 15, 25, 35, 45]; // representative level per bracket
+                const bracketNames  = ['Basic', 'Advanced', 'Royal', 'Corrupted', 'Cosmic'];
+                const bracketRanges = ['Lv 1–10', 'Lv 11–20', 'Lv 21–30', 'Lv 31–40', 'Lv 41–50'];
+
+                const archColors = { balanced: '#60a5fa', fast: '#34d399', heavy: '#f87171', wide: '#a78bfa', reach: '#fb923c' };
+                const archLabels = { balanced: '⚔️ Balanced', fast: '⚡ Fast', heavy: '🔨 Heavy', wide: '🌀 Wide', reach: '➡️ Reach' };
+
+                LEGENDARY_KEYS.forEach(key => {
+                    let leg = LEGENDARY_WEAPONS[key];
+                    let as  = ARCH_STATS[leg.arch];
+                    let effectiveDmg   = (7.0 * as.dmgMult).toFixed(2);
+                    let effectiveReach = (1.7 * as.reachMult).toFixed(2);
+                    let angle  = getArchSweepDegrees(leg.arch);
+                    let aColor = archColors[leg.arch];
+
+                    let card = document.createElement('div');
+                    card.style.cssText = 'background:rgba(0,0,0,0.25); border:2px solid #34495e; border-radius:12px; padding:14px; margin-bottom:14px;';
+
+                    // Header row: icon + name + archetype badge + stats
+                    let header = document.createElement('div');
+                    header.style.cssText = 'display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin-bottom:12px;';
+
+                    let titleBlock = document.createElement('div');
+                    titleBlock.innerHTML =
+                        `<div style="font-size:18px; font-weight:bold; color:#fde047;">${leg.icon} ${leg.name}</div>` +
+                        `<span style="display:inline-block; background:${aColor}22; color:${aColor}; border:1px solid ${aColor}55; border-radius:6px; padding:1px 9px; font-size:11px; font-weight:bold; margin-top:3px;">${archLabels[leg.arch]}</span>`;
+                    header.appendChild(titleBlock);
+
+                    let statsBlock = document.createElement('div');
+                    statsBlock.style.cssText = 'font-size:12px; color:#ccc; line-height:1.8; flex:1; min-width:160px;';
+                    statsBlock.innerHTML =
+                        `<span style="color:#888;">⚡ Attack Speed:</span> <b style="color:#fff;">${as.cdMult}× CD</b> &nbsp;` +
+                        `<span style="color:#888;">💥 Dmg:</span> <b style="color:#ff3df7;">${effectiveDmg}× total</b><br>` +
+                        `<span style="color:#888;">📏 Reach:</span> <b style="color:#fff;">${effectiveReach}×</b> &nbsp;` +
+                        `<span style="color:#888;">🌀 Angle:</span> <b style="color:#fff;">${angle}°</b> &nbsp;` +
+                        `<span style="color:#888;">💫 KB:</span> <b style="color:#fff;">${getKnockbackLabel(as.knockback)}</b>`;
+                    header.appendChild(statsBlock);
+                    card.appendChild(header);
+
+                    // 5-bracket preview strip
+                    let strip = document.createElement('div');
+                    strip.style.cssText = 'display:grid; grid-template-columns:repeat(5,1fr); gap:8px;';
+
+                    for (let b = 0; b < 5; b++) {
+                        let pal  = LEGENDARY_PALETTES[b];
+                        let cell = document.createElement('div');
+                        cell.style.cssText = `background:${pal.dark}; border:2px solid ${pal.primary}; border-radius:8px; padding:8px 4px 6px; text-align:center; box-shadow: inset 0 0 12px ${pal.primary}30;`;
+
+                        let imgWrap = document.createElement('div');
+                        imgWrap.style.cssText = 'display:flex; align-items:center; justify-content:center; width:100%; height:56px; box-sizing:border-box;';
+                        let img = document.createElement('img');
+                        img.src = getWeaponDataURL(leg.weaponType, 5, bracketLevels[b]);
+                        img.style.cssText = `max-width:100%; max-height:56px; width:auto; height:auto; object-fit:contain; filter:drop-shadow(0 0 6px ${pal.primary});`;
+                        imgWrap.appendChild(img);
+                        cell.appendChild(imgWrap);
+
+                        let bName = document.createElement('div');
+                        bName.style.cssText = `font-size:10px; font-weight:bold; color:${pal.primary}; margin-top:4px; line-height:1.2;`;
+                        bName.innerHTML = `${bracketNames[b]}<br><span style="color:#888; font-weight:normal;">${bracketRanges[b]}</span>`;
+                        cell.appendChild(bName);
+
+                        strip.appendChild(cell);
+                    }
+
+                    card.appendChild(strip);
+                    container.appendChild(card);
                 });
                 return;
             }
@@ -4893,17 +5239,20 @@
                 let row = document.createElement('div');
                 row.style.cssText = `display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 10px; background: ${isEquipped ? 'rgba(253, 224, 71, 0.15)' : 'rgba(0,0,0,0.35)'}; border: 2px solid ${isEquipped ? '#fde047' : '#34495e'};`;
 
+                let previewWrap = document.createElement('div');
+                previewWrap.style.cssText = 'display:flex; align-items:center; justify-content:center; width:110px; height:52px; flex:0 0 110px; box-sizing:border-box;';
                 let preview = document.createElement('img');
                 preview.src = getWeaponDataURL(leg.weaponType, 5, lvl);
-                preview.style.cssText = 'width: 110px; height: 38px; object-fit: contain; flex: 0 0 110px;';
-                row.appendChild(preview);
+                preview.style.cssText = 'max-width:100%; max-height:52px; width:auto; height:auto; object-fit:contain;';
+                previewWrap.appendChild(preview);
+                row.appendChild(previewWrap);
 
                 let info = document.createElement('div');
                 info.style.cssText = 'flex: 1; color: #fff; font-size: 13px; text-align: left; line-height: 1.4;';
                 info.innerHTML =
                     `<div style="font-weight:bold; font-size:15px; color:${isEquipped ? '#fde047' : '#fff'};">${leg.icon} ${leg.name}</div>` +
                     `<div style="color:#aaa; font-size:11px;">Archetype: <b style="color:#f39c12;">${leg.arch}</b></div>` +
-                    `<div style="color:#bbb; font-size:11px;">CD ${archStats.cdMult}× · Dmg ${archStats.dmgMult}× · Reach ${archStats.reachMult}× · KB ${archStats.knockback}</div>`;
+                    `<div style="color:#bbb; font-size:11px;">CD ${formatArchCdMult(archStats.cdMult)} · Dmg ${archStats.dmgMult}× · Reach ${archStats.reachMult}× · Angle ${getArchSweepDegrees(leg.arch)}° · KB ${getKnockbackLabel(archStats.knockback)}</div>`;
                 row.appendChild(info);
 
                 let btn = document.createElement('button');
