@@ -1,4 +1,28 @@
 <!DOCTYPE html>
+<!--
+    ================================================================================
+    CRAZYGAMES BUILD CHECKLIST — verify before every CrazyGames resubmission.
+    The same index.html serves both catwars.io and the CrazyGames iframe; the
+    `IS_CRAZYGAMES` detection in the first <head> script branches the runtime.
+
+    When iframed on crazygames.com, ALL of these must hold:
+      [ ] Console logs "CrazyGames host detected" within ~50 ms of load.
+      [ ] DevTools Network tab shows NO requests to:
+            firebaseio.com, identitytoolkit.googleapis.com,
+            firestore.googleapis.com, googletagmanager.com, gstatic.com/firebasejs
+      [ ] Loading screen disappears in < 1 s (no fake 85%-then-wait progress bar).
+      [ ] First interactive screen = single big PLAY button (#cg-landing),
+          NOT the 3-column main menu. No nickname input, no mode selector.
+      [ ] Auth section (#auth-section) is hidden (CSS rule, html.crazygames).
+      [ ] Banner image is NOT loaded from raw.githubusercontent.com (CSS rule).
+      [ ] Death-screen title reads DEFEATED, not WASTED.
+      [ ] gameplayStart / gameplayStop SDK calls fire on run start/end.
+      [ ] Rewarded ads route through CrazyGames SDK (no AdSense in iframe).
+
+    Tier-3 acceptance test: open at 800x450 in Chrome devtools, play a full run,
+    verify no HUD element overlaps or gets clipped.
+    ================================================================================
+-->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -12,21 +36,11 @@
     <meta name="apple-mobile-web-app-title" content="CatWars.io">
     <!-- Tab title: brand only — do not append feature/marketing phrases. -->
     <title>CatWars.io</title>
-    
-    <!-- Google tag (gtag.js) GA4 — match Admin → Data streams → Measurement ID -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R74QC0ZMG5"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-        gtag('config', 'G-R74QC0ZMG5', { send_page_view: true });
-    </script>
 
-    <!-- CrazyGames distribution gate.
-         When the game is iframed on a crazygames.com page (e.g. crazygames.com/game/catwars-io)
-         we load the CrazyGames SDK v3 and route rewarded-ad / mid-game-break calls through
-         it INSTEAD of AdSense. On catwars.io directly nothing changes — AdSense runs as today.
-         Detection MUST run before AdSense / game scripts so they can branch off it. -->
+    <!-- CrazyGames distribution gate — MUST run first so GA4 / AdSense / Firebase
+         can branch on window.IS_CRAZYGAMES. When iframed on crazygames.com we load
+         their SDK v3 and route ads through it, and we skip every external network
+         (GA4, Firebase, AdSense, hot-linked banner) to keep the iframe clean. -->
     <script>
         (function () {
             try {
@@ -87,6 +101,50 @@
                 document.head.appendChild(sdk);
             }
         })();
+    </script>
+
+    <!-- Banner image lazy-loader. The 7 MB hot-linked GitHub-raw banner ships
+         with data-src instead of src, so the browser never fetches it until we
+         explicitly opt-in. We opt-in only outside the CrazyGames iframe; on
+         CrazyGames the banner is also hidden by CSS, so it stays a pure no-op. -->
+    <script>
+        (function () {
+            if (window.IS_CRAZYGAMES) return; // CrazyGames: never fetch the banner.
+            function hydrateBanners() {
+                var imgs = document.querySelectorAll('img.js-banner-img[data-src]');
+                for (var i = 0; i < imgs.length; i++) {
+                    var img = imgs[i];
+                    if (!img.src) img.src = img.getAttribute('data-src');
+                }
+            }
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', hydrateBanners, { once: true });
+            } else {
+                hydrateBanners();
+            }
+        })();
+    </script>
+
+    <!-- Google Analytics (gtag.js) GA4 — SKIPPED inside CrazyGames iframe.
+         CrazyGames recommends ByteBrew for analytics and gets nervous about a
+         long external-script list in the iframe. We dynamically inject the
+         gtag loader only on catwars.io / non-CrazyGames hosts. The `gtag`
+         function is always defined as a no-op fallback so existing call sites
+         (e.g. gtag('event', 'game_start', ...)) don't crash either way. -->
+    <script>
+        if (!window.IS_CRAZYGAMES) {
+            var gaScript = document.createElement('script');
+            gaScript.async = true;
+            gaScript.src = 'https://www.googletagmanager.com/gtag/js?id=G-R74QC0ZMG5';
+            document.head.appendChild(gaScript);
+
+            window.dataLayer = window.dataLayer || [];
+            window.gtag = function () { window.dataLayer.push(arguments); };
+            window.gtag('js', new Date());
+            window.gtag('config', 'G-R74QC0ZMG5', { send_page_view: true });
+        } else {
+            window.gtag = function () { /* CrazyGames: analytics disabled */ };
+        }
     </script>
 
     <!-- Google AdSense + H5 Games Ads (Ad Placement API) — deferred.
@@ -230,6 +288,69 @@
         html.crazygames #login-screen {
             display: none !important;
         }
+
+        /* CrazyGames: hide the 7 MB GitHub-raw banner everywhere it appears
+           (loading screen, lobby, main menu). The hot-link is slow, off-host,
+           and was a "looks broken" risk during QA. The dedicated CrazyGames
+           landing screen (#cg-landing) ships its own inline title instead. */
+        html.crazygames .game-art-banner {
+            display: none !important;
+        }
+
+        /* CrazyGames landing screen — replaces the full 3-column main menu
+           with a single CTA so a reviewer lands in gameplay within one click.
+           The full menu still exists and is reachable from the in-game pause
+           overlay and the death screen. */
+        #cg-landing.overlay {
+            background: radial-gradient(ellipse at center, #1f2d3d 0%, #0c1218 70%);
+        }
+        .cg-landing-inner {
+            max-width: 520px;
+            width: 92%;
+            padding: 32px 28px;
+            background: rgba(0,0,0,0.55);
+            border: 3px solid var(--primary);
+            border-radius: 22px;
+            text-align: center;
+            box-shadow: 0 0 60px rgba(52,152,219,0.25);
+        }
+        .cg-landing-title {
+            font-size: clamp(34px, 7vw, 56px);
+            font-weight: 900;
+            color: var(--primary-hover);
+            text-shadow: 3px 3px 0 #000, 0 0 24px rgba(52,152,219,0.4);
+            margin: 0 0 6px 0;
+            letter-spacing: 2px;
+        }
+        .cg-landing-tagline {
+            color: #ddd;
+            font-size: clamp(14px, 2.3vw, 17px);
+            margin: 0 0 22px 0;
+            font-weight: bold;
+            line-height: 1.45;
+        }
+        #cg-play-btn {
+            font-size: clamp(26px, 4.5vw, 34px);
+            padding: 18px 60px;
+            background: var(--success);
+            color: #fff;
+            border: none;
+            border-radius: 16px;
+            cursor: pointer;
+            font-weight: 900;
+            box-shadow: 0 8px 0 #27ae60, 0 0 40px rgba(46,204,113,0.35);
+            letter-spacing: 2px;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+        #cg-play-btn:hover  { transform: translateY(2px); box-shadow: 0 6px 0 #27ae60, 0 0 30px rgba(46,204,113,0.3); }
+        #cg-play-btn:active { transform: translateY(5px); box-shadow: 0 3px 0 #27ae60; }
+        .cg-landing-hint {
+            margin-top: 18px;
+            color: #888;
+            font-size: 12px;
+            line-height: 1.5;
+        }
         
         canvas { display: block; width: 100%; height: 100%; }
         
@@ -292,6 +413,26 @@
         @keyframes pulse { 0% { transform: translateX(-50%) scale(1); } 50% { transform: translateX(-50%) scale(1.1); box-shadow: 0 0 30px #e74c3c; } 100% { transform: translateX(-50%) scale(1); } }
 
         #tutorial { position: absolute; bottom: 100px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); padding: 12px 24px; border-radius: 12px; border: 2px solid var(--primary); font-size: 18px; font-weight: bold; display: none; z-index: 20; max-width: 80%; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+
+        /* ── ONBOARDING TUTORIAL OVERLAY ──────────────────────────────────── */
+        #onboarding-overlay { z-index: 500; }
+        #onboarding-overlay .ob-panel { background: var(--panel-bg); border: 2px solid var(--primary); border-radius: 20px; padding: 32px 36px; max-width: 540px; width: calc(100% - 32px); text-align: center; box-shadow: 0 0 60px rgba(243,156,18,0.25); animation: ob-fadein 0.3s ease; }
+        @keyframes ob-fadein { from { opacity:0; transform: scale(0.95); } to { opacity:1; transform: scale(1); } }
+        #ob-dots { display: flex; justify-content: center; gap: 8px; margin-bottom: 22px; }
+        .ob-dot { width: 10px; height: 10px; border-radius: 50%; background: #444; transition: background 0.3s, transform 0.3s; }
+        .ob-dot.active { background: var(--primary); transform: scale(1.3); }
+        #ob-icon { font-size: 72px; line-height: 1; margin-bottom: 14px; }
+        #ob-title { margin: 0 0 12px; color: var(--primary-hover); font-size: 22px; font-weight: 900; }
+        #ob-desc { color: #ddd; font-size: 15px; line-height: 1.7; margin: 0 0 26px; }
+        #ob-desc b { color: var(--primary-hover); }
+        .ob-highlight-box { background: rgba(243,156,18,0.12); border: 1px solid rgba(243,156,18,0.4); border-radius: 10px; padding: 10px 16px; margin: 10px 0 0; font-size: 14px; color: #fde047; }
+        #ob-buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+        #ob-skip-btn { background: #3a3a3a; color: #aaa; border: 1px solid #555; border-radius: 10px; padding: 10px 20px; font-size: 14px; cursor: pointer; transition: background 0.2s; }
+        #ob-skip-btn:hover { background: #555; color: #fff; }
+        #ob-next-btn { background: var(--success); color: #fff; border: none; border-radius: 12px; padding: 13px 34px; font-size: 17px; font-weight: 900; cursor: pointer; box-shadow: 0 5px 0 #27ae60; transition: transform 0.1s, box-shadow 0.1s; letter-spacing: 0.5px; }
+        #ob-next-btn:hover { transform: translateY(2px); box-shadow: 0 3px 0 #27ae60; }
+        #ob-next-btn:active { transform: translateY(4px); box-shadow: 0 1px 0 #27ae60; }
+        /* ── END ONBOARDING ────────────────────────────────────────────────── */
 
         .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(18, 28, 38, 0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: auto; z-index: 100; backdrop-filter: blur(8px); padding: 20px; box-sizing: border-box; }
         /* Main menu always scrolls top-to-bottom so the footer flows naturally
@@ -466,6 +607,7 @@
         .card { background: #34495e; border: 2px solid #555; border-radius: 12px; padding: 15px; text-align: center; display: flex; flex-direction: column; align-items: center; color: white; transition: transform 0.2s; position: relative;}
         .card:hover { transform: scale(1.02); }
         .card img { width: 100%; height: 180px; object-fit: contain; margin-bottom: 10px; }
+        .codex-preview-stack img { height: auto; margin-bottom: 0; }
         .card h3 { margin: 0 0 5px 0; font-size: 18px; }
         .card p { margin: 0; font-size: 14px; color: #aaa; }
         .card.locked { background: var(--panel-bg); border-color: var(--panel-light); }
@@ -760,6 +902,80 @@
         .menu-col.side { flex: 1; min-width: 200px; max-width: 320px; }
         .menu-col.center { flex: 2; min-width: 300px; align-items: center; justify-content: flex-start; }
 
+        /* Right column — EvoWars-style codex nav (icon above label, no chunky buttons). */
+        .mm-codex-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            width: 100%;
+            flex-grow: 1;
+        }
+        .mm-codex-tile {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            width: 100%;
+            padding: 8px 6px 6px;
+            margin: 0;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            background: rgba(0, 0, 0, 0.4);
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.07);
+            transition: background 0.15s, transform 0.1s, filter 0.15s;
+            position: relative;
+            font-family: inherit;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .mm-codex-tile:hover {
+            background: rgba(255, 255, 255, 0.1);
+            filter: brightness(1.08);
+            transform: translateY(-1px);
+        }
+        .mm-codex-tile:active { transform: translateY(1px); filter: brightness(0.96); }
+        .mm-codex-tile:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+        .mm-codex-tile-icon {
+            width: 76px;
+            height: 76px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .mm-codex-tile-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.55));
+            pointer-events: none;
+        }
+        .mm-codex-tile-label {
+            font-size: 15px;
+            font-weight: 900;
+            color: #fff;
+            letter-spacing: 0.3px;
+            text-shadow: 1px 1px 0 #000, -1px 1px 0 #000, 1px -1px 0 #000, -1px -1px 0 #000;
+            line-height: 1.15;
+            text-align: center;
+        }
+        #boost-equip-badge.mm-codex-badge {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            background: var(--success);
+            color: #fff;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-weight: bold;
+            border: 2px solid #111;
+            text-transform: uppercase;
+            display: none;
+            pointer-events: none;
+        }
+
         /* Opens Codex → Global ranks (replaces the old right-column shortcut button). */
         button.mm-rank-codex-hit {
             width: 100%;
@@ -881,22 +1097,11 @@
             #auth-action-btn  { font-size: 12px !important; padding: 8px 10px !important; }
             #auth-section     { padding-top: 8px !important; gap: 6px !important; }
 
-            /* ── RIGHT COLUMN: shrink large icon buttons (UPGRADES, BESTIARY, …) ── */
-            #main-menu .menu-col.side > div > button.btn-main {
-                padding: 9px 10px !important;
-                box-shadow: 0 4px 0 rgba(0,0,0,0.35) !important;
-                gap: 10px !important;
-                border-radius: 12px !important;
-            }
-            #main-menu .menu-col.side > div > button.btn-main > span:first-child {
-                font-size: 24px !important;
-                width: 32px !important;
-            }
-            #main-menu .menu-col.side > div > button.btn-main > span:nth-child(2) {
-                font-size: 13px !important;
-                letter-spacing: 0.5px !important;
-            }
-            #main-menu .menu-col.side > div { gap: 8px !important; }
+            /* ── RIGHT COLUMN: compact codex icon tiles ── */
+            #main-menu .mm-codex-nav { gap: 2px !important; }
+            #main-menu .mm-codex-tile { padding: 5px 4px 4px !important; }
+            #main-menu .mm-codex-tile-icon { width: 52px !important; height: 52px !important; }
+            #main-menu .mm-codex-tile-label { font-size: 12px !important; }
 
             /* ── CENTER COLUMN: shrink main play button and name input ── */
             #btn-start-game {
@@ -1019,23 +1224,11 @@
                 background: rgba(243, 156, 18, 0.12);
             }
 
-            /* Right-column upgrade buttons stack to ~500px (5 × 80px) but the
-               column only has ~304px on a 360-tall phone. Shrink the buttons
-               so the Boosts + Quests rows aren't permanently below the fold. */
-            #main-menu .menu-col.side button.btn-main {
-                padding: 10px 12px !important;
-            }
-            #main-menu .menu-col.side button.btn-main > span:first-child {
-                font-size: 26px !important;
-                width: 38px !important;
-            }
-            #main-menu .menu-col.side button.btn-main > span:nth-child(2) {
-                font-size: 15px !important;
-                letter-spacing: 0.5px !important;
-            }
-            #main-menu .menu-col.side > div {
-                gap: 8px !important;
-            }
+            /* Right-column codex tiles — compact for landscape phone codex tab */
+            #main-menu .mm-codex-tile { padding: 6px 4px 4px !important; }
+            #main-menu .mm-codex-tile-icon { width: 56px !important; height: 56px !important; }
+            #main-menu .mm-codex-tile-label { font-size: 13px !important; }
+            #main-menu .mm-codex-nav { gap: 3px !important; }
 
             /* Subtle fade-out gradient on each scrollable column to hint
                "there's more content below". Pure cosmetic — no JS needed. */
@@ -1147,7 +1340,7 @@
     <div id="loading-screen" class="overlay" style="z-index: 400;">
         <div class="panel" style="max-width: 500px; padding: 25px; overflow: hidden;">
             <div class="game-art-banner" style="margin-bottom: 20px;">
-                <img src="https://raw.githubusercontent.com/davidmalina79-cell/catwars/main/CatWars2.png" alt="CatWars Battle" onerror="this.style.display='none';">
+                <img data-src="img/banner.png" alt="CatWars Battle" loading="lazy" onerror="this.style.display='none';" class="js-banner-img">
             </div>
             <h1 style="font-size: 35px; margin-bottom: 10px; color: #fff; text-shadow: 2px 2px 4px #000;">Loading CatWars.io</h1>
             <p style="margin: 0 0 18px; color: #ddd; font-size: 15px; line-height: 1.45; font-weight: bold;">
@@ -1182,9 +1375,11 @@
     <div id="lobby-screen" class="overlay" style="display: none;">
         <div class="lobby-inner">
             <div class="game-art-banner" style="margin-bottom: 20px;">
-                <img src="https://raw.githubusercontent.com/davidmalina79-cell/catwars/main/CatWars2.png"
+                <img data-src="img/banner.png"
                      alt="CatWars.io — Free Browser Survival Game"
-                     onerror="this.style.display='none';">
+                     loading="lazy"
+                     onerror="this.style.display='none';"
+                     class="js-banner-img">
             </div>
             <button id="lobby-play-btn" onclick="window.enterFromLobby()"
                     style="font-size: 32px; padding: 20px 70px; background: var(--success); color: #fff;
@@ -1210,8 +1405,38 @@
                 <b style="color: #ccc;">CatWars.io</b> — a free browser‑based 2D top‑down survival action game.
                 Solo, Hardcore, Co‑Op and Deathmatch modes · public leaderboards · permanent upgrades.
                 Built as a hobby project — no install, no pay‑to‑win.
-                <span style="display: block; margin-top: 4px; color: #555;">v1.6.13</span>
+                <span style="display: block; margin-top: 4px; color: #555;">v1.7.26</span>
             </footer>
+        </div>
+    </div>
+
+    <!-- CrazyGames landing screen — minimal "land in gameplay in 1 click" overlay.
+         Shown INSTEAD of the lobby + main menu when window.IS_CRAZYGAMES is true.
+         The full menu is still reachable via pause / death screens. -->
+    <div id="cg-landing" class="overlay" style="display: none;">
+        <div class="cg-landing-inner">
+            <h1 class="cg-landing-title">CatWars.io</h1>
+            <p class="cg-landing-tagline">
+                Stack <b>Hardcore</b> modifiers for a 5× gem multiplier · Co-Op with 8 AI cats · Deathmatch PvP · Legendary Forge
+            </p>
+            <button id="cg-play-btn" onclick="window.startGameFromCgLanding()">🗡️ PLAY</button>
+            <div class="cg-landing-hint">
+                Move with mouse · Left click to attack · Space / Right click to dash
+            </div>
+        </div>
+    </div>
+
+    <!-- ONBOARDING TUTORIAL OVERLAY — shown once for new players before first run -->
+    <div id="onboarding-overlay" class="overlay" style="display:none;">
+        <div class="ob-panel">
+            <div id="ob-dots"></div>
+            <div id="ob-icon">🐱</div>
+            <h2 id="ob-title"></h2>
+            <p id="ob-desc"></p>
+            <div id="ob-buttons">
+                <button id="ob-skip-btn" onclick="window.skipOnboarding()">Skip Tutorial</button>
+                <button id="ob-next-btn" onclick="window.advanceOnboarding()">Next →</button>
+            </div>
         </div>
     </div>
 
@@ -1517,7 +1742,7 @@
             <!-- CENTER COLUMN: Play Area -->
             <div class="menu-col center">
                 <div class="game-art-banner" style="margin-bottom: 12px; flex-shrink: 0; width: 100%;">
-                    <img src="https://raw.githubusercontent.com/davidmalina79-cell/catwars/main/CatWars2.png" alt="CatWars Battle" onerror="this.style.display='none';">
+                    <img data-src="img/banner.png" alt="CatWars Battle" loading="lazy" onerror="this.style.display='none';" class="js-banner-img">
                 </div>
                 
                 <input type="text" id="player-nickname" class="nickname-input" placeholder="Enter your name..." autocomplete="off" maxlength="15" style="margin: 0 0 12px 0; width: 100%; max-width: 400px; box-sizing: border-box; flex-shrink: 0;">
@@ -1612,23 +1837,23 @@
                         <span style="font-size: 40px; line-height: 1; filter: drop-shadow(2px 4px 4px rgba(0,0,0,0.4)); width: 50px; text-align: center;">🐱</span>
                         <span style="font-size: 20px; font-weight: 900; letter-spacing: 1px;">UPGRADES</span>
                     </button>
-                    
+
                     <button class="btn-main" onclick="openEncyclopedia('dogs')" style="background: #9b59b6; color: #fff; box-shadow: 0 8px 0 #8e44ad; width: 100%; padding: 18px 15px; margin: 0; display: flex; align-items: center; justify-content: flex-start; gap: 15px; border-radius: 16px;">
                         <span style="font-size: 40px; line-height: 1; filter: drop-shadow(2px 4px 4px rgba(0,0,0,0.4)); width: 50px; text-align: center;">🐺</span>
                         <span style="font-size: 20px; font-weight: 900; letter-spacing: 1px;">BESTIARY</span>
                     </button>
-                    
+
                     <button class="btn-main" onclick="openEncyclopedia('armory')" style="background: #f1c40f; color: #fff; text-shadow: 1px 1px 2px #000; box-shadow: 0 8px 0 #d68910; width: 100%; padding: 18px 15px; margin: 0; display: flex; align-items: center; justify-content: flex-start; gap: 15px; border-radius: 16px;">
                         <span style="font-size: 40px; line-height: 1; filter: drop-shadow(2px 4px 4px rgba(0,0,0,0.4)); width: 50px; text-align: center;">⚔️</span>
                         <span style="font-size: 20px; font-weight: 900; letter-spacing: 1px;">WEAPONS</span>
                     </button>
-                    
+
                     <button class="btn-main" onclick="openEncyclopedia('boosts')" style="background: #e67e22; color: #fff; box-shadow: 0 8px 0 #d35400; width: 100%; padding: 18px 15px; margin: 0; display: flex; align-items: center; justify-content: flex-start; gap: 15px; border-radius: 16px; position: relative;">
                         <span style="font-size: 40px; line-height: 1; filter: drop-shadow(2px 4px 4px rgba(0,0,0,0.4)); width: 50px; text-align: center;">🔥</span>
                         <span style="font-size: 20px; font-weight: 900; letter-spacing: 1px;">BOOSTS</span>
                         <div id="boost-equip-badge" style="position: absolute; top: -5px; right: -5px; background: var(--success); color: #fff; font-size: 11px; padding: 3px 7px; border-radius: 8px; font-weight: bold; border: 2px solid #111; text-transform: uppercase; display: none;">0/3</div>
                     </button>
-                    
+
                     <button class="btn-main" onclick="openEncyclopedia('quests')" style="background: #e74c3c; color: #fff; box-shadow: 0 8px 0 #c0392b; width: 100%; padding: 18px 15px; margin: 0; display: flex; align-items: center; justify-content: flex-start; gap: 15px; border-radius: 16px;">
                         <span style="font-size: 40px; line-height: 1; filter: drop-shadow(2px 4px 4px rgba(0,0,0,0.4)); width: 50px; text-align: center;">💎</span>
                         <span style="font-size: 20px; font-weight: 900; letter-spacing: 1px;">QUESTS</span>
@@ -1649,7 +1874,7 @@
                     <b style="color: #ccc;">CatWars.io</b> — free 2D browser survival game.
                     Hunt food, evolve through <b>50 levels</b>, survive endless dog hordes.
                     Solo · Hardcore · Co‑Op · no install · no pay‑to‑win.
-                    <span style="display: block; margin-top: 4px; color: #555;">v1.6.13</span>
+                    <span style="display: block; margin-top: 4px; color: #555;">v1.7.26</span>
                 </footer>
             </div>
         </div>
@@ -1808,7 +2033,7 @@
     <!-- DEATH SCREEN -->
     <div id="death-screen" class="overlay" style="display: none; background: rgba(0, 0, 0, 0.85); z-index: 150;">
         <div class="panel" id="ds-panel" style="border-color: var(--danger); max-width: 450px;">
-            <h1 id="ds-title" style="color: var(--danger); margin-bottom: 10px; font-size: 45px;">WASTED</h1>
+            <h1 id="ds-title" style="color: var(--danger); margin-bottom: 10px; font-size: 45px;">DEFEATED</h1>
             <p id="ds-subtitle" style="font-size: 18px; color: #ddd; margin-bottom: 15px;">A dog ended your meow-journey.</p>
 
             <div style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 12px; margin-bottom: 14px;">
@@ -2019,6 +2244,23 @@
             reach:    { cdMult: 1.15, dmgMult: 0.85, reachMult: 1.35, knockback: 250, sweepAngle: Math.PI / 2.5 },
         };
 
+        // UI helpers — sweepAngle is half-cone; display full attack arc in degrees.
+        function getArchSweepDegrees(archKey) {
+            return Math.round((ARCH_STATS[archKey].sweepAngle * 2 * 180) / Math.PI);
+        }
+        function formatArchCdMult(cdMult) {
+            if (cdMult < 1) return `${cdMult}× (Faster)`;
+            if (cdMult > 1) return `${cdMult}× (Slower)`;
+            return `${cdMult}×`;
+        }
+        function getKnockbackLabel(kb) {
+            if (kb <= 30) return 'None';
+            if (kb <= 90) return 'Very Low';
+            if (kb <= 180) return 'Low';
+            if (kb <= 350) return 'Medium';
+            return 'High';
+        }
+
         const BOSS_VARIANTS = [
             { name: '⚡ SWIFT BOSS', hpMult: 0.6, dmgMult: 0.7, cdMult: 1.3, windupMs: 350, speedMult: 1.6, sizeMult: 1.0, color: '#00d4ff', accent: '#111111', pattern: 'demon', alert: '⚡ SWIFT BOSS!', weapon: 'twin blades', ability: 'dash', aura: 'swift' },
             { name: '🛡️ TANK BOSS', hpMult: 1.3, dmgMult: 0.85, cdMult: 1.5, windupMs: 600, speedMult: 0.7, sizeMult: 1.25, color: '#7f8c8d', accent: '#111111', pattern: 'demon', alert: '🛡️ TANK BOSS!', weapon: 'warhammer', ability: 'stomp', aura: 'tank' },
@@ -2124,7 +2366,7 @@
     <!-- ================================================================================================= -->
     <script>
         // GLOBAL SCOPE DECLARATIONS (FIX PRO OFFLINE GUEST CHYBU)
-        var defaultProg = { nickname: '', globalLevel: 1, globalXp: 0, maxCatLevel: 1, totalKills: 0, gems: 0, dogKills: {}, weaponUpgrades: {}, helmetUpgrades: {}, unlockedLegendaries: {}, equippedLegendary: {}, bestCombo: 0, tutorialDone: false, questDate: '', quests: [], bestTimes: { solo: null, hardcore: null, team: null }, boosts: {}, equippedBoosts: [null, null, null], lastDailySpinAt: 0, dailyStreak: 0, lastAdBoostAt: 0, lastSavedAt: 0 };
+        var defaultProg = { nickname: '', globalLevel: 1, globalXp: 0, maxCatLevel: 1, totalKills: 0, gems: 0, dogKills: {}, weaponUpgrades: {}, helmetUpgrades: {}, unlockedLegendaries: {}, equippedLegendary: {}, bestCombo: 0, tutorialDone: false, inGameTipsDone: false, questDate: '', quests: [], bestTimes: { solo: null, hardcore: null, team: null }, boosts: {}, equippedBoosts: [null, null, null], lastDailySpinAt: 0, dailyStreak: 0, lastAdBoostAt: 0, lastSavedAt: 0 };
         // Timestamp kdy jsme načetli prog z cloudu — slouží jako "věk" lokálního snapshotu
         window._progLoadedAt = 0;
         var prog = { ...defaultProg };
@@ -3100,9 +3342,163 @@
         const spritesCache = { cats: {}, dogs: {} };
         const weaponCache = {};
 
+        // Hamon-style wiggle along the flat of a katana blade (great katana only).
+        function drawKatanaHamon(ctx, x0, x1, yBase, amp, waveCount, color, lineWidth) {
+            if (x1 <= x0) return;
+            ctx.save();
+            ctx.strokeStyle = color;
+            ctx.lineWidth = lineWidth || 1.2;
+            ctx.lineJoin = 'round';
+            ctx.lineCap = 'round';
+            let n = Math.max(14, Math.floor((x1 - x0) / 3));
+            ctx.beginPath();
+            for (let i = 0; i <= n; i++) {
+                let t = i / n;
+                let x = x0 + (x1 - x0) * t;
+                let y = yBase + Math.sin(t * Math.PI * 2 * waveCount) * amp;
+                if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        // Etched runes + ∞ marks on the Infinity Blade (God Cat Lv.50).
+        function drawBladeRuneGlyph(ctx, x, y, s, variant, color, lineW) {
+            ctx.save();
+            ctx.strokeStyle = color;
+            ctx.lineWidth = lineW || Math.max(1, s * 0.14);
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.beginPath();
+            let v = variant % 6;
+            if (v === 0) {
+                ctx.moveTo(x, y - s); ctx.lineTo(x, y + s);
+                ctx.moveTo(x, y - s * 0.15); ctx.lineTo(x - s * 0.6, y - s * 0.55);
+                ctx.moveTo(x, y - s * 0.15); ctx.lineTo(x + s * 0.6, y - s * 0.55);
+                ctx.moveTo(x, y + s * 0.25); ctx.lineTo(x - s * 0.45, y + s * 0.65);
+                ctx.moveTo(x, y + s * 0.25); ctx.lineTo(x + s * 0.45, y + s * 0.65);
+            } else if (v === 1) {
+                ctx.moveTo(x, y - s); ctx.lineTo(x + s * 0.7, y); ctx.lineTo(x, y + s); ctx.lineTo(x - s * 0.7, y); ctx.closePath();
+            } else if (v === 2) {
+                ctx.moveTo(x - s * 0.55, y - s * 0.55); ctx.lineTo(x + s * 0.55, y + s * 0.55);
+                ctx.moveTo(x + s * 0.55, y - s * 0.55); ctx.lineTo(x - s * 0.55, y + s * 0.55);
+                ctx.moveTo(x, y - s * 0.35); ctx.lineTo(x, y + s * 0.35);
+            } else if (v === 3) {
+                ctx.moveTo(x - s * 0.5, y); ctx.lineTo(x, y - s * 0.85); ctx.lineTo(x + s * 0.5, y); ctx.lineTo(x, y + s * 0.85); ctx.closePath();
+            } else if (v === 4) {
+                ctx.moveTo(x + s * 0.32, y);
+                ctx.arc(x - s * 0.32, y, s * 0.32, -Math.PI / 2, Math.PI / 2);
+                ctx.arc(x + s * 0.32, y, s * 0.32, Math.PI / 2, -Math.PI / 2);
+            } else {
+                ctx.moveTo(x - s * 0.65, y - s * 0.35); ctx.lineTo(x - s * 0.65, y + s * 0.35);
+                ctx.moveTo(x - s * 0.65, y - s * 0.35); ctx.lineTo(x + s * 0.5, y - s * 0.35);
+                ctx.moveTo(x - s * 0.2, y - s * 0.35); ctx.lineTo(x - s * 0.2, y + s * 0.35);
+                ctx.moveTo(x - s * 0.2, y + s * 0.35); ctx.lineTo(x + s * 0.65, y + s * 0.35);
+            }
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        function drawInfinityBladeRunes(ctx, x0, x1, wid, isUpgraded) {
+            let bladeLen = x1 - x0;
+            if (bladeLen <= 0) return;
+            let s = wid * 0.26;
+            let lw = Math.max(1, s * 0.13);
+            let primary = isUpgraded ? '#00eaff' : '#777777';
+            let accent = isUpgraded ? '#ffd700' : '#999999';
+            let slots = [0.14, 0.30, 0.46, 0.62, 0.78];
+            let variants = [0, 2, 4, 1, 3];
+            ctx.save();
+            if (isUpgraded) { ctx.shadowColor = primary; ctx.shadowBlur = 6; }
+            for (let i = 0; i < slots.length; i++) {
+                let x = x0 + bladeLen * slots[i];
+                let glyphS = s * (i === 2 ? 1.15 : 1);
+                let glyphColor = i === 2 ? accent : primary;
+                drawBladeRuneGlyph(ctx, x, -wid * 0.72, glyphS, variants[i], glyphColor, lw * (i === 2 ? 1.1 : 1));
+                drawBladeRuneGlyph(ctx, x, wid * 0.72, glyphS, (variants[i] + 3) % 6, glyphColor, lw * 0.92);
+            }
+            ctx.shadowBlur = 0;
+            ctx.strokeStyle = isUpgraded ? 'rgba(0,234,255,0.45)' : 'rgba(120,120,120,0.5)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            for (let t = 0.08; t <= 0.92; t += 0.06) {
+                let x = x0 + bladeLen * t;
+                ctx.moveTo(x, -wid * 0.08); ctx.lineTo(x + bladeLen * 0.02, -wid * 0.08);
+                ctx.moveTo(x, wid * 0.08); ctx.lineTo(x + bladeLen * 0.02, wid * 0.08);
+            }
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        // Curved soul-energy lines along the Soul Reaper scythe blade.
+        function drawSoulReaperLines(ctx, len, wid, baseColor, isUpgraded) {
+            const sampleQuad = (p0, cp, p1, t) => {
+                let u = 1 - t;
+                return {
+                    x: u * u * p0.x + 2 * u * t * cp.x + t * t * p1.x,
+                    y: u * u * p0.y + 2 * u * t * cp.y + t * t * p1.y
+                };
+            };
+            const mixPt = (a, b, k) => ({ x: a.x + (b.x - a.x) * k, y: a.y + (b.y - a.y) * k });
+            const bladeCurve = (k, t) => {
+                let p0 = mixPt(inner0, outer0, k);
+                let cp = mixPt(innerCp, outerCp, k);
+                let p1 = mixPt(inner1, outer1, k);
+                return sampleQuad(p0, cp, p1, t);
+            };
+
+            // Match the scythe light-facet outline; lines stay between inner belly and outer edge.
+            let outer0 = { x: len * 0.95, y: -wid * 0.8 };
+            let outerCp = { x: len * 1.2, y: -wid * 4.0 };
+            let outer1 = { x: len * 0.4, y: -wid * 5.0 };
+            let inner0 = { x: len * 0.87, y: -wid * 0.78 };
+            let innerCp = { x: len * 1.0, y: -wid * 2.5 };
+            let inner1 = { x: len * 0.52, y: -wid * 4.45 };
+
+            let lineColor = shade(baseColor, 42);
+            let tickColor = shade(baseColor, 24);
+
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(len * 0.85, -wid * 0.8);
+            ctx.lineTo(len * 0.95, -wid * 0.8);
+            ctx.quadraticCurveTo(len * 1.2, -wid * 4.0, len * 0.4, -wid * 5.0);
+            ctx.quadraticCurveTo(len * 0.9, -wid * 2.5, len * 0.85, -wid * 0.8);
+            ctx.closePath();
+            ctx.clip();
+
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            if (isUpgraded) { ctx.shadowColor = lineColor; ctx.shadowBlur = 4; }
+            ctx.strokeStyle = lineColor;
+            ctx.lineWidth = 1.1;
+            let stripes = [0.24, 0.38, 0.52, 0.66, 0.80];
+            for (let k of stripes) {
+                ctx.beginPath();
+                let n = 16;
+                for (let i = 0; i <= n; i++) {
+                    let pt = bladeCurve(k, 0.04 + (i / n) * 0.92);
+                    if (i === 0) ctx.moveTo(pt.x, pt.y); else ctx.lineTo(pt.x, pt.y);
+                }
+                ctx.stroke();
+            }
+            ctx.shadowBlur = 0;
+            ctx.strokeStyle = tickColor;
+            ctx.lineWidth = 0.95;
+            for (let t = 0.16; t <= 0.88; t += 0.12) {
+                let ptIn = bladeCurve(0.28, t);
+                let ptOut = bladeCurve(0.76, t);
+                ctx.beginPath();
+                ctx.moveTo(ptIn.x, ptIn.y);
+                ctx.lineTo(ptOut.x, ptOut.y);
+                ctx.stroke();
+            }
+            ctx.restore();
+        }
+
         // Legendary tier (5) — flat-shaded geometry, no shadowBlur/globalAlpha/gradients.
         // 5 archetypes × 5 level brackets = 25 visual variants.
-        function drawLegendaryWeaponShape(ctx, len, wid, archetype, level) {
+        function drawLegendaryWeaponShape(ctx, len, wid, archetype, level, weaponType) {
             let b = getLegendaryBracket(level);
             let p = LEGENDARY_PALETTES[b];
             ctx.lineWidth = 1.5;
@@ -3192,14 +3588,35 @@
 
             // -------- REACH → KATANA --------
             if (archetype === 'reach') {
-                drawHilt();
-                ctx.fillStyle = p.edge;
-                ctx.beginPath(); ctx.arc(len*0.20, 0, wid*1.1, 0, Math.PI*2); ctx.fill(); ctx.stroke();
-                let bs = len*0.22, be = len;
+                // Traditional katana: handle = 1/3 of total length, blade = 2/3 (tip stays at len).
+                let hLen = len / 2;
+                ctx.fillStyle = p.dark;
+                ctx.fillRect(-hLen, -wid*0.45, hLen, wid*0.9);
+                ctx.strokeRect(-hLen, -wid*0.45, hLen, wid*0.9);
+                ctx.fillStyle = p.secondary;
+                ctx.beginPath();
                 if (b === 0) {
+                    ctx.arc(-hLen + len*0.06, 0, wid*0.55, 0, Math.PI*2);
+                } else if (b === 1) {
+                    ctx.rect(-hLen + len*0.02, -wid*0.65, wid*0.85, wid*1.3);
+                } else if (b === 2) {
+                    ctx.moveTo(-hLen, -wid*0.75); ctx.lineTo(-hLen + len*0.20, 0);
+                    ctx.lineTo(-hLen,  wid*0.75); ctx.closePath();
+                } else if (b === 3) {
+                    ctx.moveTo(-hLen + len*0.02, 0); ctx.lineTo(-hLen + len*0.17, -wid*0.95);
+                    ctx.lineTo(-hLen + len*0.26, 0); ctx.lineTo(-hLen + len*0.17, wid*0.95); ctx.closePath();
+                } else {
+                    ctx.arc(-hLen + len*0.06, 0, wid*0.65, 0, Math.PI*2);
+                }
+                ctx.fill(); ctx.stroke();
+                ctx.fillStyle = p.edge;
+                ctx.beginPath(); ctx.arc(0, 0, wid*1.1, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+                let bs = len*0.03, be = len;
+                if (b === 0) {
+                    let bw = wid * 0.55;
                     ctx.fillStyle = p.primary;
                     ctx.beginPath();
-                    ctx.moveTo(bs,-wid*0.75); ctx.lineTo(be*0.9,-wid*0.35); ctx.lineTo(be,0); ctx.lineTo(be*0.9,wid*0.75); ctx.lineTo(bs,wid*0.75); ctx.closePath();
+                    ctx.moveTo(bs,-bw); ctx.lineTo(be*0.88,-bw); ctx.lineTo(be,0); ctx.lineTo(be*0.88,bw); ctx.lineTo(bs,bw); ctx.closePath();
                     ctx.fill(); ctx.stroke();
                 } else if (b === 1) {
                     ctx.fillStyle = p.primary;
@@ -3218,32 +3635,39 @@
                     ctx.fillStyle = p.edge;
                     ctx.fillRect(bs+(be-bs)*0.05, -wid*0.15, (be-bs)*0.85, wid*0.30);
                 } else if (b === 3) {
+                    let bw = wid * 0.55;
                     ctx.fillStyle = p.dark;
                     ctx.beginPath();
-                    ctx.moveTo(bs,-wid*0.4); ctx.lineTo(be,-wid*0.05); ctx.lineTo(be, wid*0.05);
+                    ctx.moveTo(bs,-bw); ctx.lineTo(be,-bw*0.12); ctx.lineTo(be, bw*0.12);
                     let steps = 6;
                     let segL = (be - bs) / steps;
                     for (let i = steps; i >= 0; i--) {
                         let x = bs + i*segL;
-                        ctx.lineTo(x, (i % 2 === 0) ? wid*0.85 : wid*0.45);
+                        ctx.lineTo(x, (i % 2 === 0) ? bw : bw*0.55);
                     }
                     ctx.closePath();
                     ctx.fill(); ctx.stroke();
                     ctx.fillStyle = p.primary;
-                    ctx.fillRect(bs+(be-bs)*0.1, -wid*0.1, (be-bs)*0.8, wid*0.18);
+                    ctx.fillRect(bs+(be-bs)*0.1, -bw*0.12, (be-bs)*0.8, bw*0.24);
                 } else {
+                    let bw = wid * 0.55;
                     ctx.fillStyle = p.primary;
                     ctx.beginPath();
-                    ctx.moveTo(bs,-wid*0.6); ctx.lineTo(bs+(be-bs)*0.32,-wid*0.4); ctx.lineTo(bs+(be-bs)*0.32,wid*0.4); ctx.lineTo(bs,wid*0.6); ctx.closePath();
+                    ctx.moveTo(bs,-bw); ctx.lineTo(bs+(be-bs)*0.32,-bw); ctx.lineTo(bs+(be-bs)*0.32,bw); ctx.lineTo(bs,bw); ctx.closePath();
                     ctx.fill(); ctx.stroke();
                     ctx.fillStyle = p.secondary;
                     ctx.beginPath();
-                    ctx.moveTo(bs+(be-bs)*0.32,-wid*0.4); ctx.lineTo(bs+(be-bs)*0.7,-wid*0.25); ctx.lineTo(bs+(be-bs)*0.7,wid*0.25); ctx.lineTo(bs+(be-bs)*0.32,wid*0.4); ctx.closePath();
+                    ctx.moveTo(bs+(be-bs)*0.32,-bw); ctx.lineTo(bs+(be-bs)*0.7,-bw*0.45); ctx.lineTo(bs+(be-bs)*0.7,bw*0.45); ctx.lineTo(bs+(be-bs)*0.32,bw); ctx.closePath();
                     ctx.fill(); ctx.stroke();
                     ctx.fillStyle = p.edge;
                     ctx.beginPath();
-                    ctx.moveTo(bs+(be-bs)*0.7,-wid*0.25); ctx.lineTo(be,0); ctx.lineTo(bs+(be-bs)*0.7,wid*0.25); ctx.closePath();
+                    ctx.moveTo(bs+(be-bs)*0.7,-bw*0.45); ctx.lineTo(be,0); ctx.lineTo(bs+(be-bs)*0.7,bw*0.45); ctx.closePath();
                     ctx.fill(); ctx.stroke();
+                }
+                let wLow = (weaponType || '').toLowerCase();
+                if (wLow.includes('great') && wLow.includes('katana')) {
+                    let hbw = wid * 0.55;
+                    drawKatanaHamon(ctx, bs + (be - bs) * 0.05, be * 0.86, hbw * 0.22, hbw * 0.13, 11, p.edge, 1.3);
                 }
                 return;
             }
@@ -3422,7 +3846,7 @@
         function drawWeaponShape(ctx, len, wid, weaponType, colorBase, upgradeTier, level) {
             // Tier 5 = Legendary. Bracket geometry is driven entirely by `level` (1-50), 5 brackets.
             if (upgradeTier === 5) {
-                drawLegendaryWeaponShape(ctx, len, wid, getWeaponArchetype(weaponType), level || 1);
+                drawLegendaryWeaponShape(ctx, len, wid, getWeaponArchetype(weaponType), level || 1, weaponType);
                 return;
             }
             let w = (weaponType || 'stick').toLowerCase();
@@ -3483,37 +3907,63 @@
                 }
             }
             else if (w.includes('axe')) {
-                // OPRAVA: Sekery už netrčí z ramene vzhůru nohama! (Lvl 18, 19)
+                // Each blade: triangular wing with apex at the socket, concave long sides,
+                // convex curved cutting edge on the far side (matches the reference silhouette).
                 let isColossus = w.includes('colossus');
-                let scale = isColossus ? 1.4 : 1.0;
-                
-                // Násada leží podél ruky dopředu
-                drawHandle(-len*0.3, len*0.9, wid*1.2);
+                let isBattle = w.includes('battleaxe');
+                let isDouble = isColossus || isBattle;
+                let scale = isColossus ? 1.3 : (isBattle ? 1.1 : 1.0);
 
-                let cx = len * 0.75; // Střed ocelové hlavy
-                let ah = wid * 2.2 * scale; // Výška čepele (Y osy)
-                let aw = len * 0.15 * scale; // Šířka čepele 
+                let cx = len * 0.62;
+                // ah = how far the blade reaches perpendicular to the handle
+                // aw = horizontal span of each wing along the handle
+                let ah = wid * (isColossus ? 3.1 : isBattle ? 2.85 : 2.5) * scale;
+                let aw = len * (isColossus ? 0.28 : isBattle ? 0.25 : 0.20) * scale;
+                let sockH = ah * 0.22;
 
-                ctx.fillStyle = metalGrad;
-                ctx.fillRect(cx - wid*0.8, -ah*0.3, wid*1.6, ah*0.6); // Spojka
+                // Haft stops at the socket — do not run wood through the head (was len*0.9).
+                drawHandle(-len*0.3, cx - wid * 0.85, wid * 1.1);
 
-                // Pravá čepel (+Y, směřuje do strany úderu)
-                ctx.fillStyle = bc.dark; 
-                ctx.beginPath(); ctx.moveTo(cx, 0); ctx.lineTo(cx+aw, ah); ctx.lineTo(cx+aw*2.5, ah*0.7); ctx.lineTo(cx+aw*1.5, 0); ctx.fill(); ctx.stroke();
-                ctx.fillStyle = bc.light; 
-                ctx.beginPath(); ctx.moveTo(cx, 0); ctx.lineTo(cx-aw, ah); ctx.lineTo(cx-aw*1.5, ah*0.7); ctx.lineTo(cx-aw*0.5, 0); ctx.fill(); ctx.stroke();
-                ctx.fillStyle = bc.edge;
-                ctx.beginPath(); ctx.moveTo(cx-aw*1.5, ah*0.7); ctx.quadraticCurveTo(cx+aw*0.5, ah*1.2, cx+aw*2.5, ah*0.7); ctx.lineTo(cx+aw*1.5, 0); ctx.lineTo(cx-aw*0.5, 0); ctx.closePath(); ctx.fill(); ctx.stroke();
+                // Socket block (sits between the two blades)
+                ctx.fillStyle = bc.dark;
+                ctx.fillRect(cx - wid*0.85, -sockH, wid*1.7, sockH * 2);
+                ctx.strokeStyle = '#111';
+                ctx.strokeRect(cx - wid*0.85, -sockH, wid*1.7, sockH * 2);
 
-                // Levá čepel (-Y, oboustranné sekery)
-                if (isColossus || w.includes('battleaxe')) {
-                    ctx.fillStyle = bc.dark; 
-                    ctx.beginPath(); ctx.moveTo(cx, 0); ctx.lineTo(cx+aw, -ah); ctx.lineTo(cx+aw*2.5, -ah*0.7); ctx.lineTo(cx+aw*1.5, 0); ctx.fill(); ctx.stroke();
-                    ctx.fillStyle = bc.light; 
-                    ctx.beginPath(); ctx.moveTo(cx, 0); ctx.lineTo(cx-aw, -ah); ctx.lineTo(cx-aw*1.5, -ah*0.7); ctx.lineTo(cx-aw*0.5, 0); ctx.fill(); ctx.stroke();
-                    ctx.fillStyle = bc.edge;
-                    ctx.beginPath(); ctx.moveTo(cx-aw*1.5, -ah*0.7); ctx.quadraticCurveTo(cx+aw*0.5, -ah*1.2, cx+aw*2.5, -ah*0.7); ctx.lineTo(cx+aw*1.5, 0); ctx.lineTo(cx-aw*0.5, 0); ctx.closePath(); ctx.fill(); ctx.stroke();
-                }
+                const drawBladeWing = (sign) => {
+                    let s = sign;
+                    // Wide crescents hang below the socket (s=+1); compact wing above (s=-1).
+                    let apexX = cx,                 apexY = -sockH * 0.55 * s;
+                    let frontX = cx - aw * 1.55,    frontY = -ah * s;
+                    let backX  = cx + aw * 0.78,    backY  = -ah * s;
+
+                    let ctlFrontX = cx - aw * 0.48, ctlFrontY = -ah * 0.74 * s;
+                    let ctlBackX  = cx + aw * 0.08, ctlBackY  = -ah * 0.74 * s;
+                    let ctlOuterX = cx - aw * 0.5,  ctlOuterY = -ah * 1.36 * s;
+
+                    ctx.fillStyle = bc.dark;
+                    ctx.beginPath();
+                    ctx.moveTo(apexX, apexY);
+                    ctx.quadraticCurveTo(ctlFrontX, ctlFrontY, frontX, frontY);
+                    ctx.quadraticCurveTo(ctlOuterX, ctlOuterY, backX, backY);
+                    ctx.quadraticCurveTo(ctlBackX,  ctlBackY,  apexX, apexY);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.stroke();
+
+                    ctx.strokeStyle = bc.light;
+                    ctx.lineWidth = Math.max(1.6, wid * 0.22);
+                    ctx.beginPath();
+                    ctx.moveTo(frontX + aw * 0.08, frontY * 0.94);
+                    ctx.quadraticCurveTo(cx - aw * 0.45, -ah * 1.22 * s, backX - aw * 0.08, backY * 0.94);
+                    ctx.stroke();
+
+                    ctx.lineWidth = 1.5;
+                    ctx.strokeStyle = '#111';
+                };
+
+                drawBladeWing(1);
+                if (isDouble) drawBladeWing(-1);
             }
             else if (w.includes('hammer')) {
                 // OPRAVA: Kladiva se drží za násadu! (Lvl 12, 30)
@@ -3577,6 +4027,9 @@
                 // Čepel kosy
                 ctx.fillStyle = bc.light; ctx.beginPath(); ctx.moveTo(len*0.85, -wid*0.8); ctx.lineTo(len*0.95, -wid*0.8); ctx.quadraticCurveTo(len*1.2, -wid*4.0, len*0.4, -wid*5.0); ctx.quadraticCurveTo(len*0.9, -wid*2.5, len*0.85, -wid*0.8); ctx.fill(); ctx.stroke();
                 ctx.fillStyle = bc.dark; ctx.beginPath(); ctx.moveTo(len*0.85, -wid*0.8); ctx.quadraticCurveTo(len*1.0, -wid*2.5, len*0.5, -wid*4.5); ctx.quadraticCurveTo(len*0.9, -wid*2.5, len*0.85, -wid*0.8); ctx.fill();
+                if (w.includes('soul reaper')) {
+                    drawSoulReaperLines(ctx, len, wid, bc.light, isUpgraded);
+                }
             }
             else if (w.includes('godslayer') || w.includes('infinity blade')) {
                 drawHandle(-len*0.2, len*0.2, wid*1.5);
@@ -3588,6 +4041,9 @@
                 ctx.strokeStyle = isUpgraded ? '#0ff' : '#555'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(bStart, 0); ctx.lineTo(bEnd - len*0.1, 0); ctx.stroke(); ctx.lineWidth = 1.5; ctx.strokeStyle = '#111';
                 ctx.fillStyle = bc.light; ctx.beginPath(); ctx.moveTo(bStart, -wid*0.5); ctx.lineTo(bStart + len*0.1, -wid*1.4); ctx.lineTo(bEnd - len*0.2, -wid*1.2); ctx.lineTo(bEnd, 0); ctx.lineTo(bEnd - len*0.1, -wid*0.4); ctx.lineTo(bStart, 0); ctx.closePath(); ctx.fill(); ctx.stroke();
                 ctx.fillStyle = bc.dark; ctx.beginPath(); ctx.moveTo(bStart, wid*0.5); ctx.lineTo(bStart + len*0.1, wid*1.4); ctx.lineTo(bEnd - len*0.2, wid*1.2); ctx.lineTo(bEnd, 0); ctx.lineTo(bEnd - len*0.1, wid*0.4); ctx.lineTo(bStart, 0); ctx.closePath(); ctx.fill(); ctx.stroke();
+                if (w.includes('infinity blade')) {
+                    drawInfinityBladeRunes(ctx, bStart, bEnd - len * 0.05, wid, isUpgraded);
+                }
             }
             else if (w === 'broadsword') {
                 drawHandle(-len*0.2, len*0.15, wid*1.4);
@@ -3646,15 +4102,36 @@
                 if (isTwin) drawStraightBlade(bStart, bEnd, bWid, -1);
             }
             else if (w.includes('katana') || w.includes('naginata') || w.includes('cutlass')) {
-                // OPRAVA: Naginata už se nedrží na samém konci (Lvl 16, 26)
                 let isPole = w.includes('naginata');
-                drawHandle(-len*0.4, isPole ? len*0.7 : len*0.2, wid*1.0);
+                if (isPole) {
+                    drawHandle(-len*0.4, len*0.7, wid*1.0);
+                } else {
+                    // Traditional katana: handle = 1/3 of total length, blade = 2/3 (tip stays at len).
+                    drawHandle(-len/2, 0, wid*1.0);
+                }
 
-                let bStart = isPole ? len*0.7 : len*0.2;
+                let bStart = isPole ? len*0.7 : len*0.03;
                 ctx.fillStyle = '#111'; ctx.fillRect(bStart - wid*0.5, -wid*1.2, wid*0.4, wid*2.4);
 
-                ctx.fillStyle = bc.light; ctx.beginPath(); ctx.moveTo(bStart, 0); ctx.quadraticCurveTo(bStart + len*0.2, wid*0.6, len*0.85, wid*0.3); ctx.lineTo(len, -wid*0.1); ctx.lineTo(len*0.85, -wid*0.5); ctx.quadraticCurveTo(bStart + len*0.2, -wid*0.2, bStart, -wid*0.4); ctx.fill(); ctx.stroke();
-                ctx.strokeStyle = bc.edge; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(bStart, 0); ctx.quadraticCurveTo(bStart + len*0.2, wid*0.4, len*0.9, -wid*0.1); ctx.stroke();
+                let bw = wid * 0.55;
+                let tipStart = len * 0.88;
+                ctx.fillStyle = bc.light;
+                ctx.beginPath();
+                ctx.moveTo(bStart, -bw);
+                ctx.lineTo(tipStart, -bw);
+                ctx.lineTo(len, -wid * 0.08);
+                ctx.lineTo(tipStart, bw);
+                ctx.lineTo(bStart, bw);
+                ctx.closePath();
+                ctx.fill(); ctx.stroke();
+                ctx.strokeStyle = bc.edge; ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(bStart, -bw);
+                ctx.quadraticCurveTo(bStart + len * 0.35, -bw * 0.92, len * 0.92, -wid * 0.08);
+                ctx.stroke();
+                if (w.includes('great') && w.includes('katana')) {
+                    drawKatanaHamon(ctx, bStart + len * 0.04, tipStart - len * 0.02, bw * 0.22, bw * 0.13, 11, isUpgraded ? bc.edge : '#999999', 1.3);
+                }
             }
             else if (w.includes('spear')) {
                 drawHandle(-len*0.4, len*0.75, wid*1.0);
@@ -3830,36 +4307,30 @@
                 drawHelmet(ctx, size, helmetTier, variantId);
             }
 
-            let catStats = evolutions[Math.min(level - 1, 49)];
-            let variantId = getHelmetVariant(catStats.catName);
-            let helmetOccludesEyes = isCat && helmetTier >= 3 && [3,4,5].includes(variantId);
+            let eyeColor = '#ffffff'; let glowColor = null;
+            if (level >= 45) { eyeColor = '#ffd700'; glowColor = '#ffaa00'; } else if (level >= 30) { eyeColor = '#00ffff'; glowColor = '#0088ff'; } if (level === 40) { eyeColor = '#ff3333'; glowColor = '#ff0000'; }
             
-            if (!helmetOccludesEyes) {
-                let eyeColor = '#ffffff'; let glowColor = null;
-                if (level >= 45) { eyeColor = '#ffd700'; glowColor = '#ffaa00'; } else if (level >= 30) { eyeColor = '#00ffff'; glowColor = '#0088ff'; } if (level === 40) { eyeColor = '#ff3333'; glowColor = '#ff0000'; } 
-                
-                ctx.fillStyle = eyeColor;
-                if (glowColor) { ctx.shadowColor = glowColor; ctx.shadowBlur = 15; }
-                
-                // Základ očí
-                ctx.beginPath(); ctx.arc(size*0.2, -size*0.4, size*0.22, 0, Math.PI*2); ctx.fill(); 
-                ctx.beginPath(); ctx.arc(size*0.2, size*0.4, size*0.22, 0, Math.PI*2); ctx.fill();
-                
-                // Zorničky a odlesk aplikované pro VŠECHNY levely
-                ctx.fillStyle = 'black'; 
-                ctx.beginPath(); ctx.arc(size*0.3, -size*0.4, size*0.12, 0, Math.PI*2); ctx.fill(); 
-                ctx.beginPath(); ctx.arc(size*0.3, size*0.4, size*0.12, 0, Math.PI*2); ctx.fill(); 
-                
-                ctx.fillStyle = 'white'; 
-                ctx.beginPath(); ctx.arc(size*0.32, -size*0.43, size*0.04, 0, Math.PI*2); ctx.fill(); 
-                ctx.beginPath(); ctx.arc(size*0.32, size*0.37, size*0.04, 0, Math.PI*2); ctx.fill(); 
-                
-                ctx.shadowBlur = 0;
-            }
+            ctx.fillStyle = eyeColor;
+            if (glowColor) { ctx.shadowColor = glowColor; ctx.shadowBlur = 15; }
+            
+            // Základ očí
+            ctx.beginPath(); ctx.arc(size*0.2, -size*0.4, size*0.22, 0, Math.PI*2); ctx.fill(); 
+            ctx.beginPath(); ctx.arc(size*0.2, size*0.4, size*0.22, 0, Math.PI*2); ctx.fill();
+            
+            // Zorničky a odlesk aplikované pro VŠECHNY levely
+            ctx.fillStyle = 'black'; 
+            ctx.beginPath(); ctx.arc(size*0.3, -size*0.4, size*0.12, 0, Math.PI*2); ctx.fill(); 
+            ctx.beginPath(); ctx.arc(size*0.3, size*0.4, size*0.12, 0, Math.PI*2); ctx.fill(); 
+            
+            ctx.fillStyle = 'white'; 
+            ctx.beginPath(); ctx.arc(size*0.32, -size*0.43, size*0.04, 0, Math.PI*2); ctx.fill(); 
+            ctx.beginPath(); ctx.arc(size*0.32, size*0.37, size*0.04, 0, Math.PI*2); ctx.fill(); 
+            
+            ctx.shadowBlur = 0;
             ctx.restore();
         }
 
-        function drawEntity(ctx, isCat, size, color, accent, pattern, attackProgress, weaponType, level, helmetTier = 0, wTierOverride = -1, aura = null) {
+        function drawEntity(ctx, isCat, size, color, accent, pattern, attackProgress, weaponType, level, helmetTier = 0, wTierOverride = -1, aura = null, bodyOnly = false) {
             ctx.save(); 
             
             // NOVÉ: Custom Aury pro bossy a high-level entity
@@ -3940,6 +4411,7 @@
             }
 
             drawFace(ctx, size, color, accent, pattern, isCat, level, helmetTier);
+            if (!bodyOnly) {
             let currentTier = wTierOverride !== -1 ? wTierOverride : (isCat ? (prog.weaponUpgrades[level] || 0) : 0); 
             let sizeMult = isCat ? UPGRADE_SIZE_MULT[currentTier] : 1.0;
             
@@ -3987,12 +4459,13 @@
             ctx.restore();
             
             ctx.restore(); 
+            }
             ctx.restore();
         }
 
-        function getSpriteDataURL(type, level, weaponTier = 0, helmetTier = 0, legendaryType = null) {
+        function getSpriteDataURL(type, level, weaponTier = 0, helmetTier = 0, legendaryType = null, bodyOnly = false) {
             // Legendary key encodes the override so each archetype/level pair gets a unique cached sprite.
-            let key = `${level}_${weaponTier}_${helmetTier}_${legendaryType || ''}`;
+            let key = `${bodyOnly ? 'b:' : ''}${level}_${weaponTier}_${helmetTier}_${legendaryType || ''}`;
             if (spritesCache[type][key]) return spritesCache[type][key];
             
             let tempC = document.createElement('canvas'); tempC.width = 240; tempC.height = 240;
@@ -4000,7 +4473,8 @@
             
             let stats = evolutions[Math.min(level - 1, 49)];
             let isCat = type === 'cats'; let cColor = isCat ? stats.catColor : stats.dogColor;
-            let visSize = (22 + Math.min(level, 50) * 0.35) * 1.35; 
+            let maxVisSize = (22 + 50 * 0.35) * 1.35;
+            let visSize = bodyOnly ? maxVisSize : (22 + Math.min(level, 50) * 0.35) * 1.35; 
             tCtx.rotate(Math.PI / 2); 
             
             let renderWeapon = stats.weaponType;
@@ -4009,18 +4483,71 @@
                 renderWeapon = LEGENDARY_WEAPONS[legendaryType].weaponType;
                 renderTier = 5;
             }
-            drawEntity(tCtx, isCat, visSize, cColor, stats.accent, stats.pattern, 0, renderWeapon, level, helmetTier, renderTier, null);
+            drawEntity(tCtx, isCat, visSize, cColor, stats.accent, stats.pattern, 0, renderWeapon, level, helmetTier, renderTier, null, bodyOnly);
             
             let data = tempC.toDataURL(); spritesCache[type][key] = data; return data;
         }
 
+        /** Codex card: body sprite on top, horizontal weapon strip below (Armory-style). */
+        function buildCodexSpritePreview(type, level, weaponType, weaponTier, helmetTier, legendaryType, locked) {
+            let bodySrc = getSpriteDataURL(type, level, weaponTier, helmetTier, legendaryType, true);
+            let bodyFx = locked ? 'opacity:0.7; filter:brightness(0.2) grayscale(0.8);' : 'filter:drop-shadow(0 5px 8px rgba(0,0,0,0.5));';
+            let html = `<div class="codex-preview-stack" style="width:100%; margin-bottom:10px; box-sizing:border-box;">`;
+            html += `<img src="${bodySrc}" alt="" style="width:100%; height:110px; object-fit:contain; display:block; margin:0; ${bodyFx}">`;
+            if (!locked) {
+                let wType = weaponType, wTier = weaponTier;
+                if (legendaryType && LEGENDARY_WEAPONS[legendaryType]) {
+                    wType = LEGENDARY_WEAPONS[legendaryType].weaponType;
+                    wTier = 5;
+                }
+                let tierColor = UPGRADE_COLORS[wTier] || '#555';
+                let wGlow = wTier > 0 ? `filter:drop-shadow(0px 0px 5px ${tierColor});` : '';
+                html += `<div style="display:flex; align-items:center; justify-content:center; width:100%; height:76px; box-sizing:border-box;"><img src="${getWeaponDataURL(wType, wTier, level)}" alt="" style="max-width:100%; max-height:76px; width:auto; height:auto; object-fit:contain; display:block; margin:0; ${wGlow}"></div>`;
+            }
+            html += `</div>`;
+            return html;
+        }
+
+        function getWeaponPreviewLayout(weaponType, wLen, wWid) {
+            let w = (weaponType || '').toLowerCase();
+            let canvasW = 400;
+            let canvasH = 200;
+            let offsetX = wLen * 0.4;
+            if (w.includes('twin')) offsetX = wLen * 0.1;
+            else if (w.includes('staff') || w.includes('stick')) offsetX = wLen * 0.5;
+            else if (w.includes('katana') || w.includes('naginata') || w.includes('cutlass')) offsetX = wLen * 0.28;
+
+            let offsetY = 0;
+            if (w.includes('scythe') || w.includes('reaper')) {
+                canvasH = 280;
+                offsetY = wWid * 0.45;
+            } else if (w.includes('axe') || w.includes('cleaver')) {
+                canvasH = 260;
+                offsetY = wWid * 0.4;
+            } else if (w.includes('godslayer') || w.includes('infinity')) {
+                canvasH = 230;
+                offsetY = wWid * 0.55;
+            } else if (w.includes('naginata')) {
+                canvasH = 220;
+                offsetY = wWid * 0.3;
+            } else if (w.includes('hammer') || w.includes('mace') || w.includes('star') || w.includes('morningstar') || w.includes('warhammer')) {
+                canvasH = 220;
+                offsetY = wWid * 0.3;
+            } else if (w.includes('twin')) {
+                canvasH = 210;
+                offsetY = wWid * 0.35;
+            } else if (w.includes('spear') || w.includes('lightsaber') || w.includes('holy')) {
+                canvasH = 210;
+                offsetY = wWid * 0.2;
+            }
+
+            return { canvasW, canvasH, offsetX, offsetY };
+        }
+
         function getWeaponDataURL(weaponType, upgradeTier = 0, level = 1) {
             // Level only matters for Legendary (tier 5) bracket geometry — included in key so caches stay correct.
-            let key = `${weaponType}_${upgradeTier}_${upgradeTier === 5 ? getLegendaryBracket(level) : 0}`;
+            let key = `${weaponType}_${upgradeTier}_${upgradeTier === 5 ? getLegendaryBracket(level) : 0}_pv2`;
             if (weaponCache[key]) return weaponCache[key];
-            
-            let tempC = document.createElement('canvas'); tempC.width = 400; tempC.height = 140;
-            let tCtx = tempC.getContext('2d'); 
             
             let size = 42; 
             let arch = getWeaponArchetype(weaponType); let archStats = ARCH_STATS[arch];
@@ -4028,13 +4555,13 @@
             let wLen = (size * 2.5) * archStats.reachMult * sizeMult; 
             let wWid = Math.max(6, size * 0.22) * sizeMult;
 
-            // Dynamický posun pro vycentrování v plátně
-            let w = (weaponType || '').toLowerCase();
-            let offsetX = wLen * 0.4; // Těžiště většiny zbraní
-            if (w.includes('twin')) offsetX = wLen * 0.1;
-            else if (w.includes('staff') || w.includes('stick')) offsetX = wLen * 0.5;
+            let layout = getWeaponPreviewLayout(weaponType, wLen, wWid);
+            let tempC = document.createElement('canvas');
+            tempC.width = layout.canvasW;
+            tempC.height = layout.canvasH;
+            let tCtx = tempC.getContext('2d');
 
-            tCtx.translate(200 - offsetX, 70); 
+            tCtx.translate(layout.canvasW / 2 - layout.offsetX, layout.canvasH / 2 + layout.offsetY);
 
             drawWeaponShape(tCtx, wLen, wWid, weaponType, '#ffffff', upgradeTier, level);
             let data = tempC.toDataURL(); weaponCache[key] = data; return data;
@@ -4046,10 +4573,16 @@
         window._lobbyShown = false;
 
         // Called by both loading-completion paths (Firebase auth + offline fallback).
-        // On CrazyGames the game is already in an iframe shell — skip lobby entirely.
+        // On CrazyGames we route first-time visitors through the minimal #cg-landing
+        // overlay so the reviewer hits the giant PLAY button immediately instead of
+        // the 3-column main menu (CrazyGames quality guideline: "land directly in
+        // gameplay, max 1 click"). Returning players (totalKills > 0) keep the full
+        // menu — they want the upgrades / codex / boosts panels they earned.
         window.showLobby = function() {
             if (document.documentElement.classList.contains('crazygames')) {
-                document.getElementById('main-menu').style.display = 'flex';
+                let isReturning = window.prog && (window.prog.totalKills || 0) > 0;
+                document.getElementById('cg-landing').style.display = isReturning ? 'none' : 'flex';
+                document.getElementById('main-menu').style.display = isReturning ? 'flex' : 'none';
                 return;
             }
             // Desktop / mouse-and-keyboard users — skip the lobby entirely. The
@@ -4109,6 +4642,23 @@
             // Enables the CSS rotate-overlay on portrait mobile
             document.body.classList.add('post-lobby');
             await window.requestFullscreenAndLandscape();
+        };
+
+        // CrazyGames landing PLAY click — go straight into a Solo run with the
+        // saved nickname (or "Player" for first-time visitors). startGame() reads
+        // #player-nickname.value, which lives inside the hidden #main-menu, so we
+        // make sure it has a value before kicking off the run. We also force Solo
+        // mode via selectMode() so the (invisible) mode picker doesn't sneak the
+        // player into Hardcore / Co-Op / DM on their very first click.
+        window.startGameFromCgLanding = async function() {
+            document.getElementById('cg-landing').style.display = 'none';
+            let nickInput = document.getElementById('player-nickname');
+            if (nickInput) {
+                let saved = (window.prog && window.prog.nickname) ? window.prog.nickname.trim() : '';
+                nickInput.value = saved || 'Player';
+            }
+            try { selectMode('solo'); } catch (e) { /* selectMode may not be ready yet — solo is already the default. */ }
+            await window.startGame();
         };
         // ── END LOBBY ──────────────────────────────────────────────────────
 
@@ -4236,15 +4786,20 @@
             </tr>`;
         };
 
-        function goToMenu() { 
+        function goToMenu() {
             if (window.notifyGameplayStop) window.notifyGameplayStop();
-            document.getElementById('game-ui').style.display = 'none'; 
+            document.getElementById('game-ui').style.display = 'none';
             document.getElementById('encyclopedia').style.display = 'none'; document.getElementById('dash-container').style.display = 'none'; document.getElementById('joystick-zone').style.display = 'none'; document.getElementById('attack-btn').style.display = 'none';
             document.getElementById('minimap').style.display = 'none'; document.getElementById('boss-arrow').style.display = 'none';
             document.getElementById('pause-btn').style.display = 'none'; document.getElementById('tutorial').style.display = 'none';
-            document.getElementById('pause-overlay').style.display = 'none'; 
-            document.getElementById('main-menu').style.display = 'flex'; document.body.classList.remove('low-hp'); 
-            gameState = 'menu'; updateMenuStats(); 
+            document.getElementById('pause-overlay').style.display = 'none';
+            // After a run ends, even CrazyGames players see the full menu — they've
+            // earned access to upgrades / codex / boosts. The minimal #cg-landing
+            // is strictly first-impression only (see showLobby).
+            let cgLanding = document.getElementById('cg-landing');
+            if (cgLanding) cgLanding.style.display = 'none';
+            document.getElementById('main-menu').style.display = 'flex'; document.body.classList.remove('low-hp');
+            gameState = 'menu'; updateMenuStats();
         }
         window.goToMenu = goToMenu;
         
@@ -4395,15 +4950,25 @@
             }
 
             if (tab === 'armory') {
+                const archOrder = ['balanced', 'fast', 'heavy', 'wide', 'reach'];
+                const archDisplay = {
+                    balanced: '⚔️ Balanced',
+                    fast: '⚡ Fast',
+                    heavy: '🔨 Heavy',
+                    wide: '🌀 Wide',
+                    reach: '➡️ Reach'
+                };
+                let archRows = archOrder.map(key => {
+                    let s = ARCH_STATS[key];
+                    return `<tr><td style="color:var(--primary); font-weight:bold;">${archDisplay[key]}</td>` +
+                        `<td>${formatArchCdMult(s.cdMult)}</td><td>${s.dmgMult}×</td><td>${s.reachMult}×</td>` +
+                        `<td>${getArchSweepDegrees(key)}°</td><td>${getKnockbackLabel(s.knockback)}</td></tr>`;
+                }).join('');
                 let html = `
                     <h3 style="margin-top:0; color:#fff;">🛡️ Weapon Archetypes</h3>
                     <table class="stats-table">
                         <tr><th>Archetype</th><th>Speed (CD)</th><th>Damage</th><th>Reach</th><th>Angle</th><th>Knockback</th></tr>
-                        <tr><td style="color:var(--primary); font-weight:bold;">⚔️ Balanced</td><td>1.0x</td><td>1.0x</td><td>1.0x</td><td>180°</td><td>Low</td></tr>
-                        <tr><td style="color:var(--primary); font-weight:bold;">⚡ Fast</td><td>0.6x (Faster)</td><td>0.85x</td><td>0.9x</td><td>120°</td><td>None</td></tr>
-                        <tr><td style="color:var(--primary); font-weight:bold;">🔨 Heavy</td><td>1.45x (Slower)</td><td>1.55x</td><td>1.0x</td><td>163°</td><td>High</td></tr>
-                        <tr><td style="color:var(--primary); font-weight:bold;">🌀 Wide</td><td>1.1x</td><td>0.9x</td><td>1.1x</td><td>240°</td><td>Very Low</td></tr>
-                        <tr><td style="color:var(--primary); font-weight:bold;">➡️ Reach</td><td>1.0x</td><td>1.0x</td><td>1.35x</td><td>144°</td><td>Medium</td></tr>
+                        ${archRows}
                     </table>
                     
                     <h3 style="color:#fff; margin-top: 30px;">🗡️ Weapon Evolution Gallery</h3>
@@ -4433,15 +4998,93 @@
                         tierCard.style.border = `2px solid ${borderColor}`; tierCard.style.borderRadius = '8px'; tierCard.style.padding = '10px'; tierCard.style.minWidth = '160px'; tierCard.style.textAlign = 'center'; tierCard.style.flex = '1';
                         if(tier >= 3) tierCard.style.boxShadow = `inset 0 0 15px ${borderColor}40`;
                         
-                        let img = document.createElement('img'); img.src = getWeaponDataURL(w, tier); img.style.width = '100%'; img.style.height = '70px'; img.style.objectFit = 'contain';
+                        let imgWrap = document.createElement('div');
+                        imgWrap.style.cssText = 'display:flex; align-items:center; justify-content:center; width:100%; height:80px; box-sizing:border-box;';
+                        let img = document.createElement('img'); img.src = getWeaponDataURL(w, tier); img.style.maxWidth = '100%'; img.style.maxHeight = '80px'; img.style.width = 'auto'; img.style.height = 'auto'; img.style.objectFit = 'contain';
                         if(tier > 0) img.style.filter = `drop-shadow(0px 0px 5px ${borderColor})`;
+                        imgWrap.appendChild(img);
                         
                         let tierName = document.createElement('div'); tierName.style.fontWeight = 'bold'; tierName.style.fontSize = '14px'; tierName.style.marginTop = '5px'; tierName.style.color = borderColor === '#555' ? '#ccc' : borderColor; tierName.innerText = WEAPON_TIERS[tier];
                         let stats = document.createElement('div'); stats.style.fontSize = '12px'; stats.style.color = '#aaa'; stats.style.marginTop = '5px'; stats.innerHTML = `Dmg: <b>${UPGRADE_MULT[tier]}x</b><br>Reach: <b>${UPGRADE_SIZE_MULT[tier]}x</b>`;
                         
-                        tierCard.appendChild(img); tierCard.appendChild(tierName); tierCard.appendChild(stats); evolutionFlex.appendChild(tierCard);
+                        tierCard.appendChild(imgWrap); tierCard.appendChild(tierName); tierCard.appendChild(stats); evolutionFlex.appendChild(tierCard);
                     }
                     weaponRow.appendChild(evolutionFlex); container.appendChild(weaponRow);
+                });
+
+                // ── Legendary Weapon Sets (5 weapons × 5 brackets = 25 unique forms) ─
+                let legSection = document.createElement('div');
+                legSection.innerHTML = `<h3 style="color:#fde047; margin-top:30px; margin-bottom:4px;">🌟 Legendary Weapon Sets</h3>
+                    <p style="color:#aaa; font-size:13px; margin:0 0 16px 0;">5 weapons × 5 level brackets = <b style="color:#ff3df7;">25 unique forms</b>. Each bracket changes the color palette <i>and</i> hilt/guard geometry. Unlocked at <b style="color:#00ffff;">Diamond</b> weapon. Cost: Level × 1 000 💎. All apply <b style="color:#ff3df7;">7×</b> base damage × archetype multiplier.</p>`;
+                container.appendChild(legSection);
+
+                // Bracket metadata
+                const bracketLevels = [5, 15, 25, 35, 45]; // representative level per bracket
+                const bracketNames  = ['Basic', 'Advanced', 'Royal', 'Corrupted', 'Cosmic'];
+                const bracketRanges = ['Lv 1–10', 'Lv 11–20', 'Lv 21–30', 'Lv 31–40', 'Lv 41–50'];
+
+                const archColors = { balanced: '#60a5fa', fast: '#34d399', heavy: '#f87171', wide: '#a78bfa', reach: '#fb923c' };
+                const archLabels = { balanced: '⚔️ Balanced', fast: '⚡ Fast', heavy: '🔨 Heavy', wide: '🌀 Wide', reach: '➡️ Reach' };
+
+                LEGENDARY_KEYS.forEach(key => {
+                    let leg = LEGENDARY_WEAPONS[key];
+                    let as  = ARCH_STATS[leg.arch];
+                    let effectiveDmg   = (7.0 * as.dmgMult).toFixed(2);
+                    let effectiveReach = (1.7 * as.reachMult).toFixed(2);
+                    let angle  = getArchSweepDegrees(leg.arch);
+                    let aColor = archColors[leg.arch];
+
+                    let card = document.createElement('div');
+                    card.style.cssText = 'background:rgba(0,0,0,0.25); border:2px solid #34495e; border-radius:12px; padding:14px; margin-bottom:14px;';
+
+                    // Header row: icon + name + archetype badge + stats
+                    let header = document.createElement('div');
+                    header.style.cssText = 'display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin-bottom:12px;';
+
+                    let titleBlock = document.createElement('div');
+                    titleBlock.innerHTML =
+                        `<div style="font-size:18px; font-weight:bold; color:#fde047;">${leg.icon} ${leg.name}</div>` +
+                        `<span style="display:inline-block; background:${aColor}22; color:${aColor}; border:1px solid ${aColor}55; border-radius:6px; padding:1px 9px; font-size:11px; font-weight:bold; margin-top:3px;">${archLabels[leg.arch]}</span>`;
+                    header.appendChild(titleBlock);
+
+                    let statsBlock = document.createElement('div');
+                    statsBlock.style.cssText = 'font-size:12px; color:#ccc; line-height:1.8; flex:1; min-width:160px;';
+                    statsBlock.innerHTML =
+                        `<span style="color:#888;">⚡ Attack Speed:</span> <b style="color:#fff;">${as.cdMult}× CD</b> &nbsp;` +
+                        `<span style="color:#888;">💥 Dmg:</span> <b style="color:#ff3df7;">${effectiveDmg}× total</b><br>` +
+                        `<span style="color:#888;">📏 Reach:</span> <b style="color:#fff;">${effectiveReach}×</b> &nbsp;` +
+                        `<span style="color:#888;">🌀 Angle:</span> <b style="color:#fff;">${angle}°</b> &nbsp;` +
+                        `<span style="color:#888;">💫 KB:</span> <b style="color:#fff;">${getKnockbackLabel(as.knockback)}</b>`;
+                    header.appendChild(statsBlock);
+                    card.appendChild(header);
+
+                    // 5-bracket preview strip
+                    let strip = document.createElement('div');
+                    strip.style.cssText = 'display:grid; grid-template-columns:repeat(5,1fr); gap:8px;';
+
+                    for (let b = 0; b < 5; b++) {
+                        let pal  = LEGENDARY_PALETTES[b];
+                        let cell = document.createElement('div');
+                        cell.style.cssText = `background:${pal.dark}; border:2px solid ${pal.primary}; border-radius:8px; padding:8px 4px 6px; text-align:center; box-shadow: inset 0 0 12px ${pal.primary}30;`;
+
+                        let imgWrap = document.createElement('div');
+                        imgWrap.style.cssText = 'display:flex; align-items:center; justify-content:center; width:100%; height:56px; box-sizing:border-box;';
+                        let img = document.createElement('img');
+                        img.src = getWeaponDataURL(leg.weaponType, 5, bracketLevels[b]);
+                        img.style.cssText = `max-width:100%; max-height:56px; width:auto; height:auto; object-fit:contain; filter:drop-shadow(0 0 6px ${pal.primary});`;
+                        imgWrap.appendChild(img);
+                        cell.appendChild(imgWrap);
+
+                        let bName = document.createElement('div');
+                        bName.style.cssText = `font-size:10px; font-weight:bold; color:${pal.primary}; margin-top:4px; line-height:1.2;`;
+                        bName.innerHTML = `${bracketNames[b]}<br><span style="color:#888; font-weight:normal;">${bracketRanges[b]}</span>`;
+                        cell.appendChild(bName);
+
+                        strip.appendChild(cell);
+                    }
+
+                    card.appendChild(strip);
+                    container.appendChild(card);
                 });
                 return;
             }
@@ -4466,7 +5109,7 @@
                         let weaponLabel = legKey ? LEGENDARY_WEAPONS[legKey].name.toUpperCase() : stats.weaponType.toUpperCase();
                         
                         let cardContent = `<h3 style="margin: 0 0 5px 0; font-size: 18px;">Lv.${i} ${stats.catName}</h3>`;
-                        cardContent += `<img src="${getSpriteDataURL('cats', i, wTier, hTier, legKey)}" style="width:100%; height:180px; object-fit:contain; margin-bottom: 10px; filter: drop-shadow(0 5px 8px rgba(0,0,0,0.5));">`;
+                        cardContent += buildCodexSpritePreview('cats', i, stats.weaponType, wTier, hTier, legKey, false);
                         cardContent += `<div style="background: rgba(0,0,0,0.4); padding: 6px; border-radius: 8px; width: 100%; box-sizing: border-box; margin-bottom: 12px; line-height: 1.3;">
                                             <strong style="color: ${legKey ? '#ff7ff0' : '#fff'}; font-size: 13px;">${wTierName}${weaponLabel}</strong><br>
                                             <span style="color:#f39c12; font-size: 11px;">${archLabel}</span>
@@ -4514,7 +5157,7 @@
                         card.appendChild(legBtn);
                     } else { 
                         card.innerHTML = `<h3 style="margin: 0 0 5px 0; font-size: 18px;">Lv.${i} ???</h3>`;
-                        card.innerHTML += `<img src="${getSpriteDataURL('cats', i, 0, 0)}" style="width:100%; height:180px; object-fit:contain; opacity:0.7; filter:brightness(0.2) grayscale(0.8); margin: 5px 0;">`;
+                        card.innerHTML += buildCodexSpritePreview('cats', i, stats.weaponType, 0, 0, null, true);
                         card.innerHTML += `<p style="margin-top:10px;">Reach Lv. ${i}</p>`; 
                     }
                     grid.appendChild(card);
@@ -4527,7 +5170,7 @@
                     
                     if (!locked) {
                         let cardContent = `<h3 style="margin: 0 0 5px 0; font-size: 18px;">Lv.${i} ${stats.dogName}</h3>`;
-                        cardContent += `<img src="${getSpriteDataURL('dogs', i, 0, 0)}" style="width:100%; height:180px; object-fit:contain; margin-bottom: 10px; filter: drop-shadow(0 5px 8px rgba(0,0,0,0.5));">`;
+                        cardContent += buildCodexSpritePreview('dogs', i, stats.weaponType, 0, 0, null, false);
                         cardContent += `<div style="background: rgba(0,0,0,0.4); padding: 6px; border-radius: 8px; width: 100%; box-sizing: border-box; margin-bottom: 12px; line-height: 1.3;">
                                             <strong style="color: #fff; font-size: 13px;">${stats.weaponType.toUpperCase()}</strong><br>
                                             <span style="color:#f39c12; font-size: 11px;">${archLabel}</span>
@@ -4536,7 +5179,7 @@
                         card.innerHTML = cardContent;
                     } else { 
                         card.innerHTML = `<h3 style="margin: 0 0 5px 0; font-size: 18px;">Lv.${i} ???</h3>`;
-                        card.innerHTML += `<img src="${getSpriteDataURL('dogs', i, 0, 0)}" style="width:100%; height:180px; object-fit:contain; opacity:0.7; filter:brightness(0.2) grayscale(0.8); margin: 5px 0;">`;
+                        card.innerHTML += buildCodexSpritePreview('dogs', i, stats.weaponType, 0, 0, null, true);
                         card.innerHTML += `<p style="margin-top: 10px;">Defeated: 0</p>`; 
                     }
                     grid.appendChild(card);
@@ -4596,17 +5239,20 @@
                 let row = document.createElement('div');
                 row.style.cssText = `display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 10px; background: ${isEquipped ? 'rgba(253, 224, 71, 0.15)' : 'rgba(0,0,0,0.35)'}; border: 2px solid ${isEquipped ? '#fde047' : '#34495e'};`;
 
+                let previewWrap = document.createElement('div');
+                previewWrap.style.cssText = 'display:flex; align-items:center; justify-content:center; width:110px; height:52px; flex:0 0 110px; box-sizing:border-box;';
                 let preview = document.createElement('img');
                 preview.src = getWeaponDataURL(leg.weaponType, 5, lvl);
-                preview.style.cssText = 'width: 110px; height: 38px; object-fit: contain; flex: 0 0 110px;';
-                row.appendChild(preview);
+                preview.style.cssText = 'max-width:100%; max-height:52px; width:auto; height:auto; object-fit:contain;';
+                previewWrap.appendChild(preview);
+                row.appendChild(previewWrap);
 
                 let info = document.createElement('div');
                 info.style.cssText = 'flex: 1; color: #fff; font-size: 13px; text-align: left; line-height: 1.4;';
                 info.innerHTML =
                     `<div style="font-weight:bold; font-size:15px; color:${isEquipped ? '#fde047' : '#fff'};">${leg.icon} ${leg.name}</div>` +
                     `<div style="color:#aaa; font-size:11px;">Archetype: <b style="color:#f39c12;">${leg.arch}</b></div>` +
-                    `<div style="color:#bbb; font-size:11px;">CD ${archStats.cdMult}× · Dmg ${archStats.dmgMult}× · Reach ${archStats.reachMult}× · KB ${archStats.knockback}</div>`;
+                    `<div style="color:#bbb; font-size:11px;">CD ${formatArchCdMult(archStats.cdMult)} · Dmg ${archStats.dmgMult}× · Reach ${archStats.reachMult}× · Angle ${getArchSweepDegrees(leg.arch)}° · KB ${getKnockbackLabel(archStats.knockback)}</div>`;
                 row.appendChild(info);
 
                 let btn = document.createElement('button');
@@ -4702,22 +5348,146 @@
         let lastTime = 0; 
         
         let tutorialSteps = [
-            { text: "🖱️ Move your mouse to hunt weaker dogs.", duration: 5 },
-            { text: "⚔️ Left click to attack. Find some food!", duration: 5 },
-            { text: "⚡ Space or Right click to dash.", duration: 5 },
-            { text: "💎 Break chests to get Gems for permanent upgrades.", duration: 6 }
+            { text: "🖱️ Move your mouse to steer — your cat always faces your cursor!", textMobile: "🕹️ Use the joystick to steer — your cat faces the direction you push!", duration: 6 },
+            { text: "⚔️ Point cursor AT the dog, then Left Click! You only hit what you're FACING.", textMobile: "⚔️ Face the dog with the joystick, then tap ⚔️! You only hit what you're FACING.", duration: 7 },
+            { text: "🍖 Collect food for XP and a health boost. Eat often to stay alive!", duration: 6 },
+            { text: "⚡ Space or Right Click to dash out of danger.", textMobile: "⚡ Tap the ⚡ dash button to escape danger!", duration: 5 },
+            { text: "💎 Break chests for Gems — spend them on permanent upgrades in the menu.", duration: 6 }
         ];
         let tutorialIdx = 0, tutorialTimer = 0, tutorialActive = false;
 
         function showTutorial() {
             let el = document.getElementById('tutorial');
             if (tutorialIdx >= tutorialSteps.length) { el.style.display = 'none'; tutorialActive = false; return; }
-            el.innerText = tutorialSteps[tutorialIdx].text;
+            let step = tutorialSteps[tutorialIdx];
+            let isMob = (typeof IS_TOUCH_DEV !== 'undefined' && IS_TOUCH_DEV);
+            el.innerText = (isMob && step.textMobile) ? step.textMobile : step.text;
             el.style.display = 'block';
-            tutorialTimer = tutorialSteps[tutorialIdx].duration;
+            tutorialTimer = step.duration;
         }
 
+        // ── ONBOARDING TUTORIAL ─────────────────────────────────────────────
+        const OB_STEPS = [
+            {
+                icon: '🐱',
+                title: 'Welcome to CatWars!',
+                desc: "You're a cat surrounded by <b>endless dog hordes</b>. Survive, eat, and evolve from a tiny Kitten all the way to a legendary <b>God Cat</b> — 50 levels of power!",
+                forced: true,
+                nextLabel: "Let's go! →"
+            },
+            {
+                icon: '🕹️',
+                title: 'Move to steer',
+                desc: "Your cat <b>follows your cursor</b>. Move the mouse to steer — the cat always faces the direction you point.",
+                extra: "💡 Tip: weaker dogs appear early — chase them first to level up fast.",
+                descMobile: "Use the <b>joystick</b> (bottom-left) to move your cat. The cat always faces the direction you push.",
+                extraMobile: "💡 Tip: weaker dogs appear early — chase them first to level up fast.",
+                nextLabel: 'Got it! →'
+            },
+            {
+                icon: '⚔️',
+                title: 'Face the dog — then attack!',
+                desc: "Your attack hits a <b>cone directly in front of your cat</b>. <b>Point your cursor AT the dog first</b>, then <b>Left Click</b> to swing.<br><br>Swinging when the dog is behind you does nothing!",
+                extra: "💡 Tip: chase a dog until it's in front of you, then click.",
+                descMobile: "Your attack hits a <b>cone directly in front of your cat</b>. Steer with the joystick so the dog is <b>in front of you</b>, then tap the <b>⚔️ button</b> to strike.<br><br>Hitting from behind does nothing!",
+                extraMobile: "💡 Tip: use the joystick to face the dog, then tap ⚔️.",
+                nextLabel: 'Understood! →'
+            },
+            {
+                icon: '🍖',
+                title: 'Eat food to level up',
+                desc: "Food items (fish, meat, bones…) scattered around the map give you <b>XP</b> and restore a little <b>health</b>. Eat often — higher level cats are dramatically stronger!",
+                nextLabel: 'Tasty! →'
+            },
+            {
+                icon: '⚡',
+                title: 'Dash to survive',
+                desc: "Press <b>SPACE</b> or <b>Right-Click</b> to dash away from danger. Dash has a short cooldown — save it for when you're surrounded!",
+                descMobile: "Tap the <b>⚡ dash button</b> (next to the attack button) to dash away from danger. Dash has a short cooldown — save it for tight spots!",
+                nextLabel: 'Ready! →'
+            },
+            {
+                icon: '💎',
+                title: 'Gems = permanent power',
+                desc: "Break <b>chests</b> to earn Gems. Spend them in the main menu on <b>weapon &amp; helmet upgrades</b> that carry over to every future run — making you stronger from the start!",
+                nextLabel: '🗡️ Start Playing!'
+            }
+        ];
+
+        let _obIdx = 0;
+        let _obCallback = null;
+
+        function _obRenderStep(idx) {
+            let s = OB_STEPS[idx];
+            let total = OB_STEPS.length;
+            let isMob = (typeof IS_TOUCH_DEV !== 'undefined' && IS_TOUCH_DEV);
+            // dots
+            let dots = document.getElementById('ob-dots');
+            dots.innerHTML = '';
+            for (let i = 0; i < total; i++) {
+                let d = document.createElement('span');
+                d.className = 'ob-dot' + (i === idx ? ' active' : '');
+                dots.appendChild(d);
+            }
+            document.getElementById('ob-icon').textContent = s.icon;
+            document.getElementById('ob-title').textContent = s.title;
+            let desc  = (isMob && s.descMobile)  ? s.descMobile  : s.desc;
+            let extra = (isMob && s.extraMobile)  ? s.extraMobile : (s.extra || '');
+            let descEl = document.getElementById('ob-desc');
+            descEl.innerHTML = desc + (extra ? '<div class="ob-highlight-box">' + extra + '</div>' : '');
+            // skip button — hidden on forced step
+            let skipBtn = document.getElementById('ob-skip-btn');
+            skipBtn.style.display = s.forced ? 'none' : 'inline-block';
+            // next button label
+            document.getElementById('ob-next-btn').textContent = s.nextLabel || 'Next →';
+        }
+
+        window.advanceOnboarding = function() {
+            _obIdx++;
+            if (_obIdx >= OB_STEPS.length) {
+                window.completeOnboarding();
+            } else {
+                _obRenderStep(_obIdx);
+            }
+        };
+
+        window.skipOnboarding = function() {
+            window.completeOnboarding();
+        };
+
+        window.completeOnboarding = function() {
+            document.getElementById('onboarding-overlay').style.display = 'none';
+            prog.tutorialDone = true;
+            saveProgress();
+            if (typeof _obCallback === 'function') {
+                let cb = _obCallback;
+                _obCallback = null;
+                cb();
+            }
+        };
+
+        // Call this instead of startGame() for new players.
+        // If tutorialDone is already set, fires callback immediately.
+        window.showOnboarding = function(callback) {
+            if (prog.tutorialDone) {
+                if (typeof callback === 'function') callback();
+                return;
+            }
+            _obIdx = 0;
+            _obCallback = callback;
+            document.getElementById('onboarding-overlay').style.display = 'flex';
+            _obRenderStep(0);
+        };
+        // ── END ONBOARDING ──────────────────────────────────────────────────
+
         async function startGame() {
+            // Show onboarding tutorial for first-time players. Onboarding calls
+            // startGame() again when complete/skipped (tutorialDone will be true).
+            if (!prog.tutorialDone) {
+                window.showOnboarding(() => startGame());
+                return;
+            }
+
             // Browser back-gesture / Esc always drops fullscreen. The Play click
             // is a fresh user gesture so we can re-request fullscreen + landscape
             // lock here — fire-and-forget so a denial / non-secure-context doesn't
@@ -4859,7 +5629,7 @@
             
             document.getElementById('tutorial').style.display = 'none';
             tutorialActive = false;
-            if (!prog.tutorialDone) { tutorialActive = true; tutorialIdx = 0; showTutorial(); prog.tutorialDone = true; saveProgress(); }
+            if (!prog.inGameTipsDone) { tutorialActive = true; tutorialIdx = 0; showTutorial(); prog.inGameTipsDone = true; saveProgress(); }
             
             gameState = 'playing'; updateUI(); lastTime = performance.now();
             if (window.notifyGameplayStart) window.notifyGameplayStart();
@@ -6321,7 +7091,7 @@
             } else {
                 panel.style.borderColor = 'var(--danger)';
                 panel.style.boxShadow = '0 0 50px rgba(0,0,0,0.8)';
-                title.innerText = "WASTED";
+                title.innerText = "DEFEATED";
                 title.style.color = 'var(--danger)';
                 title.style.textShadow = 'none';
                 subtitle.innerText = "A dog ended your meow-journey.";
@@ -6504,27 +7274,105 @@
     <!-- ================================================================================================= -->
     <!-- ================================= MODULE: FIREBASE / AUTH ======================================= -->
     <!-- ================================================================================================= -->
+    <!--
+      This module historically used static `import` statements which always fetch
+      gstatic.com/firebasejs even when we don't want Firebase to run (CrazyGames
+      iframe — third-party cookies + IndexedDB are unreliable there and external
+      auth is forbidden by their guidelines).
+
+      We now wrap the whole module body in an async IIFE so we can:
+        • Short-circuit on IS_CRAZYGAMES and run a pure-localStorage session with
+          zero external network. Firebase / Firestore modules are NEVER downloaded.
+        • Use dynamic import() to lazy-fetch Firebase only on catwars.io + beta.
+        • Kill the old fake "85% then wait" loading-bar ramp — it screamed
+          'fake progress' to CrazyGames QA. The bar is now bound to real
+          milestones: 30% on module start, 100% the moment session is ready.
+    -->
     <script type="module">
-        let loadProgress = 0;
+    (async () => {
         const loadBar = document.getElementById('loading-bar-fill');
         const loadText = document.getElementById('loading-status-text');
-        
-        let loadInterval = setInterval(() => {
-            if (loadProgress < 85) {
-                loadProgress += Math.random() * 15;
-                if(loadBar) loadBar.style.width = Math.min(loadProgress, 85) + '%';
-            }
-        }, 300);
 
+        function setLoadProgress(pct, text) {
+            if (loadBar) loadBar.style.width = Math.max(0, Math.min(100, pct)) + '%';
+            if (loadText && text) loadText.innerText = text;
+        }
         function completeLoading() {
-            clearInterval(loadInterval);
-            if(loadBar) loadBar.style.width = '100%';
-            if(loadText) loadText.innerText = "Welcome!";
+            setLoadProgress(100, "Welcome!");
         }
 
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, signInWithPopup, GoogleAuthProvider, EmailAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, linkWithCredential, linkWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, initializeFirestore, doc, setDoc, getDoc, collection, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        setLoadProgress(25, "Booting…");
+
+        // ── CrazyGames short-circuit ─────────────────────────────────────────
+        // No Firebase, no Firestore, no Google Auth. Pure offline guest using
+        // localStorage. The Firebase modules below are never fetched.
+        if (window.IS_CRAZYGAMES) {
+            console.log("[CatWars] CrazyGames build — skipping Firebase, running offline-guest.");
+
+            // Stub every Firebase-dependent global so the rest of the codebase
+            // (login modal handlers, cloud save, leaderboard) becomes a no-op.
+            window.openLoginModal     = () => {};
+            window.closeLoginModal    = () => {};
+            window.handleAuthAction   = () => {};
+            window.loginAsGuest       = () => {};
+            window.loginWithGoogle    = () => {};
+            window.loginWithPassword  = () => {};
+            window.registerWithPassword = () => {};
+            window.logout             = () => {};
+            window.loadCloudProgress  = async () => {};
+            window.fetchFromFirestore = null;
+            window.saveToFirestore    = null;
+            window.fetchLeaderboard   = async () => [];
+            window.updateAuthUI       = () => {};
+
+            window.startLocalSession = () => {
+                if (window._sessionStarted) return;
+                window._sessionStarted = true;
+                window.currentUserUid = 'cg_guest';
+
+                let local = localStorage.getItem('catwars_save_cg_guest');
+                if (local) {
+                    try { window.prog = { ...window.defaultProg, ...JSON.parse(local) }; }
+                    catch (e) { window.prog = { ...window.defaultProg }; }
+                } else {
+                    window.prog = { ...window.defaultProg };
+                }
+                if (!window.prog.nickname) window.prog.nickname = 'Player';
+
+                if (typeof rollDailyQuestsIfNeeded === 'function') rollDailyQuestsIfNeeded();
+                if (typeof updateMenuStats === 'function') updateMenuStats();
+
+                completeLoading();
+                let ls = document.getElementById('loading-screen');
+                if (ls) ls.style.display = 'none';
+                let lg = document.getElementById('login-screen');
+                if (lg) lg.style.display = 'none';
+
+                if (window.startApp) { window.startApp(); window.startApp = null; }
+                window.showLobby();
+            };
+
+            window.startLocalSession();
+            return; // ← critical: skip every Firebase code path below.
+        }
+        // ── End CrazyGames short-circuit ────────────────────────────────────
+
+        // catwars.io / beta: lazy-fetch Firebase modules. Same named bindings
+        // as the original static imports so the existing init code below works
+        // unchanged.
+        setLoadProgress(45, "Connecting…");
+        const [{ initializeApp },
+               { getAuth, signInAnonymously, signInWithCustomToken, signInWithPopup,
+                 GoogleAuthProvider, EmailAuthProvider, signInWithEmailAndPassword,
+                 createUserWithEmailAndPassword, linkWithCredential, linkWithPopup,
+                 onAuthStateChanged, signOut },
+               { getFirestore, initializeFirestore, doc, setDoc, getDoc, collection,
+                 getDocs, query, orderBy, limit }] = await Promise.all([
+            import("https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js"),
+            import("https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js"),
+            import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js"),
+        ]);
+        setLoadProgress(70, "Almost ready…");
 
         console.log("[CatWars] Initializing Firebase...");
         let isCanvasEnv = typeof __firebase_config !== 'undefined';
@@ -7048,6 +7896,26 @@
              document.getElementById('loading-screen').style.display = 'none';
              window.startLocalSession();
         }
+    })().catch(err => {
+        // Hard fail bootstrap (e.g. CDN blocked Firebase imports). Fall back to
+        // a pure-offline guest session so the player still gets into the game
+        // instead of staring at the loading screen forever.
+        console.error("[CatWars] Module bootstrap failed:", err);
+        try {
+            const ls = document.getElementById('loading-screen');
+            if (ls) ls.style.display = 'none';
+            if (typeof window.startLocalSession === 'function') {
+                window.startLocalSession();
+            } else {
+                // No stub set yet — define a minimal one inline so the rest of
+                // the game can still mount.
+                window.currentUserUid = 'offline_guest';
+                window.prog = { ...window.defaultProg };
+                if (window.startApp) { window.startApp(); window.startApp = null; }
+                if (typeof window.showLobby === 'function') window.showLobby();
+            }
+        } catch (e2) { console.error("[CatWars] Emergency fallback also failed:", e2); }
+    });
     </script>
 </body>
 </html>
