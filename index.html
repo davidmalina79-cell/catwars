@@ -998,6 +998,517 @@
         /* In-game rank chip: receives clicks through #game-ui (pointer-events: none). */
         #ui-global-rank { cursor: pointer; pointer-events: auto; }
 
+        /* ── D3c "HERO FOCUS" MAIN MENU ───────────────────────────────────────
+           Top-strip · Left rail · Hero centre · Right rail · Bottom strip.
+           All selectors are scoped under #main-menu so they cannot bleed into
+           other overlays (Codex / Leaderboard / Privacy keep their own .card,
+           .overlay, .enc-tab styles). Hardcore mods are a centred MODAL inside
+           #main-menu (z-index 50) — never pushes the layout. */
+        #main-menu.overlay {
+            padding: 0;
+            display: none; /* default; toggled to block by JS */
+            align-items: stretch;
+            justify-content: flex-start;
+        }
+        #main-menu .mm-root {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(ellipse at 50% 60%, #1a2f44 0%, #0a1219 70%);
+            overflow: hidden;
+        }
+        /* ── TOP STRIP ── */
+        #main-menu .mm-top-strip {
+            position: absolute; top: 0; left: 0; right: 0;
+            height: clamp(44px, 7vh, 62px);
+            display: flex; align-items: center;
+            padding: 0 clamp(10px, 1.5vw, 18px);
+            gap: 10px; z-index: 10;
+            background: linear-gradient(180deg, rgba(0,0,0,0.75) 0%, transparent 100%);
+        }
+        #main-menu .mm-logo {
+            font-size: clamp(14px, 2.2vw, 24px);
+            font-weight: 900; color: var(--primary);
+            letter-spacing: 2px; margin-right: 8px;
+            text-shadow: 1px 1px 2px #000;
+        }
+        #main-menu .mm-chip {
+            background: rgba(0,0,0,0.55);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 18px;
+            padding: 4px 11px;
+            font-size: clamp(10px, 1.1vw, 13px);
+            font-weight: 700;
+            backdrop-filter: blur(6px);
+            white-space: nowrap;
+        }
+        #main-menu .mm-chip-gem { color: #00d4ff; }
+        #main-menu .mm-rank-combo {
+            display: flex; align-items: center; gap: 8px;
+            background: rgba(0,0,0,0.55);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 4px 12px 4px 4px;
+            backdrop-filter: blur(6px);
+            cursor: pointer;
+            font-family: inherit;
+            color: inherit;
+        }
+        #main-menu .mm-rank-combo:hover { filter: brightness(1.08); }
+        /* Rank badge is updated by updateMenuStats() — keep the existing visual */
+        #main-menu #mm-global-rank-badge {
+            background: #7f8c8d; color: #fff;
+            border: 2px solid #fff;
+            font-weight: 900;
+            padding: 3px 10px;
+            border-radius: 7px;
+            font-size: clamp(10px, 1.15vw, 13px);
+            white-space: nowrap;
+            text-shadow: 1px 1px 2px #000;
+            display: inline-block;
+            margin: 0;
+            line-height: 1.2;
+        }
+        #main-menu .mm-xp-combo {
+            display: flex; flex-direction: column; gap: 2px;
+            min-width: clamp(90px, 12vw, 150px);
+        }
+        #main-menu .mm-xp-combo-txt {
+            font-size: clamp(8px, 0.95vw, 11px);
+            color: #aaa; font-weight: 700;
+            display: flex; justify-content: space-between; gap: 8px;
+        }
+        #main-menu .mm-xp-combo-bar {
+            width: 100%; height: 6px;
+            background: rgba(0,0,0,0.6);
+            border-radius: 3px; overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        #main-menu #global-xp-bar {
+            height: 100%; width: 0%;
+            background: linear-gradient(90deg, #3498db, #2ecc71);
+            transition: width 0.3s ease-out;
+        }
+        #main-menu .mm-top-spacer { flex: 1; }
+        /* Wraps existing #auth-section (keeps CrazyGames CSS rule working) */
+        #main-menu .mm-auth-wrap {
+            display: flex; align-items: center; gap: 8px;
+        }
+        #main-menu #auth-status-text {
+            font-size: clamp(10px, 1vw, 12px);
+            color: #aaa; font-weight: 700;
+            text-shadow: 1px 1px 2px #000;
+            white-space: nowrap;
+        }
+        #main-menu #auth-action-btn.mm-auth-btn {
+            background: var(--success);
+            border: none;
+            color: #fff;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: clamp(10px, 1.1vw, 13px);
+            font-family: inherit;
+            box-shadow: 0 4px 0 #27ae60;
+            margin: 0;
+            text-shadow: 1px 1px 2px #000;
+            transition: filter 0.1s, transform 0.1s;
+        }
+        #main-menu #auth-action-btn.mm-auth-btn:hover { filter: brightness(1.1); }
+        #main-menu #auth-action-btn.mm-auth-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #27ae60; }
+
+        /* ── RAILS (left + right) ── */
+        #main-menu .mm-rail {
+            position: absolute;
+            top: clamp(44px, 7vh, 62px);
+            bottom: clamp(38px, 6vh, 52px);
+            width: clamp(76px, 10vw, 120px);
+            display: flex; flex-direction: column;
+            justify-content: center;
+            gap: clamp(4px, 0.8vh, 8px);
+            padding: 10px 6px;
+            z-index: 5;
+        }
+        #main-menu .mm-rail-left {
+            left: 0;
+            background: linear-gradient(90deg, rgba(0,0,0,0.6) 0%, transparent 100%);
+        }
+        #main-menu .mm-rail-right {
+            right: 0;
+            align-items: center;
+            background: linear-gradient(270deg, rgba(0,0,0,0.6) 0%, transparent 100%);
+        }
+        #main-menu .mm-rail-stats,
+        #main-menu .mm-rail-actions {
+            display: flex; flex-direction: column;
+            gap: clamp(4px, 0.8vh, 8px);
+        }
+        #main-menu .mm-rail-actions { margin-top: clamp(8px, 1.5vh, 14px); }
+        #main-menu .mm-stat-mini {
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            background: rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 10px;
+            padding: 7px 4px; width: 100%;
+            min-height: clamp(48px, 7vh, 62px);
+            line-height: 1.1;
+        }
+        #main-menu .mm-stat-mini-icon { font-size: clamp(14px, 1.8vw, 20px); }
+        #main-menu .mm-stat-mini-val {
+            font-size: clamp(11px, 1.3vw, 15px);
+            font-weight: 900; color: var(--primary);
+            margin-top: 2px;
+        }
+        #main-menu .mm-stat-mini-lbl {
+            font-size: clamp(8px, 0.85vw, 10px);
+            color: #888; text-transform: uppercase;
+            letter-spacing: 0.5px; margin-top: 1px;
+        }
+        #main-menu .mm-stat-mini.mm-stat-gem .mm-stat-mini-val { color: #00d4ff; }
+        #main-menu .mm-rail-action {
+            display: flex; flex-direction: column;
+            align-items: center; gap: 3px;
+            width: 100%; padding: 9px 4px;
+            border: none; border-radius: 10px;
+            cursor: pointer; color: #fff;
+            font-family: inherit;
+            transition: all 0.15s;
+            position: relative;
+        }
+        #main-menu .mm-rail-action.mm-lb {
+            background: rgba(230,126,34,0.25);
+            border: 1px solid rgba(230,126,34,0.5);
+        }
+        #main-menu .mm-rail-action.mm-lb:hover {
+            background: rgba(230,126,34,0.4);
+            border-color: #e67e22;
+            box-shadow: 0 0 12px rgba(230,126,34,0.5);
+            transform: translateY(-1px);
+        }
+        #main-menu .mm-rail-action.mm-spin {
+            background: rgba(155,89,182,0.25);
+            border: 1px solid rgba(155,89,182,0.5);
+        }
+        #main-menu .mm-rail-action.mm-spin:hover {
+            background: rgba(155,89,182,0.4);
+            border-color: #9b59b6;
+            box-shadow: 0 0 12px rgba(155,89,182,0.5);
+            transform: translateY(-1px);
+        }
+        #main-menu .mm-rail-action-icon { font-size: clamp(18px, 2.4vw, 26px); }
+        #main-menu .mm-rail-action-lbl {
+            font-size: clamp(9px, 1vw, 12px);
+            font-weight: 900; letter-spacing: 0.3px;
+            line-height: 1.1; text-align: center;
+        }
+        #main-menu .mm-rail-action-sub {
+            font-size: clamp(8px, 0.9vw, 10px);
+            color: #ddd; font-weight: 700;
+            line-height: 1.1; margin-top: 1px;
+        }
+
+        /* ── RIGHT RAIL DOCK BUTTONS ── */
+        #main-menu .mm-dock-btn {
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            gap: 2px;
+            background: rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 10px;
+            padding: 7px 4px; width: 100%;
+            min-height: clamp(48px, 7vh, 62px);
+            cursor: pointer; color: #fff;
+            font-family: inherit;
+            transition: all 0.15s;
+            line-height: 1.1; position: relative;
+        }
+        #main-menu .mm-dock-btn:hover {
+            background: rgba(243,156,18,0.2);
+            border-color: var(--primary);
+            transform: translateX(-3px);
+        }
+        #main-menu .mm-dock-icon { font-size: clamp(14px, 1.8vw, 20px); }
+        #main-menu .mm-dock-lbl {
+            font-size: clamp(8px, 0.85vw, 10px);
+            font-weight: 900;
+            margin-top: 2px;
+            letter-spacing: 0.3px;
+        }
+        /* Re-style existing #boost-equip-badge inside the dock button */
+        #main-menu .mm-dock-btn #boost-equip-badge {
+            position: absolute;
+            top: 3px; right: 3px;
+            background: var(--success);
+            color: #fff;
+            font-size: 8px;
+            padding: 1px 4px;
+            border-radius: 6px;
+            font-weight: 900;
+            border: 1.5px solid var(--bg, #0a1219);
+            /* display toggled by updateBoostEquipBadge() */
+        }
+
+        /* ── HERO CENTRE ── */
+        #main-menu .mm-hero {
+            position: absolute;
+            left: clamp(76px, 10vw, 120px);
+            right: clamp(76px, 10vw, 120px);
+            top: clamp(44px, 7vh, 62px);
+            bottom: clamp(38px, 6vh, 52px);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: clamp(8px, 1.5vh, 16px);
+            gap: clamp(7px, 1.3vh, 13px);
+        }
+        #main-menu .mm-hero-cat {
+            position: absolute; inset: 0;
+            display: flex; align-items: center; justify-content: center;
+            font-size: clamp(140px, 32vh, 340px);
+            opacity: 0.07;
+            pointer-events: none;
+            user-select: none;
+        }
+        #main-menu .mm-hero-title {
+            font-size: clamp(22px, 4.5vw, 52px);
+            font-weight: 900;
+            color: var(--primary);
+            text-shadow: 0 0 30px rgba(243,156,18,0.5), 3px 3px 0 #000;
+            letter-spacing: 3px;
+            text-align: center;
+            z-index: 1; line-height: 1;
+            margin: 0;
+        }
+        #main-menu .mm-hero-sub {
+            font-size: clamp(10px, 1.3vw, 15px);
+            color: #888;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            margin-top: -4px;
+            z-index: 1;
+        }
+        /* Re-style existing #player-nickname inside hero */
+        #main-menu .mm-hero #player-nickname.nickname-input {
+            width: 100%;
+            max-width: clamp(280px, 40vw, 440px);
+            padding: clamp(8px, 1.5vh, 12px) 14px;
+            margin: 0;
+            font-size: clamp(13px, 1.7vw, 18px);
+            font-weight: 700;
+            text-align: center;
+            background: rgba(44,62,80,0.7);
+            color: #fff;
+            border: 2px solid rgba(243,156,18,0.5);
+            border-radius: 10px;
+            outline: none;
+            backdrop-filter: blur(4px);
+            box-shadow: none;
+            z-index: 1;
+            transition: 0.2s;
+        }
+        #main-menu .mm-hero #player-nickname.nickname-input:focus {
+            border-color: var(--primary-hover);
+            box-shadow: 0 0 20px var(--primary);
+        }
+        /* Re-style existing #btn-start-game as the mega PLAY button */
+        #main-menu .mm-hero #btn-start-game.btn-main {
+            width: 100%;
+            max-width: clamp(280px, 40vw, 440px);
+            padding: clamp(14px, 3vh, 24px);
+            font-size: clamp(22px, 3.5vw, 40px);
+            font-weight: 900;
+            border: none;
+            border-radius: 14px;
+            background: linear-gradient(180deg, #2ecc71 0%, #27ae60 100%);
+            color: #fff;
+            cursor: pointer;
+            box-shadow: 0 8px 0 #1e8449, 0 12px 30px rgba(46,204,113,0.4);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            z-index: 1;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            transition: all 0.15s;
+            margin: 0;
+            max-height: none;
+        }
+        #main-menu .mm-hero #btn-start-game.btn-main:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 0 #1e8449, 0 14px 36px rgba(46,204,113,0.5);
+            filter: none;
+        }
+        #main-menu .mm-hero #btn-start-game.btn-main:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #1e8449;
+        }
+        /* Mode pill row */
+        #main-menu .mm-modes-row {
+            display: flex; gap: 6px;
+            z-index: 1; width: 100%;
+            max-width: clamp(380px, 52vw, 580px);
+            flex-shrink: 0;
+        }
+        #main-menu .mm-modes-row .mode-card {
+            flex: 1;
+            background: rgba(0,0,0,0.55);
+            border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: clamp(6px, 1vh, 10px) 4px;
+            min-height: 0;
+            backdrop-filter: blur(4px);
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+            position: relative;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+        }
+        #main-menu .mm-modes-row .mode-card:hover:not(.locked) {
+            border-color: var(--primary);
+            background: rgba(243,156,18,0.15);
+            transform: translateY(-2px);
+        }
+        #main-menu .mm-modes-row .mode-card.active {
+            border-color: var(--primary);
+            background: rgba(243,156,18,0.25);
+            box-shadow: 0 0 16px rgba(243,156,18,0.4);
+        }
+        #main-menu .mm-modes-row .mode-icon {
+            font-size: clamp(14px, 2vw, 22px);
+            margin-bottom: 0;
+            filter: drop-shadow(1px 1px 2px #000);
+        }
+        #main-menu .mm-modes-row .mode-name {
+            font-size: clamp(9px, 1vw, 12px);
+            font-weight: 700;
+            margin-top: 2px;
+            min-height: 0;
+            line-height: 1.1;
+        }
+        #main-menu .mm-modes-row .mode-badge {
+            top: -6px; right: -4px;
+            font-size: 8px;
+            padding: 1px 5px;
+        }
+
+        /* ── BOTTOM STRIP ── */
+        #main-menu .mm-bot-strip {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            height: clamp(38px, 6vh, 52px);
+            display: flex; align-items: center;
+            padding: 0 clamp(10px, 1.5vw, 18px);
+            gap: 8px; z-index: 10;
+            background: linear-gradient(0deg, rgba(0,0,0,0.7) 0%, transparent 100%);
+        }
+        #main-menu .mm-bot-spacer { flex: 1; }
+        #main-menu .mm-bot-links { display: flex; gap: 10px; font-size: 10px; }
+        #main-menu .mm-bot-links a {
+            color: #888; text-decoration: none; cursor: pointer;
+            font-size: clamp(10px, 1.1vw, 13px);
+        }
+        #main-menu .mm-bot-links a:hover { color: #ddd; }
+        #main-menu .mm-bot-version {
+            color: #555;
+            font-size: clamp(9px, 1vw, 11px);
+        }
+
+        /* ── HARDCORE OVERLAY (centred modal inside #main-menu) ── */
+        #main-menu .mm-hc-overlay {
+            position: absolute; inset: 0;
+            background: rgba(10,18,25,0.85);
+            backdrop-filter: blur(6px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+            padding: clamp(10px, 2vh, 20px);
+        }
+        #main-menu .mm-hc-overlay.show { display: flex; }
+        #main-menu .mm-hc-modal {
+            background: var(--panel-light, #2c3e50);
+            border: 3px solid var(--danger);
+            border-radius: 16px;
+            padding: clamp(12px, 2vw, 20px);
+            width: 100%;
+            max-width: clamp(320px, 44vw, 440px);
+            max-height: 90%;
+            overflow-y: auto;
+            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+        }
+        #main-menu .mm-hc-head {
+            display: flex; justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #444;
+            padding-bottom: 8px;
+            margin-bottom: 10px;
+            gap: 8px;
+        }
+        #main-menu .mm-hc-head h3 {
+            margin: 0; color: var(--danger);
+            font-size: clamp(13px, 1.6vw, 17px);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        #main-menu .mm-hc-mult {
+            font-weight: bold;
+            color: var(--primary-hover);
+            font-size: clamp(12px, 1.5vw, 15px);
+        }
+        #main-menu .mm-hc-close {
+            background: transparent; border: none;
+            color: #888; font-size: 22px;
+            cursor: pointer; line-height: 1;
+            padding: 0 6px; font-family: inherit;
+        }
+        #main-menu .mm-hc-close:hover { color: #fff; }
+        #main-menu .mm-hc-list {
+            display: flex; flex-direction: column;
+            gap: 3px; text-align: left;
+            margin-bottom: 10px;
+        }
+        #main-menu .mm-hc-comp {
+            display: flex; align-items: center;
+            gap: 8px; padding: 8px 10px;
+            background: rgba(231,76,60,0.15);
+            border-radius: 8px;
+            border: 1px solid var(--danger);
+            cursor: pointer;
+            justify-content: center;
+        }
+        #main-menu .mm-hc-comp input {
+            transform: scale(1.2); cursor: pointer;
+            accent-color: var(--danger);
+        }
+        #main-menu .mm-hc-comp span {
+            color: var(--primary-hover);
+            font-weight: 900;
+            font-size: clamp(11px, 1.3vw, 14px);
+            letter-spacing: 0.5px;
+        }
+        #main-menu .mm-hc-confirm {
+            width: 100%; margin-top: 12px;
+            padding: 12px;
+            font-size: clamp(13px, 1.6vw, 16px);
+            font-weight: 900;
+            border: none; border-radius: 10px;
+            background: linear-gradient(180deg, #e74c3c, #c0392b);
+            color: #fff; cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 0 #922b21;
+            font-family: inherit;
+            text-shadow: 1px 1px 2px #000;
+        }
+        #main-menu .mm-hc-confirm:hover { filter: brightness(1.1); }
+        #main-menu .mm-hc-confirm:active { transform: translateY(2px); box-shadow: 0 2px 0 #922b21; }
+        /* ── END D3c MAIN MENU ────────────────────────────────────────────── */
+
+        /* TODO: legacy mobile / narrow-iframe @media rules below were authored
+           for the old three-column .menu-container layout (.menu-col, #solo-panel,
+           .mm-codex-tile, .mode-card legacy sizing, mobile-tab-bar). After the
+           D3c refactor they no longer match anything inside #main-menu and act
+           as dead code. Kept verbatim per spec — revisit when responsive pass
+           for portrait / landscape mobile lands. */
         /* MOBILE — stack columns vertically on touch devices (phones/tablets).
            pointer: coarse keeps this from firing inside a narrow desktop iframe
            on CrazyGames, where pointer: fine (mouse) is always reported even
@@ -1701,185 +2212,165 @@
         </div>
     </div>
 
-    <!-- MAIN MENU (COMPLETELY REDESIGNED FOR 16:9) -->
+    <!-- MAIN MENU — D3c "Hero Focus" layout (v1.7.27).
+         Structure: top-strip · left rail · hero centre · right rail · bottom strip.
+         Hardcore mods open as a centred MODAL (#mm-hc-overlay) inside this same
+         container so they never push the layout. Existing IDs are preserved so
+         updateMenuStats(), updateAuthUI(), updateBoostEquipBadge(), selectMode(),
+         calcModMultiplier(), toggleCompetitiveHardcore() keep working untouched. -->
     <div id="main-menu" class="overlay" style="display: none;">
+        <div class="mm-root">
 
-        <div class="menu-container">
-            <!-- LEFT COLUMN: Profile & Stats -->
-            <div class="menu-col side">
-                
-                <!-- GLOBÁLNÍ RANK A XP — click opens Codex (Global ranks) -->
-                <button type="button" class="mm-rank-codex-hit" onclick="openEncyclopedia('ranks')" title="Global ranks — open Codex" aria-label="Open Global ranks in Codex">
-                <div id="mm-global-rank-badge" style="background: #7f8c8d; color: white; padding: 10px 18px; border-radius: 10px; font-weight: bold; border: 3px solid #fff; display: inline-block; margin: 10px auto 10px auto; font-size: 18px; text-shadow: 1px 1px 3px #000; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">
-                    Stray Recruit ★
-                </div>
-                <div style="font-size: 15px; color: #aaa; margin-bottom: 8px; font-weight: bold;">Global Level: <span id="mm-global-level" style="color: #fff;">1</span></div>
-                
-                <div style="width: 100%; height: 18px; background: rgba(0,0,0,0.6); border-radius: 9px; border: 2px solid #444; overflow: hidden; position: relative;">
-                    <div id="global-xp-bar" style="height: 100%; width: 0%; background: linear-gradient(90deg, #3498db, #2ecc71); transition: width 0.3s ease-out;"></div>
-                </div>
-                <div id="global-xp-text" style="font-size: 13px; color: #fff; margin-top: 5px; margin-bottom: 25px; font-weight: bold;">0 / 1000 XP</div>
+            <!-- TOP STRIP — logo · rank+XP · gems · spacer · sign-in -->
+            <div class="mm-top-strip">
+                <div class="mm-logo">CatWars.io</div>
+                <button type="button" class="mm-rank-combo" onclick="openEncyclopedia('ranks')" title="Global ranks — open Codex" aria-label="Open Global ranks in Codex">
+                    <div id="mm-global-rank-badge">Stray Recruit ★</div>
+                    <div class="mm-xp-combo">
+                        <div class="mm-xp-combo-txt"><span>Lv <span id="mm-global-level">1</span></span><span id="global-xp-text">0 / 1000 XP</span></div>
+                        <div class="mm-xp-combo-bar"><div id="global-xp-bar"></div></div>
+                    </div>
                 </button>
-                <!-- KONEC GLOBÁLNÍHO RANKU -->
-
-                <div style="font-size: 14px; color: #aaa; margin-bottom: 12px; font-weight: bold; background: rgba(0,0,0,0.4); padding: 8px; border-radius: 8px; text-align: left;">
-                    ⏱️ Best Solo: <span id="mm-best-solo" style="color: #fff; float: right;">--:--</span><br>
-                    💀 Best Hardcore: <span id="mm-best-hardcore" style="color: #fff; float: right;">--:--</span>
-                </div>
-
-                <div class="stat-box" style="margin-bottom: 12px; font-size: 16px;">Kills: <span id="mm-kills">0</span></div>
-                <div class="stat-box" style="margin-bottom: 12px; font-size: 16px;">Max Lv: <span id="mm-level">1</span></div>
-                <div class="stat-box gem-text" style="margin-bottom: 12px; font-size: 18px;">💎 <span id="mm-gems">0</span></div>
-                <button class="btn-main" onclick="window.openLeaderboard()" style="background: #e67e22; box-shadow: 0 6px 0 #d35400; width: 100%; font-size: 18px; padding: 15px; margin-top: 0;">🏆 Leaderboard</button>
-                <button class="btn-main" id="btn-daily-spin" onclick="window.openDailySpin()" style="background: #9b59b6; box-shadow: 0 6px 0 #8e44ad; width: 100%; font-size: 18px; padding: 15px; margin: 8px 0 0 0; line-height: 1.2;">🎰 Daily Spin<br><span id="daily-spin-sub" style="font-size: 14px;">Ready!</span></button>
-
-                <div id="auth-section" style="margin-top: auto; border-top: 2px solid rgba(255,255,255,0.1); padding-top: 12px; display: flex; flex-direction: column; gap: 8px;">
-                    <div id="auth-status-text" style="color: #aaa; font-size: 13px; font-weight: bold; text-shadow: 1px 1px 2px black; text-align: center;">Playing as: Guest</div>
-                    <button id="auth-action-btn" class="btn-main" onclick="window.handleAuthAction()" style="font-size: 15px; padding: 12px 16px; margin: 0; background: var(--success); box-shadow: 0 4px 0 #27ae60; width: 100%;">🔑 Sign In to Save</button>
+                <div class="mm-chip mm-chip-gem">💎 <span id="mm-gems">0</span></div>
+                <div class="mm-top-spacer"></div>
+                <!-- #auth-section wrapper retained for the html.crazygames CSS rule that hides it on CrazyGames. -->
+                <div id="auth-section" class="mm-auth-wrap">
+                    <div id="auth-status-text">Playing as: Guest</div>
+                    <button id="auth-action-btn" class="mm-auth-btn" onclick="window.handleAuthAction()">🔑 Sign In</button>
                 </div>
             </div>
 
-            <!-- CENTER COLUMN: Play Area -->
-            <div class="menu-col center">
-                <div class="game-art-banner" style="margin-bottom: 12px; flex-shrink: 0; width: 100%;">
-                    <img data-src="img/banner.png" alt="CatWars Battle" loading="lazy" onerror="this.style.display='none';" class="js-banner-img">
+            <!-- LEFT RAIL — quick stats + leaderboard + daily spin -->
+            <div class="mm-rail mm-rail-left">
+                <div class="mm-rail-stats">
+                    <div class="mm-stat-mini">
+                        <div class="mm-stat-mini-icon">💀</div>
+                        <div class="mm-stat-mini-val"><span id="mm-kills">0</span></div>
+                        <div class="mm-stat-mini-lbl">Kills</div>
+                    </div>
+                    <div class="mm-stat-mini">
+                        <div class="mm-stat-mini-icon">⭐</div>
+                        <div class="mm-stat-mini-val"><span id="mm-level">1</span></div>
+                        <div class="mm-stat-mini-lbl">Max Lv</div>
+                    </div>
                 </div>
-                
-                <input type="text" id="player-nickname" class="nickname-input" placeholder="Enter your name..." autocomplete="off" maxlength="15" style="margin: 0 0 12px 0; width: 100%; max-width: 400px; box-sizing: border-box; flex-shrink: 0;">
+                <div class="mm-rail-actions">
+                    <button type="button" class="mm-rail-action mm-lb" onclick="window.openLeaderboard()">
+                        <div class="mm-rail-action-icon">🏆</div>
+                        <div class="mm-rail-action-lbl">Leaderboard</div>
+                    </button>
+                    <button type="button" id="btn-daily-spin" class="mm-rail-action mm-spin" onclick="window.openDailySpin()">
+                        <div class="mm-rail-action-icon">🎰</div>
+                        <div class="mm-rail-action-lbl">Daily Spin</div>
+                        <div class="mm-rail-action-sub" id="daily-spin-sub">Ready!</div>
+                    </button>
+                </div>
+                <!-- Hidden best-time spans — updateMenuStats() writes here; surfacing handled in Leaderboard. -->
+                <span id="mm-best-solo" hidden></span>
+                <span id="mm-best-hardcore" hidden></span>
+            </div>
 
-                <button class="btn-main" id="btn-start-game" onclick="startGame()" style="font-size: 26px; padding: 15px 30px; width: 100%; max-width: 400px; margin: 0 0 12px 0; flex-shrink: 0; background: var(--success); box-shadow: 0 6px 0 #27ae60;">🗡️ PLAY SOLO</button>
-                
-                <!-- VÝBĚR MÓDU -->
-                <div class="modes-grid" style="flex-shrink: 0; margin: 0 0 8px 0;">
+            <!-- HERO CENTRE — title · nickname · PLAY · mode pills -->
+            <div class="mm-hero">
+                <div class="mm-hero-cat">🐱</div>
+                <div class="mm-hero-title">CatWars.io</div>
+                <div class="mm-hero-sub" id="mm-hero-sub">Survive · Evolve · Dominate</div>
+
+                <input type="text" id="player-nickname" class="nickname-input" placeholder="Enter your name..." autocomplete="off" maxlength="15">
+
+                <button class="btn-main" id="btn-start-game" onclick="window.mmPlayClick()">🗡️ PLAY</button>
+
+                <div class="mm-modes-row">
                     <div class="mode-card active" id="mode-solo" onclick="selectMode('solo')">
                         <div class="mode-icon">🗡️</div>
-                        <div class="mode-name">Solo Survival</div>
+                        <div class="mode-name">Solo</div>
                     </div>
                     <div class="mode-card" id="mode-hardcore" onclick="selectMode('hardcore')">
                         <div class="mode-icon">💀</div>
                         <div class="mode-name">Hardcore</div>
                     </div>
                     <div class="mode-card" id="mode-team" onclick="selectMode('team')">
-                        <div class="mode-icon" style="font-size: 17px; letter-spacing: -1px; white-space: nowrap;">🐱⚔️🐺</div>
-                        <div class="mode-name">Cats vs Dogs</div>
+                        <div class="mode-icon" style="font-size: 13px; letter-spacing: -1px;">🐱⚔️🐺</div>
+                        <div class="mode-name">Co-Op</div>
                         <div class="mode-badge" style="background: var(--info);">NEW</div>
                     </div>
                     <div class="mode-card" id="mode-ffa" onclick="selectMode('ffa')">
-                        <div class="mode-icon" style="font-size: 17px; letter-spacing: -1px; white-space: nowrap;">🐱⚔️🐱</div>
+                        <div class="mode-icon" style="font-size: 13px; letter-spacing: -1px;">🐱⚔️🐱</div>
                         <div class="mode-name">Deathmatch</div>
                         <div class="mode-badge" style="background: var(--danger);">NEW</div>
                     </div>
                 </div>
-
-                <!-- HARDCORE MODIFIERS PANEL (Skrytý by default) -->
-                <div id="modifiers-panel" style="display: none; flex-direction: column; background: rgba(0,0,0,0.5); padding: 6px 12px; border-radius: 12px; border: 2px solid var(--danger); width: 100%; max-width: 400px; margin-bottom: 0; box-sizing: border-box; gap: 2px; flex-shrink: 0; flex-grow: 1; justify-content: space-between;">
-                    
-                    <!-- BLOK 1: Hlavička a Násobič -->
-                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #444; padding-bottom: 4px;">
-                        <h3 style="margin: 0; color: var(--danger); font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">💀 Hardcore Mods</h3>
-                        <div style="font-weight: bold; color: #f1c40f; font-size: 14px; text-shadow: 1px 1px 2px #000;">
-                            Multiplier: <span id="mod-total-mult" style="font-size: 18px;">1.0</span>x
-                        </div>
-                    </div>
-
-                    <!-- BLOK 2: Modifikátory (Pod sebou) -->
-                    <div style="display: flex; flex-direction: column; gap: 2px; text-align: left;">
-                        <label class="mod-label" style="font-size: 12px; padding: 2px 5px;"><input type="checkbox" id="mod-double-dmg" onchange="calcModMultiplier()"> 💀 Double Damage <span class="mod-bonus">+200%</span></label>
-                        <label class="mod-label" style="font-size: 12px; padding: 2px 5px;"><input type="checkbox" id="mod-fast" onchange="calcModMultiplier()"> ⚡ Fast Dogs <span class="mod-bonus">+50%</span></label>
-                        <label class="mod-label" style="font-size: 12px; padding: 2px 5px;"><input type="checkbox" id="mod-noheal" onchange="calcModMultiplier()"> 🚫 No Food Heal <span class="mod-bonus">+100%</span></label>
-                        <label class="mod-label" style="font-size: 12px; padding: 2px 5px;"><input type="checkbox" id="mod-nodash" onchange="calcModMultiplier()"> 🐢 No Dash <span class="mod-bonus">+50%</span></label>
-                        <label class="mod-label" style="font-size: 12px; padding: 2px 5px;"><input type="checkbox" id="mod-doubleboss" onchange="calcModMultiplier()"> 👹 Double Bosses <span class="mod-bonus">+100%</span></label>
-                    </div>
-                    
-                    <!-- BLOK 3: Competitive mód -->
-                    <div style="border-top: 1px solid #444; padding-top: 6px; display: flex; justify-content: center; margin-top: auto;">
-                        <label class="mod-label" style="padding: 4px 10px; background: rgba(231, 76, 60, 0.15); border-radius: 8px; border: 1px solid var(--danger); width: 100%; justify-content: center;">
-                            <input type="checkbox" id="mod-comp-hardcore" onchange="toggleCompetitiveHardcore()">
-                            <span style="color: #f1c40f; font-weight: 900; text-shadow: 1px 1px 2px #000; font-size: 13px; letter-spacing: 0.5px;">🏆 COMPETITIVE HARDCORE</span>
-                        </label>
-                    </div>
-                </div>
-
-                <!-- SOLO INFO PANEL -->
-                <!-- flex-grow: 0 — the description should hug its content. flex-grow: 1
-                     used to stretch the green-bordered box to fill the entire column,
-                     leaving a giant empty void below the bullet list on tall screens. -->
-                <div id="solo-panel" style="display: flex; flex-direction: column; background: rgba(0,0,0,0.5); padding: 12px; border-radius: 12px; border: 2px solid var(--success); width: 100%; max-width: 400px; margin-bottom: 0; box-sizing: border-box; flex-shrink: 0; flex-grow: 0; justify-content: flex-start; text-align: left;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #444; padding-bottom: 4px; margin-bottom: 12px;">
-                        <h3 style="margin: 0; color: var(--success); font-size: 15px; text-transform: uppercase; letter-spacing: 0.5px;">🗡️ Classic Survival</h3>
-                    </div>
-                    <p style="color: #ccc; font-size: 14px; margin: 0 0 10px 0; line-height: 1.4;">The standard CatWars experience. Survive against endless waves of dogs, level up your feline warrior, and collect gems.</p>
-                    <ul style="color: #aaa; font-size: 13px; margin: 0; padding-left: 20px; line-height: 1.7;">
-                        <li>Hunt food to evolve up to Level 50.</li>
-                        <li>Defeat Bosses to earn massive gem rewards.</li>
-                        <li>Find chests and complete your daily quests.</li>
-                    </ul>
-                </div>
-
-                <!-- TEAM INFO PANEL — flex-grow: 0 for the same reason as #solo-panel. -->
-                <div id="team-panel" style="display: none; flex-direction: column; background: rgba(0,0,0,0.5); padding: 12px; border-radius: 12px; border: 2px solid var(--info); width: 100%; max-width: 400px; margin-bottom: 0; box-sizing: border-box; flex-shrink: 0; flex-grow: 0; justify-content: flex-start; text-align: left;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #444; padding-bottom: 4px; margin-bottom: 12px;">
-                        <h3 style="margin: 0; color: var(--info); font-size: 15px; text-transform: uppercase; letter-spacing: 0.5px;">🔵 Co-Op Domination</h3>
-                    </div>
-                    <p style="color: #ccc; font-size: 14px; margin: 0 0 10px 0; line-height: 1.4;">Fight alongside AI-controlled cat allies! Work together to clear the map, share the aggro, and dominate the dog hordes.</p>
-                    <ul style="color: #aaa; font-size: 13px; margin: 0; padding-left: 20px; line-height: 1.7;">
-                        <li>8 Allied Cats roam the map with you.</li>
-                        <li>Watch out: Allies steal your kills and food!</li>
-                        <li>Chaotic battles perfect for casual play.</li>
-                    </ul>
-                </div>
             </div>
 
-            <!-- RIGHT COLUMN: Upgrades -->
-            <div class="menu-col side">
-                <div style="display: flex; flex-direction: column; gap: 14px; flex-grow: 1; justify-content: flex-start; margin-top: 0;">
-                    <button class="btn-main" onclick="openEncyclopedia('cats')" style="background: #3498db; color: #fff; box-shadow: 0 8px 0 #2980b9; width: 100%; padding: 18px 15px; margin: 0; display: flex; align-items: center; justify-content: flex-start; gap: 15px; border-radius: 16px;">
-                        <span style="font-size: 40px; line-height: 1; filter: drop-shadow(2px 4px 4px rgba(0,0,0,0.4)); width: 50px; text-align: center;">🐱</span>
-                        <span style="font-size: 20px; font-weight: 900; letter-spacing: 1px;">UPGRADES</span>
-                    </button>
+            <!-- RIGHT RAIL — codex shortcuts -->
+            <div class="mm-rail mm-rail-right">
+                <button type="button" class="mm-dock-btn" onclick="openEncyclopedia('cats')">
+                    <div class="mm-dock-icon">🐱</div>
+                    <div class="mm-dock-lbl">UPGRADES</div>
+                </button>
+                <button type="button" class="mm-dock-btn" onclick="openEncyclopedia('dogs')">
+                    <div class="mm-dock-icon">🐺</div>
+                    <div class="mm-dock-lbl">BESTIARY</div>
+                </button>
+                <button type="button" class="mm-dock-btn" onclick="openEncyclopedia('armory')">
+                    <div class="mm-dock-icon">⚔️</div>
+                    <div class="mm-dock-lbl">WEAPONS</div>
+                </button>
+                <button type="button" class="mm-dock-btn" onclick="openEncyclopedia('boosts')">
+                    <div class="mm-dock-icon">🔥</div>
+                    <div class="mm-dock-lbl">BOOSTS</div>
+                    <div id="boost-equip-badge" style="display: none;">0/3</div>
+                </button>
+                <button type="button" class="mm-dock-btn" onclick="openEncyclopedia('quests')">
+                    <div class="mm-dock-icon">💎</div>
+                    <div class="mm-dock-lbl">QUESTS</div>
+                </button>
+            </div>
 
-                    <button class="btn-main" onclick="openEncyclopedia('dogs')" style="background: #9b59b6; color: #fff; box-shadow: 0 8px 0 #8e44ad; width: 100%; padding: 18px 15px; margin: 0; display: flex; align-items: center; justify-content: flex-start; gap: 15px; border-radius: 16px;">
-                        <span style="font-size: 40px; line-height: 1; filter: drop-shadow(2px 4px 4px rgba(0,0,0,0.4)); width: 50px; text-align: center;">🐺</span>
-                        <span style="font-size: 20px; font-weight: 900; letter-spacing: 1px;">BESTIARY</span>
-                    </button>
-
-                    <button class="btn-main" onclick="openEncyclopedia('armory')" style="background: #f1c40f; color: #fff; text-shadow: 1px 1px 2px #000; box-shadow: 0 8px 0 #d68910; width: 100%; padding: 18px 15px; margin: 0; display: flex; align-items: center; justify-content: flex-start; gap: 15px; border-radius: 16px;">
-                        <span style="font-size: 40px; line-height: 1; filter: drop-shadow(2px 4px 4px rgba(0,0,0,0.4)); width: 50px; text-align: center;">⚔️</span>
-                        <span style="font-size: 20px; font-weight: 900; letter-spacing: 1px;">WEAPONS</span>
-                    </button>
-
-                    <button class="btn-main" onclick="openEncyclopedia('boosts')" style="background: #e67e22; color: #fff; box-shadow: 0 8px 0 #d35400; width: 100%; padding: 18px 15px; margin: 0; display: flex; align-items: center; justify-content: flex-start; gap: 15px; border-radius: 16px; position: relative;">
-                        <span style="font-size: 40px; line-height: 1; filter: drop-shadow(2px 4px 4px rgba(0,0,0,0.4)); width: 50px; text-align: center;">🔥</span>
-                        <span style="font-size: 20px; font-weight: 900; letter-spacing: 1px;">BOOSTS</span>
-                        <div id="boost-equip-badge" style="position: absolute; top: -5px; right: -5px; background: var(--success); color: #fff; font-size: 11px; padding: 3px 7px; border-radius: 8px; font-weight: bold; border: 2px solid #111; text-transform: uppercase; display: none;">0/3</div>
-                    </button>
-
-                    <button class="btn-main" onclick="openEncyclopedia('quests')" style="background: #e74c3c; color: #fff; box-shadow: 0 8px 0 #c0392b; width: 100%; padding: 18px 15px; margin: 0; display: flex; align-items: center; justify-content: flex-start; gap: 15px; border-radius: 16px;">
-                        <span style="font-size: 40px; line-height: 1; filter: drop-shadow(2px 4px 4px rgba(0,0,0,0.4)); width: 50px; text-align: center;">💎</span>
-                        <span style="font-size: 20px; font-weight: 900; letter-spacing: 1px;">QUESTS</span>
-                    </button>
+            <!-- BOTTOM STRIP — legal links + version.
+                 Uses class menu-about-footer so the existing
+                 html.crazygames .menu-about-footer { display:none } rule still hides it. -->
+            <div class="mm-bot-strip menu-about-footer">
+                <div class="mm-bot-links">
+                    <a href="#" onclick="window.openPrivacy('about'); return false;">About</a>
+                    <a href="#" onclick="window.openPrivacy('howto'); return false;">How to play</a>
+                    <a href="#" onclick="window.openPrivacy('privacy'); return false;">Privacy</a>
+                    <a href="#" onclick="window.openPrivacy('cookies'); return false;">Cookies &amp; Ads</a>
                 </div>
+                <div class="mm-bot-spacer"></div>
+                <div class="mm-bot-version">v1.7.27</div>
+            </div>
 
-                <!-- About footer — sits inside the right column as a plain flex child; no special positioning needed -->
-                <footer class="menu-about-footer" style="margin-top: 12px; padding: 10px 4px calc(6px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid rgba(255,255,255,0.08); font-size: 11px; line-height: 1.5; color: #888; text-align: center;">
-                    <div style="margin-bottom: 5px;">
-                        <a href="#" onclick="window.openPrivacy('about'); return false;" style="color: #bbb; text-decoration: none;">About</a>
-                        <span style="margin: 0 5px; color: #555;">·</span>
-                        <a href="#" onclick="window.openPrivacy('howto'); return false;" style="color: #bbb; text-decoration: none;">How to play</a>
-                        <span style="margin: 0 5px; color: #555;">·</span>
-                        <a href="#" onclick="window.openPrivacy('privacy'); return false;" style="color: #bbb; text-decoration: none;">Privacy</a>
-                        <span style="margin: 0 5px; color: #555;">·</span>
-                        <a href="#" onclick="window.openPrivacy('cookies'); return false;" style="color: #bbb; text-decoration: none;">Cookies &amp; Ads</a>
+            <!-- HARDCORE MODS — centred modal, z-index 50 (above menu, below other overlays).
+                 IDs match calcModMultiplier() and toggleCompetitiveHardcore() — these JS
+                 functions are untouched. The legacy inline #modifiers-panel was removed; the
+                 selectMode() helper guards every panel access with `if (modPanel)` so its
+                 absence is a no-op. -->
+            <div class="mm-hc-overlay" id="mm-hc-overlay" onclick="if(event.target===this) window.closeHardcoreOverlay()">
+                <div class="mm-hc-modal">
+                    <div class="mm-hc-head">
+                        <h3>💀 Hardcore Mods</h3>
+                        <div class="mm-hc-mult">Multiplier: <span id="mod-total-mult">1.0</span>x</div>
+                        <button type="button" class="mm-hc-close" onclick="window.closeHardcoreOverlay()" aria-label="Close hardcore modifiers">✕</button>
                     </div>
-                    <b style="color: #ccc;">CatWars.io</b> — free 2D browser survival game.
-                    Hunt food, evolve through <b>50 levels</b>, survive endless dog hordes.
-                    Solo · Hardcore · Co‑Op · no install · no pay‑to‑win.
-                    <span style="display: block; margin-top: 4px; color: #555;">v1.7.26</span>
-                </footer>
+                    <div class="mm-hc-list">
+                        <label class="mod-label"><input type="checkbox" id="mod-double-dmg" onchange="calcModMultiplier()"> 💀 Double Damage <span class="mod-bonus">+200%</span></label>
+                        <label class="mod-label"><input type="checkbox" id="mod-fast" onchange="calcModMultiplier()"> ⚡ Fast Dogs <span class="mod-bonus">+50%</span></label>
+                        <label class="mod-label"><input type="checkbox" id="mod-noheal" onchange="calcModMultiplier()"> 🚫 No Food Heal <span class="mod-bonus">+100%</span></label>
+                        <label class="mod-label"><input type="checkbox" id="mod-nodash" onchange="calcModMultiplier()"> 🐢 No Dash <span class="mod-bonus">+50%</span></label>
+                        <label class="mod-label"><input type="checkbox" id="mod-doubleboss" onchange="calcModMultiplier()"> 👹 Double Bosses <span class="mod-bonus">+100%</span></label>
+                    </div>
+                    <label class="mm-hc-comp">
+                        <input type="checkbox" id="mod-comp-hardcore" onchange="toggleCompetitiveHardcore()">
+                        <span>🏆 COMPETITIVE HARDCORE</span>
+                    </label>
+                    <button type="button" class="mm-hc-confirm" onclick="window.startHardcoreRun()">💀 Start Hardcore Run</button>
+                </div>
             </div>
         </div>
 
-        <!-- Mobile landscape tab bar — only visible via CSS @media (max-height: 520px) and (orientation: landscape) -->
+        <!-- Legacy mobile landscape tab bar — kept hidden as a placeholder for the upcoming
+             responsive pass. CSS @media rules for it remain in <style> (see TODO comment). -->
         <nav class="mobile-tab-bar" aria-label="Menu sections">
             <button type="button" data-tab="profile" onclick="window.switchMobileTab('profile')">
                 <span class="icon">👤</span>
@@ -2613,6 +3104,31 @@
             }
         }
         window.selectMode = selectMode;
+
+        // ── D3c HARDCORE OVERLAY (modal lives inside #main-menu) ────────────
+        // Routes the big PLAY button: solo/team/ffa → startGame() directly;
+        // hardcore → opens the modal first so the player can pick modifiers.
+        // The legacy inline #modifiers-panel push was removed in v1.7.27.
+        window.openHardcoreOverlay = function () {
+            let ov = document.getElementById('mm-hc-overlay');
+            if (ov) ov.classList.add('show');
+            if (typeof calcModMultiplier === 'function') calcModMultiplier();
+        };
+        window.closeHardcoreOverlay = function () {
+            let ov = document.getElementById('mm-hc-overlay');
+            if (ov) ov.classList.remove('show');
+        };
+        window.startHardcoreRun = function () {
+            window.closeHardcoreOverlay();
+            if (typeof startGame === 'function') startGame();
+        };
+        window.mmPlayClick = function () {
+            if (selectedGameMode === 'hardcore') {
+                window.openHardcoreOverlay();
+                return;
+            }
+            if (typeof startGame === 'function') startGame();
+        };
 
         // ===== DAILY SPIN =====
         function dailySpinReady() {
