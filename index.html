@@ -599,6 +599,11 @@
             text-overflow: ellipsis;
         }
         .enc-tab.active { background: var(--primary); color: #111; }
+        /* Leaderboard body: wraps tabs + table area so both can be made row-direction on mobile */
+        .lb-body { display: flex; flex-direction: column; flex: 1; overflow: hidden; min-height: 0; }
+        /* Tab label variants — short hidden on desktop, full hidden on mobile */
+        .lb-tab-short { display: none; }
+        .lb-tab-full  { display: inline; }
         /* Codex (#encyclopedia) tabs — keep the 5 buttons on a SINGLE row even
            when the panel is narrow. The shared .enc-tabs above uses flex-wrap:
            wrap so long labels like "Cats & Upgrades" used to push the row to
@@ -718,19 +723,28 @@
                 grid-template-columns: repeat(3, minmax(0, 1fr));
                 gap: 10px;
             }
-            #encyclopedia .card { padding: 8px; }
-            #encyclopedia .card img { height: 110px; margin-bottom: 6px; }
-            #encyclopedia .card h3 { font-size: 14px; margin-bottom: 4px; }
-            #encyclopedia .card p  { font-size: 11px; }
-            #encyclopedia .upgrade-btn { font-size: 11px; padding: 6px 8px; margin-top: 4px; }
+            #encyclopedia .card { padding: 6px; }
+            #encyclopedia .card img { height: 90px; margin-bottom: 4px; }
+            #encyclopedia .card h3 { font-size: 13px; margin-bottom: 2px; }
+            #encyclopedia .card p  { font-size: 10px; }
+            #encyclopedia .upgrade-btn { font-size: 10px; padding: 5px 6px; margin-top: 3px; }
+            /* Override inline heights in buildCodexSpritePreview for mobile portrait */
+            #encyclopedia .codex-preview-stack { margin-bottom: 4px !important; }
+            #encyclopedia .codex-preview-stack > img { height: 72px !important; }
+            #encyclopedia .codex-preview-stack > div { height: 46px !important; }
+            #encyclopedia .codex-preview-stack > div > img { max-height: 46px !important; }
         }
         /* Even tighter at very small heights — typical landscape phone (≤480px tall).
            Keeps the 3-cards-per-row rule the user asked for, but shrinks the cat
            sprite + title further so a full row stays visible without scrolling. */
         @media (max-height: 480px) {
-            #encyclopedia .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-            #encyclopedia .card img { height: 80px; }
-            #encyclopedia .card h3 { font-size: 13px; }
+            #encyclopedia .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+            #encyclopedia .card { padding: 5px; }
+            #encyclopedia .card h3 { font-size: 12px; }
+            #encyclopedia .upgrade-btn { font-size: 10px; padding: 4px 5px; }
+            #encyclopedia .codex-preview-stack > img { height: 58px !important; }
+            #encyclopedia .codex-preview-stack > div { height: 36px !important; }
+            #encyclopedia .codex-preview-stack > div > img { max-height: 36px !important; }
         }
 
         /* MOBILE PORTRAIT — keep stats horizontal wrap (column stacked too tall
@@ -766,12 +780,43 @@
                 top: auto; right: 8px; bottom: 130px;
             }
             .enc-tab { font-size: 12px; padding: 8px; }
-            /* Leaderboard mobile tweaks */
+            /* Leaderboard mobile — vertical left-rail tabs */
             .lb-back-btn { padding: 6px 10px !important; font-size: 11px !important; min-width: 68px; }
             .lb-top-spacer { min-width: 68px; }
             .lb-title { font-size: clamp(13px, 3.8vw, 20px); }
-            .enc-tabs.lb-tabs { gap: 3px; }
-            .enc-tabs.lb-tabs .enc-tab { font-size: clamp(9px, 2.4vw, 12px); padding: 6px 2px; min-height: 30px; }
+            .lb-body { flex-direction: row; }
+            .enc-tabs.lb-tabs {
+                display: flex !important;
+                flex-direction: column;
+                width: 50px;
+                min-width: 50px;
+                gap: 4px;
+                margin-right: 8px;
+                margin-bottom: 0;
+            }
+            .enc-tabs.lb-tabs .enc-tab {
+                font-size: 9px;
+                padding: 4px 2px;
+                min-height: 50px;
+                height: auto;
+                white-space: normal;
+                overflow: visible;
+                text-overflow: unset;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                line-height: 1.3;
+            }
+            .lb-tab-full  { display: none; }
+            .lb-tab-short { display: flex; flex-direction: column; align-items: center; font-size: 9px; }
+            /* Hide Level + Max Cat Lv. columns so 3-column table fits the rail layout */
+            #lb-header th:nth-child(3),
+            #lb-header th:nth-child(4),
+            #lb-table-body tr td:nth-child(3),
+            #lb-table-body tr td:nth-child(4),
+            #lb-current-player tr td:nth-child(3),
+            #lb-current-player tr td:nth-child(4) { display: none !important; }
             /* Smaller virtual controls so attack/dash/joystick all fit comfortably */
             body.touch-device #attack-btn { width: 78px; height: 78px; font-size: 28px; }
             body.touch-device #dash-container { width: 52px; height: 52px; right: 108px; }
@@ -1836,7 +1881,7 @@
                 </p>
                 <p style="margin: 0;">
                     Play <b>Solo Survival</b>, stack brutal <b>Hardcore</b> modifiers, or bring
-                    AI teammates into <b>Cats vs Dogs (Co-Op)</b>. Earn Gems, buy permanent
+                    AI teammates into <b>Cats vs Dogs</b>. Earn Gems, buy permanent
                     upgrades, and climb the leaderboard.
                 </p>
             </div>
@@ -1878,7 +1923,7 @@
                     <a href="#" onclick="window.openPrivacy('cookies'); return false;" style="color: #bbb; text-decoration: none;">Cookies &amp; Ads</a>
                 </div>
                 <b style="color: #ccc;">CatWars.io</b> — a free browser‑based 2D top‑down survival action game.
-                Solo, Hardcore, Co‑Op and Deathmatch modes · public leaderboards · permanent upgrades.
+                Solo, Hardcore, Cats vs Dogs and Deathmatch modes · public leaderboards · permanent upgrades.
                 Built as a hobby project — no install, no pay‑to‑win.
                 <span style="display: block; margin-top: 4px; color: #555;">v1.7.26</span>
             </footer>
@@ -1892,7 +1937,7 @@
         <div class="cg-landing-inner">
             <h1 class="cg-landing-title">CatWars.io</h1>
             <p class="cg-landing-tagline">
-                Stack <b>Hardcore</b> modifiers for a 5× gem multiplier · Co-Op with 8 AI cats · Deathmatch PvP · Legendary Forge
+                Stack <b>Hardcore</b> modifiers for a 5× gem multiplier · Cats vs Dogs with 8 AI cats · Deathmatch PvP · Legendary Forge
             </p>
             <button id="cg-play-btn" onclick="window.startGameFromCgLanding()">🗡️ PLAY</button>
             <div class="cg-landing-hint">
@@ -1977,7 +2022,7 @@
                 <h2 style="color: var(--primary-hover); margin-top: 0;">About CatWars.io</h2>
                 <p style="font-size: 16px; color: #eee;">
                     Survive solo, push <b>Hardcore</b> for bigger rewards, or fight beside
-                    AI cats in <b>Co‑Op</b>. No install, no pay‑to‑win — just jump in and
+                    AI cats in <b>Cats vs Dogs</b>. No install, no pay‑to‑win — just jump in and
                     become the strongest cat.
                 </p>
                 <p>
@@ -2000,7 +2045,7 @@
                     <li><b>Hardcore</b> — stack difficulty modifiers (double damage, fast dogs,
                         no healing, double bosses, no dash) for a much higher gem multiplier
                         and a special <b>Competitive Hardcore</b> leaderboard.</li>
-                    <li><b>Cats vs Dogs (Co‑Op)</b> — fight alongside eight AI‑controlled cat
+                    <li><b>Cats vs Dogs</b> — fight alongside eight AI‑controlled cat
                         allies that level up, steal food and battle the hordes with you.</li>
                     <li><b>Deathmatch</b> — a free‑for‑all cats vs cats battle. Fight against AI
                         cat opponents in a PvP arena while the dog horde keeps the pressure on.</li>
@@ -2045,7 +2090,7 @@
                         frames are short.</li>
                     <li>In Hardcore, stack modifiers <b>gradually</b>. The gem multiplier scales,
                         but a bad combination (e.g. No Dash + Fast Dogs) is brutal at low level.</li>
-                    <li>In Co‑Op, allied cats <b>steal kills and food</b>. Stay on the edge of
+                    <li>In Cats vs Dogs, allied cats <b>steal kills and food</b>. Stay on the edge of
                         the pack and use them to soak boss aggro.</li>
                     <li>Spend gems on permanent <b>weapon upgrades</b> first — they compound
                         across every run.</li>
@@ -2255,7 +2300,7 @@
                     </div>
                     <div class="mode-card" id="mode-team" onclick="selectMode('team')">
                         <div class="mode-icon" style="font-size: 13px; letter-spacing: -1px;">🐱⚔️🐺</div>
-                        <div class="mode-name">Co-Op</div>
+                        <div class="mode-name">Cats vs Dogs</div>
                         <div class="mode-badge" style="background: var(--info);">NEW</div>
                     </div>
                     <div class="mode-card" id="mode-ffa" onclick="selectMode('ffa')">
@@ -2302,7 +2347,7 @@
                     <a href="#" onclick="window.openPrivacy('cookies'); return false;">Cookies &amp; Ads</a>
                 </div>
                 <div class="mm-bot-spacer"></div>
-                <div class="mm-bot-version">v1.7.29</div>
+                <div class="mm-bot-version">v1.7.31</div>
             </div>
 
             <!-- HARDCORE MODS — centred modal, z-index 50 (above menu, below other overlays).
@@ -2346,39 +2391,60 @@
                 <div class="lb-top-spacer"></div>
             </div>
 
-            <!-- All 5 category tabs on one row -->
-            <div class="enc-tabs lb-tabs" style="margin-bottom: 12px; width: 100%;">
-                <button class="enc-tab lb-tab active" onclick="switchLbTab('kills')">Total Kills</button>
-                <button class="enc-tab lb-tab" onclick="switchLbTab('solo')">Best Solo</button>
-                <button class="enc-tab lb-tab" onclick="switchLbTab('hardcore')">Best Hardcore</button>
-                <button class="enc-tab lb-tab" onclick="switchLbTab('team')">Best Co-Op</button>
-                <button class="enc-tab lb-tab" onclick="switchLbTab('ffa')">Best Deathmatch</button>
-            </div>
+            <!-- Body: tab rail (left on mobile, top on desktop) + table area -->
+            <div class="lb-body">
 
-            <div style="background: rgba(0,0,0,0.4); border-radius: 10px; padding: 10px; flex-grow: 1; overflow: hidden; display: flex; flex-direction: column; text-align: left;">
-                <div style="padding-right: 8px;">
-                    <table class="stats-table" style="margin-bottom:0;">
-                        <thead>
-                            <tr id="lb-header"><th>Rank</th><th style="text-align: left;">Player</th><th style="text-align: left;">Level</th><th>Max Cat Lv.</th><th>Score</th></tr>
-                        </thead>
-                    </table>
-                </div>
-                <div id="lb-scroll-area" style="overflow-y: auto; flex-grow: 1;">
-                    <table class="stats-table" style="margin-bottom:0;">
-                        <tbody id="lb-table-body">
-                            <!-- JS fills this -->
-                        </tbody>
-                    </table>
+                <!-- Category tabs — dual-label: full text on desktop, short icon+word on mobile -->
+                <div class="enc-tabs lb-tabs" style="margin-bottom: 12px;">
+                    <button class="enc-tab lb-tab active" onclick="switchLbTab('kills')">
+                        <span class="lb-tab-full">Total Kills</span>
+                        <span class="lb-tab-short">⚔️<br>Kills</span>
+                    </button>
+                    <button class="enc-tab lb-tab" onclick="switchLbTab('solo')">
+                        <span class="lb-tab-full">Best Solo</span>
+                        <span class="lb-tab-short">🐱<br>Solo</span>
+                    </button>
+                    <button class="enc-tab lb-tab" onclick="switchLbTab('hardcore')">
+                        <span class="lb-tab-full">Best Hardcore</span>
+                        <span class="lb-tab-short">💀<br>H/C</span>
+                    </button>
+                    <button class="enc-tab lb-tab" onclick="switchLbTab('team')">
+                        <span class="lb-tab-full">Best Cats vs Dogs</span>
+                        <span class="lb-tab-short">🐾<br>Co-Op</span>
+                    </button>
+                    <button class="enc-tab lb-tab" onclick="switchLbTab('ffa')">
+                        <span class="lb-tab-full">Best Deathmatch</span>
+                        <span class="lb-tab-short">🆚<br>FFA</span>
+                    </button>
                 </div>
 
-                <!-- Current Player Sticky Row -->
-                <div style="border-top: 2px solid var(--primary); margin-top: 5px; padding-top: 5px;">
-                    <table class="stats-table" style="margin-bottom:0; background: rgba(243, 156, 18, 0.2);">
-                        <tbody id="lb-current-player">
-                            <!-- JS fills this -->
-                        </tbody>
-                    </table>
+                <!-- Table area — fills remaining space -->
+                <div class="lb-table-area" style="background: rgba(0,0,0,0.4); border-radius: 10px; padding: 10px; flex-grow: 1; overflow: hidden; display: flex; flex-direction: column; text-align: left; min-width: 0;">
+                    <div style="padding-right: 8px;">
+                        <table class="stats-table" style="margin-bottom:0;">
+                            <thead>
+                                <tr id="lb-header"><th>Rank</th><th style="text-align: left;">Player</th><th style="text-align: left;">Level</th><th>Max Cat Lv.</th><th>Score</th></tr>
+                            </thead>
+                        </table>
+                    </div>
+                    <div id="lb-scroll-area" style="overflow-y: auto; flex-grow: 1;">
+                        <table class="stats-table" style="margin-bottom:0;">
+                            <tbody id="lb-table-body">
+                                <!-- JS fills this -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Current Player Sticky Row -->
+                    <div style="border-top: 2px solid var(--primary); margin-top: 5px; padding-top: 5px;">
+                        <table class="stats-table" style="margin-bottom:0; background: rgba(243, 156, 18, 0.2);">
+                            <tbody id="lb-current-player">
+                                <!-- JS fills this -->
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
+
             </div>
         </div>
     </div>
@@ -3043,7 +3109,7 @@
                 startBtn.style.boxShadow = '0 6px 0 #c0392b';
             } else if (mode === 'team') {
                 if (teamPanel) teamPanel.style.display = 'flex';
-                startBtn.innerHTML = '<span style="font-size: 0.82em; letter-spacing: -0.06em; white-space: nowrap; vertical-align: middle;">🐱⚔️🐺</span> PLAY CO-OP';
+                startBtn.innerHTML = '<span style="font-size: 0.82em; letter-spacing: -0.06em; white-space: nowrap; vertical-align: middle;">🐱⚔️🐺</span> PLAY CATS VS DOGS';
                 startBtn.style.background = 'var(--info)';
                 startBtn.style.boxShadow = '0 6px 0 #2980b9';
             } else if (mode === 'ffa') {
@@ -4958,8 +5024,8 @@
         function buildCodexSpritePreview(type, level, weaponType, weaponTier, helmetTier, legendaryType, locked) {
             let bodySrc = getSpriteDataURL(type, level, weaponTier, helmetTier, legendaryType, true);
             let bodyFx = locked ? 'opacity:0.7; filter:brightness(0.2) grayscale(0.8);' : 'filter:drop-shadow(0 5px 8px rgba(0,0,0,0.5));';
-            let html = `<div class="codex-preview-stack" style="width:100%; margin-bottom:10px; box-sizing:border-box;">`;
-            html += `<img src="${bodySrc}" alt="" style="width:100%; height:110px; object-fit:contain; display:block; margin:0; ${bodyFx}">`;
+            let html = `<div class="codex-preview-stack" style="width:100%; margin-bottom:6px; box-sizing:border-box;">`;
+            html += `<img src="${bodySrc}" alt="" style="width:100%; height:90px; object-fit:contain; display:block; margin:0; ${bodyFx}">`;
             if (!locked) {
                 let wType = weaponType, wTier = weaponTier;
                 if (legendaryType && LEGENDARY_WEAPONS[legendaryType]) {
@@ -4968,7 +5034,7 @@
                 }
                 let tierColor = UPGRADE_COLORS[wTier] || '#555';
                 let wGlow = wTier > 0 ? `filter:drop-shadow(0px 0px 5px ${tierColor});` : '';
-                html += `<div style="display:flex; align-items:center; justify-content:center; width:100%; height:76px; box-sizing:border-box;"><img src="${getWeaponDataURL(wType, wTier, level)}" alt="" style="max-width:100%; max-height:76px; width:auto; height:auto; object-fit:contain; display:block; margin:0; ${wGlow}"></div>`;
+                html += `<div style="display:flex; align-items:center; justify-content:center; width:100%; height:58px; box-sizing:border-box;"><img src="${getWeaponDataURL(wType, wTier, level)}" alt="" style="max-width:100%; max-height:58px; width:auto; height:auto; object-fit:contain; display:block; margin:0; ${wGlow}"></div>`;
             }
             html += `</div>`;
             return html;
@@ -5115,7 +5181,7 @@
         // #player-nickname.value, which lives inside the hidden #main-menu, so we
         // make sure it has a value before kicking off the run. We also force Solo
         // mode via selectMode() so the (invisible) mode picker doesn't sneak the
-        // player into Hardcore / Co-Op / DM on their very first click.
+        // player into Hardcore / Cats vs Dogs / DM on their very first click.
         window.startGameFromCgLanding = async function() {
             document.getElementById('cg-landing').style.display = 'none';
             let nickInput = document.getElementById('player-nickname');
@@ -5561,11 +5627,11 @@
                         let wTierName = legKey ? `🌟 LEGENDARY ` : (wTier > 0 ? `✨ ${WEAPON_TIERS[wTier]} ` : ''); 
                         let weaponLabel = legKey ? LEGENDARY_WEAPONS[legKey].name.toUpperCase() : stats.weaponType.toUpperCase();
                         
-                        let cardContent = `<h3 style="margin: 0 0 5px 0; font-size: 18px;">Lv.${i} ${stats.catName}</h3>`;
+                        let cardContent = `<h3 style="margin: 0 0 3px 0; font-size: 15px;">Lv.${i} ${stats.catName}</h3>`;
                         cardContent += buildCodexSpritePreview('cats', i, stats.weaponType, wTier, hTier, legKey, false);
-                        cardContent += `<div style="background: rgba(0,0,0,0.4); padding: 6px; border-radius: 8px; width: 100%; box-sizing: border-box; margin-bottom: 12px; line-height: 1.3;">
-                                            <strong style="color: ${legKey ? '#ff7ff0' : '#fff'}; font-size: 13px;">${wTierName}${weaponLabel}</strong><br>
-                                            <span style="color:#f39c12; font-size: 11px;">${archLabel}</span>
+                        cardContent += `<div style="background: rgba(0,0,0,0.4); padding: 4px 5px; border-radius: 6px; width: 100%; box-sizing: border-box; margin-bottom: 7px; line-height: 1.2;">
+                                            <strong style="color: ${legKey ? '#ff7ff0' : '#fff'}; font-size: 12px;">${wTierName}${weaponLabel}</strong><br>
+                                            <span style="color:#f39c12; font-size: 10px;">${archLabel}</span>
                                         </div>`;
                         card.innerHTML = cardContent;
                         
@@ -5609,9 +5675,9 @@
                         }
                         card.appendChild(legBtn);
                     } else { 
-                        card.innerHTML = `<h3 style="margin: 0 0 5px 0; font-size: 18px;">Lv.${i} ???</h3>`;
+                        card.innerHTML = `<h3 style="margin: 0 0 3px 0; font-size: 15px;">Lv.${i} ???</h3>`;
                         card.innerHTML += buildCodexSpritePreview('cats', i, stats.weaponType, 0, 0, null, true);
-                        card.innerHTML += `<p style="margin-top:10px;">Reach Lv. ${i}</p>`; 
+                        card.innerHTML += `<p style="margin-top:6px;">Reach Lv. ${i}</p>`; 
                     }
                     grid.appendChild(card);
                 }
@@ -5622,18 +5688,18 @@
                     let archLabel = { fast:'⚡ Fast', heavy:'🔨 Heavy', wide:'🌀 Wide', reach:'➡️ Reach', balanced:'⚔️ Balanced' }[getWeaponArchetype(stats.weaponType)];
                     
                     if (!locked) {
-                        let cardContent = `<h3 style="margin: 0 0 5px 0; font-size: 18px;">Lv.${i} ${stats.dogName}</h3>`;
+                        let cardContent = `<h3 style="margin: 0 0 3px 0; font-size: 15px;">Lv.${i} ${stats.dogName}</h3>`;
                         cardContent += buildCodexSpritePreview('dogs', i, stats.weaponType, 0, 0, null, false);
-                        cardContent += `<div style="background: rgba(0,0,0,0.4); padding: 6px; border-radius: 8px; width: 100%; box-sizing: border-box; margin-bottom: 12px; line-height: 1.3;">
-                                            <strong style="color: #fff; font-size: 13px;">${stats.weaponType.toUpperCase()}</strong><br>
-                                            <span style="color:#f39c12; font-size: 11px;">${archLabel}</span>
+                        cardContent += `<div style="background: rgba(0,0,0,0.4); padding: 4px 5px; border-radius: 6px; width: 100%; box-sizing: border-box; margin-bottom: 7px; line-height: 1.2;">
+                                            <strong style="color: #fff; font-size: 12px;">${stats.weaponType.toUpperCase()}</strong><br>
+                                            <span style="color:#f39c12; font-size: 10px;">${archLabel}</span>
                                         </div>`;
                         cardContent += `<p style="margin: 0; font-weight: bold; color: ${kills > 0 ? '#2ecc71' : '#aaa'};">Defeated: ${kills}</p>`;
                         card.innerHTML = cardContent;
                     } else { 
-                        card.innerHTML = `<h3 style="margin: 0 0 5px 0; font-size: 18px;">Lv.${i} ???</h3>`;
+                        card.innerHTML = `<h3 style="margin: 0 0 3px 0; font-size: 15px;">Lv.${i} ???</h3>`;
                         card.innerHTML += buildCodexSpritePreview('dogs', i, stats.weaponType, 0, 0, null, true);
-                        card.innerHTML += `<p style="margin-top: 10px;">Defeated: 0</p>`; 
+                        card.innerHTML += `<p style="margin-top: 6px;">Defeated: 0</p>`; 
                     }
                     grid.appendChild(card);
                 }
@@ -6279,7 +6345,7 @@
             let eSpeed = stats.speed * 0.82;
             if (activeMods.fast) eSpeed *= 1.5; 
 
-            // Elite enemies: rare purple-tinted variants in Solo/Co-Op once player reaches mid-game
+            // Elite enemies: rare purple-tinted variants in Solo/Cats vs Dogs once player reaches mid-game
             let isElite = !isInitial && !isHardcoreMode 
                 && player && player.level >= BALANCE.ELITE_MIN_LEVEL 
                 && Math.random() < BALANCE.ELITE_CHANCE;
