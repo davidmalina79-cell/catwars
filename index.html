@@ -413,6 +413,7 @@
         @keyframes pulse { 0% { transform: translateX(-50%) scale(1); } 50% { transform: translateX(-50%) scale(1.1); box-shadow: 0 0 30px #e74c3c; } 100% { transform: translateX(-50%) scale(1); } }
 
         #tutorial { position: absolute; bottom: 100px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); padding: 12px 24px; border-radius: 12px; border: 2px solid var(--primary); font-size: 18px; font-weight: bold; display: none; z-index: 20; max-width: 80%; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        body.touch-device #tutorial { bottom: 12px; font-size: 14px; padding: 8px 14px; max-width: 54%; }
 
         /* ── ONBOARDING TUTORIAL OVERLAY ──────────────────────────────────── */
         #onboarding-overlay { z-index: 500; }
@@ -872,6 +873,7 @@
             body.touch-device #joystick-knob { width: 44px; height: 44px; }
             body.touch-device #sound-toggle { top: 8px; right: 8px; width: 40px; height: 40px; font-size: 15px; }
             body.touch-device #pause-btn { top: 8px; right: 56px; width: 40px; height: 40px; font-size: 15px; }
+            body.touch-device #tutorial { bottom: 8px; font-size: 12px; padding: 6px 10px; max-width: 50%; }
         }
 
         /* NARROW DESKTOP IFRAME (e.g. CrazyGames windowed mode) — pointer: fine
@@ -2347,7 +2349,7 @@
                     <a href="#" onclick="window.openPrivacy('cookies'); return false;">Cookies &amp; Ads</a>
                 </div>
                 <div class="mm-bot-spacer"></div>
-                <div class="mm-bot-version">v1.7.31</div>
+                <div class="mm-bot-version">v1.7.32</div>
             </div>
 
             <!-- HARDCORE MODS — centred modal, z-index 50 (above menu, below other overlays).
@@ -5871,7 +5873,7 @@
             { text: "⚔️ Point cursor AT the dog, then Left Click! You only hit what you're FACING.", textMobile: "⚔️ Face the dog with the joystick, then tap ⚔️! You only hit what you're FACING.", duration: 7 },
             { text: "🍖 Collect food for XP and a health boost. Eat often to stay alive!", duration: 6 },
             { text: "⚡ Space or Right Click to dash out of danger.", textMobile: "⚡ Tap the ⚡ dash button to escape danger!", duration: 5 },
-            { text: "💎 Break chests for Gems — spend them on permanent upgrades in the menu.", duration: 6 }
+            { text: "💎 Break chests to collect Gem diamonds! Spend them on permanent weapon &amp; helmet upgrades in the menu.", duration: 7 }
         ];
         let tutorialIdx = 0, tutorialTimer = 0, tutorialActive = false;
 
