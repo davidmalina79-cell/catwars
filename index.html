@@ -599,6 +599,19 @@
             text-overflow: ellipsis;
         }
         .enc-tab.active { background: var(--primary); color: #111; }
+        /* Codex (#encyclopedia) tabs — keep the 5 buttons on a SINGLE row even
+           when the panel is narrow. The shared .enc-tabs above uses flex-wrap:
+           wrap so long labels like "Cats & Upgrades" used to push the row to
+           a second line on short/narrow viewports. Scoped to #encyclopedia so
+           the privacy modal (which prefers wrapping) is untouched. */
+        #encyclopedia .enc-tabs { flex-wrap: nowrap; min-width: 0; }
+        #encyclopedia .enc-tab {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            min-width: 0;
+            text-align: center;
+        }
         .close-btn { background: var(--danger); color: white; border: none; border-radius: 8px; padding: 10px 20px; cursor: pointer; font-weight: bold; font-size: 16px; }
         
         .enc-content { padding: 20px; overflow-y: auto; flex-grow: 1; }
@@ -675,6 +688,51 @@
         .game-art-banner img { width: 100%; height: 100%; max-height: 240px; object-fit: contain; display: block; filter: drop-shadow(0 0 10px rgba(243, 156, 18, 0.3)); }
         
         .controls-hint { text-align: center; font-size: 14px; opacity: 0.8; font-weight: normal; margin-top: auto; color: white; background: rgba(0,0,0,0.5); padding: 8px 16px; border-radius: 20px; pointer-events: none; }
+
+        /* ── COMPACT CODEX (mobile landscape + short/narrow desktop iframe) ──
+           Applies when vertical space is tight (≤620px tall) or width is small
+           (≤900px). Shrinks header, tabs, cards, and forces 3 columns so a
+           full row of cat boxes is visible without scrolling. Cat upgrade
+           details (the previous big preview) are still there — just sized to
+           fit the viewport instead of overflowing it. Pointer-agnostic on
+           purpose: a windowed CrazyGames desktop iframe hits this case too. */
+        @media (max-height: 620px), (max-width: 900px) {
+            #encyclopedia { top: 2%; left: 2%; width: 96%; height: 96%; }
+            #encyclopedia .enc-header {
+                padding: 8px 12px;
+                gap: 6px;
+            }
+            #encyclopedia .enc-tabs { gap: 4px; }
+            #encyclopedia .enc-tab {
+                font-size: 12px;
+                padding: 6px 8px;
+                min-width: 0;
+            }
+            #encyclopedia .close-btn {
+                padding: 7px 12px;
+                font-size: 13px;
+            }
+            #encyclopedia .enc-header .stat-box { font-size: 13px; padding: 5px 10px; }
+            #encyclopedia .enc-content { padding: 10px; }
+            #encyclopedia .grid {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                gap: 10px;
+            }
+            #encyclopedia .card { padding: 8px; }
+            #encyclopedia .card img { height: 110px; margin-bottom: 6px; }
+            #encyclopedia .card h3 { font-size: 14px; margin-bottom: 4px; }
+            #encyclopedia .card p  { font-size: 11px; }
+            #encyclopedia .upgrade-btn { font-size: 11px; padding: 6px 8px; margin-top: 4px; }
+        }
+        /* Even tighter at very small heights — typical landscape phone (≤480px tall).
+           Keeps the 3-cards-per-row rule the user asked for, but shrinks the cat
+           sprite + title further so a full row stays visible without scrolling. */
+        @media (max-height: 480px) {
+            #encyclopedia .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+            #encyclopedia .card img { height: 80px; }
+            #encyclopedia .card h3 { font-size: 13px; }
+        }
+
         /* MOBILE PORTRAIT — keep stats horizontal wrap (column stacked too tall
            and was crashing into the centered Level / XP / HP bars). Hide the
            in-game global-rank chip (with its own mini XP bar) — that info is
@@ -1031,6 +1089,7 @@
             font-weight: 900; color: var(--primary);
             letter-spacing: 2px; margin-right: 8px;
             text-shadow: 1px 1px 2px #000;
+            visibility: hidden;
         }
         #main-menu .mm-chip {
             background: rgba(0,0,0,0.55);
@@ -1505,10 +1564,11 @@
 
         /* TODO: legacy mobile / narrow-iframe @media rules below were authored
            for the old three-column .menu-container layout (.menu-col, #solo-panel,
-           .mm-codex-tile, .mode-card legacy sizing, mobile-tab-bar). After the
-           D3c refactor they no longer match anything inside #main-menu and act
-           as dead code. Kept verbatim per spec — revisit when responsive pass
-           for portrait / landscape mobile lands. */
+           .mm-codex-tile, .mode-card legacy sizing). After the D3c refactor they
+           no longer match anything inside #main-menu and act as dead code. Kept
+           verbatim per spec — revisit when responsive pass for portrait /
+           landscape mobile lands. (The legacy landscape mobile-tab-bar that lived
+           here was removed in v1.7.28 — its tabs did nothing in the new layout.) */
         /* MOBILE — stack columns vertically on touch devices (phones/tablets).
            pointer: coarse keeps this from firing inside a narrow desktop iframe
            on CrazyGames, where pointer: fine (mouse) is always reported even
@@ -1653,102 +1713,6 @@
                 margin-top: 8px !important;
             }
         }
-
-        /* ── MOBILE LANDSCAPE TAB BAR ─────────────────────────────────────
-           Default state: hidden on desktop, tablet, and portrait orientation.
-           Activated only on short landscape viewports on TOUCH devices (typical
-           phone landscape is 350-430px tall). pointer: coarse keeps this from
-           firing inside a CrazyGames iframe on a desktop — that iframe is short
-           and landscape too, but the user has a mouse (pointer: fine). */
-        .mobile-tab-bar { display: none; }
-
-        @media (max-height: 520px) and (orientation: landscape) and (pointer: coarse) {
-            /* Banner image eats too much vertical space — hide on landscape phones */
-            #main-menu .game-art-banner { display: none; }
-
-            /* Pin the menu to the viewport; tab bar sits at the bottom (~60px tall) */
-            #main-menu.overlay {
-                padding: 8px 8px 64px 8px;
-                overflow: hidden;
-                justify-content: flex-start;
-            }
-            #main-menu .menu-container {
-                flex-direction: row;
-                flex-wrap: nowrap;
-                width: 100%;
-                max-width: none;
-                height: calc(100dvh - 72px);
-                max-height: calc(100dvh - 72px);
-                margin-top: 0;
-                gap: 0;
-                align-items: stretch;
-            }
-            /* Hide all columns by default; the active body.mb-tab-* class shows one */
-            #main-menu .menu-container > .menu-col {
-                display: none;
-                flex: 1;
-                width: 100%;
-                max-width: none;
-                min-width: 0;
-                min-height: 0;
-                max-height: 100%;
-                overflow-y: auto;
-            }
-            body.mb-tab-profile #main-menu .menu-container > .menu-col:nth-child(1) { display: flex; }
-            body.mb-tab-play    #main-menu .menu-container > .menu-col:nth-child(2) { display: flex; }
-            body.mb-tab-codex   #main-menu .menu-container > .menu-col:nth-child(3) { display: flex; }
-
-            /* Tab bar itself — fixed to bottom of viewport */
-            .mobile-tab-bar {
-                display: flex;
-                position: fixed;
-                left: 0; right: 0; bottom: 0;
-                height: calc(56px + env(safe-area-inset-bottom, 0px));
-                padding-bottom: env(safe-area-inset-bottom, 0px);
-                background: rgba(10, 18, 26, 0.97);
-                border-top: 2px solid var(--primary);
-                box-shadow: 0 -4px 16px rgba(0,0,0,0.5);
-                z-index: 110;
-                box-sizing: border-box;
-            }
-            .mobile-tab-bar button {
-                flex: 1;
-                background: transparent;
-                color: #aaa;
-                border: none;
-                font-size: 11px;
-                font-weight: bold;
-                cursor: pointer;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                gap: 2px;
-                padding: 4px;
-                transition: color 0.15s, background 0.15s;
-            }
-            .mobile-tab-bar button .icon { font-size: 22px; line-height: 1; }
-            body.mb-tab-profile .mobile-tab-bar button[data-tab="profile"],
-            body.mb-tab-play    .mobile-tab-bar button[data-tab="play"],
-            body.mb-tab-codex   .mobile-tab-bar button[data-tab="codex"] {
-                color: var(--primary);
-                background: rgba(243, 156, 18, 0.12);
-            }
-
-            /* Right-column codex tiles — compact for landscape phone codex tab */
-            #main-menu .mm-codex-tile { padding: 6px 4px 4px !important; }
-            #main-menu .mm-codex-tile-icon { width: 56px !important; height: 56px !important; }
-            #main-menu .mm-codex-tile-label { font-size: 13px !important; }
-            #main-menu .mm-codex-nav { gap: 3px !important; }
-
-            /* Subtle fade-out gradient on each scrollable column to hint
-               "there's more content below". Pure cosmetic — no JS needed. */
-            #main-menu .menu-container > .menu-col {
-                -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 18px), transparent 100%);
-                        mask-image: linear-gradient(to bottom, #000 calc(100% - 18px), transparent 100%);
-            }
-        }
-        /* ── END MOBILE TAB BAR ──────────────────────────────────────────── */
 
         /* ── LANDSCAPE PHONE — compact OVERLAYS (death / pause) ──────────
            Default .panel reserves max-height: 95vh, but the death screen
@@ -2338,7 +2302,7 @@
                     <a href="#" onclick="window.openPrivacy('cookies'); return false;">Cookies &amp; Ads</a>
                 </div>
                 <div class="mm-bot-spacer"></div>
-                <div class="mm-bot-version">v1.7.27</div>
+                <div class="mm-bot-version">v1.7.29</div>
             </div>
 
             <!-- HARDCORE MODS — centred modal, z-index 50 (above menu, below other overlays).
@@ -2369,22 +2333,6 @@
             </div>
         </div>
 
-        <!-- Legacy mobile landscape tab bar — kept hidden as a placeholder for the upcoming
-             responsive pass. CSS @media rules for it remain in <style> (see TODO comment). -->
-        <nav class="mobile-tab-bar" aria-label="Menu sections">
-            <button type="button" data-tab="profile" onclick="window.switchMobileTab('profile')">
-                <span class="icon">👤</span>
-                <span>Profile</span>
-            </button>
-            <button type="button" data-tab="play" onclick="window.switchMobileTab('play')">
-                <span class="icon">🗡️</span>
-                <span>Play</span>
-            </button>
-            <button type="button" data-tab="codex" onclick="window.switchMobileTab('codex')">
-                <span class="icon">📖</span>
-                <span>Codex</span>
-            </button>
-        </nav>
     </div>
 
     <!-- LEADERBOARD SCREEN -->
@@ -2439,12 +2387,14 @@
     <div id="encyclopedia">
         <div class="enc-header">
             <div class="enc-tabs">
-                <button class="enc-tab active" onclick="switchTab('cats')">Cats & Upgrades</button>
+                <button class="enc-tab active" onclick="switchTab('cats')">Cats &amp; Upgrades</button>
                 <button class="enc-tab" onclick="switchTab('dogs')">Bestiary</button>
                 <button class="enc-tab" onclick="switchTab('armory')">Armory</button>
                 <button class="enc-tab" onclick="switchTab('boosts')">Boosts</button>
                 <button class="enc-tab" onclick="switchTab('quests')">Quests</button>
-                <button class="enc-tab" onclick="switchTab('ranks')">Global ranks</button>
+                <!-- Global ranks tab removed in v1.7.29 — still reachable from the main
+                     menu rank-combo button which calls openEncyclopedia('ranks'). -->
+
             </div>
             <div class="stat-box gem-text">💎 <span id="enc-gems">0</span></div>
             <button class="close-btn" onclick="closeEncyclopedia()">✕ Close</button>
@@ -5177,19 +5127,6 @@
             await window.startGame();
         };
         // ── END LOBBY ──────────────────────────────────────────────────────
-
-        // ── MOBILE LANDSCAPE TAB BAR ───────────────────────────────────────
-        // Default tab = Play. Body class is read by CSS to show the matching column.
-        if (!document.body.classList.contains('mb-tab-profile') &&
-            !document.body.classList.contains('mb-tab-play') &&
-            !document.body.classList.contains('mb-tab-codex')) {
-            document.body.classList.add('mb-tab-play');
-        }
-        window.switchMobileTab = function(tab) {
-            document.body.classList.remove('mb-tab-profile', 'mb-tab-play', 'mb-tab-codex');
-            document.body.classList.add('mb-tab-' + tab);
-        };
-        // ── END MOBILE TAB BAR ─────────────────────────────────────────────
 
         window.openLeaderboard = async () => {
             document.getElementById('main-menu').style.display = 'none';
