@@ -3020,7 +3020,7 @@
         const INITIAL_BOSS_DELAY = 60;
         const BOSS_RESPAWN_AFTER_KILL = 90;
         const BOSS_TIMEOUT = 120;
-        const GAME_VERSION = '1.7.52';
+        const GAME_VERSION = '1.7.53';
 
         const CHEST_TYPES = { 
             wood: { hp: 500, gems: [3, 6], color: '#6b4423', metal: '#7f8c8d', weight: 0.70, size: 130 }, 
@@ -3301,9 +3301,17 @@
     <script>
         // GLOBAL SCOPE DECLARATIONS (FIX PRO OFFLINE GUEST CHYBU)
         var defaultProg = { nickname: '', globalLevel: 1, globalXp: 0, maxCatLevel: 1, totalKills: 0, gems: 0, dogKills: {}, weaponUpgrades: {}, helmetUpgrades: {}, unlockedLegendaries: {}, equippedLegendary: {}, bestCombo: 0, tutorialDone: false, inGameTipsDone: false, questDate: '', quests: [], bestTimes: { solo: null, hardcore: null, team: null }, boosts: {}, equippedBoosts: [null, null, null], lastDailySpinAt: 0, dailyStreak: 0, lastAdBoostAt: 0, lastSavedAt: 0 };
+        window.defaultProg = defaultProg;
         // Timestamp kdy jsme načetli prog z cloudu — slouží jako "věk" lokálního snapshotu
         window._progLoadedAt = 0;
         var prog = { ...defaultProg };
+        // After registered logout: new guest must start at zero (see window.logout + onAuthStateChanged).
+        window.applyFreshGuestProg = function() {
+            prog = { ...defaultProg };
+            normalizeProg();
+            rollDailyQuestsIfNeeded();
+            updateMenuStats();
+        };
         var currentGemMultiplier = 1.0; 
         var activeMods = { doubleDmg: false, noHeal: false, doubleBoss: false, fast: false, noDash: false };
         const DEV_MODE = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
@@ -8507,8 +8515,14 @@
             window.saveToFirestore = null; // Vypnout cloud pro offline
             window.fetchFromFirestore = null; 
             
-            let local = localStorage.getItem('catwars_save_offline_guest');
-            if (local) window.prog = { ...window.defaultProg, ...JSON.parse(local) };
+            if (window._freshGuestAfterLogout) {
+                localStorage.removeItem('catwars_save_offline_guest');
+                window._freshGuestAfterLogout = false;
+                if (typeof window.applyFreshGuestProg === 'function') window.applyFreshGuestProg();
+            } else {
+                let local = localStorage.getItem('catwars_save_offline_guest');
+                if (local) window.prog = { ...window.defaultProg, ...JSON.parse(local) };
+            }
             
             rollDailyQuestsIfNeeded();
             updateMenuStats();
@@ -8664,8 +8678,12 @@
         
         // Sign out of the current real account. onAuthStateChanged(null) will then
         // auto-start a fresh guest session, so the player never sees a dead-end login screen.
+        // Registered logout must not carry progress into the next guest (anti account-dupe).
         window.logout = () => {
             if (auth && auth.currentUser) {
+                if (!auth.currentUser.isAnonymous) {
+                    window._freshGuestAfterLogout = true;
+                }
                 signOut(auth);
             } else {
                 window.openLoginModal();
@@ -8899,6 +8917,10 @@
                             } catch (e) {
                                 console.warn("[CatWars] loadCloudProgress after credential change:", e);
                             }
+                        } else if (window._freshGuestAfterLogout) {
+                            if (typeof window.applyFreshGuestProg === 'function') window.applyFreshGuestProg();
+                            if (window.prog) localStorage.setItem('catwars_save_' + user.uid, JSON.stringify(window.prog));
+                            window._freshGuestAfterLogout = false;
                         }
                         updateAuthUI(user);
                         let loginScr = document.getElementById('login-screen');
@@ -8940,7 +8962,17 @@
                         }
                     } catch (e) {
                         console.warn("[CatWars] Anonymous auth failed, falling back to offline guest.", e);
-                        window.startLocalSession();
+                        if (window._freshGuestAfterLogout && window._sessionStarted) {
+                            localStorage.removeItem('catwars_save_offline_guest');
+                            window.currentUserUid = 'offline_guest';
+                            window.saveToFirestore = null;
+                            window.fetchFromFirestore = null;
+                            if (typeof window.applyFreshGuestProg === 'function') window.applyFreshGuestProg();
+                            window._freshGuestAfterLogout = false;
+                            updateAuthUI(null);
+                        } else {
+                            window.startLocalSession();
+                        }
                     }
                 }
             });
