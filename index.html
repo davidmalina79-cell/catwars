@@ -2105,14 +2105,13 @@
         /* ── END LOADING SCREEN ─────────────────────────────────────────── */
 
         /* ── LOGIN MODAL — MOBILE COMPACT ───────────────────────────────────
-           On small phones the default inputs (font-size:20px / padding:15px)
-           and panel padding push the Login/Register buttons off screen.
-           These overrides shrink everything so both buttons are visible without
-           scrolling; the Google button and legal text are still reachable by
-           a short swipe. pointer:coarse limits the rule to real touch devices. */
+           .overlay is flex-direction:column so justify-content controls
+           vertical placement. We anchor to the top so content never overflows
+           below the fold; the overlay itself scrolls for the Google button. */
         @media (max-width: 600px) and (pointer: coarse) {
             #login-screen.overlay {
-                align-items: flex-start;
+                justify-content: flex-start;   /* anchor panel to top, not center */
+                align-items: stretch;
                 padding: 0;
                 overflow-y: auto;
             }
@@ -2121,31 +2120,29 @@
                 width: 100% !important;
                 max-height: none !important;
                 overflow-y: visible !important;
-                min-height: unset;
                 border-radius: 0 0 16px 16px;
                 border-top: none;
-                padding: 14px 16px 20px !important;
+                padding: 12px 16px 18px !important;
                 margin: 0;
             }
             #login-screen h2 {
-                font-size: 18px !important;
-                margin-bottom: 4px !important;
+                font-size: 17px !important;
+                margin-bottom: 2px !important;
             }
+            /* Hide the description text — saves ~50px on small screens */
             #login-screen > .panel > p {
-                font-size: 11px !important;
-                margin-bottom: 10px !important;
-                line-height: 1.35 !important;
+                display: none !important;
             }
             #login-nick, #login-pass {
-                font-size: 16px !important;
+                font-size: 16px !important;  /* 16px prevents iOS auto-zoom */
                 padding: 10px 12px !important;
                 width: 92% !important;
                 margin-bottom: 6px !important;
             }
             #login-error {
                 font-size: 12px !important;
-                min-height: 18px !important;
-                margin-bottom: 6px !important;
+                min-height: 16px !important;
+                margin: 2px auto 6px !important;
             }
             #login-screen .btn-main {
                 font-size: 15px !important;
@@ -2887,7 +2884,7 @@
         const INITIAL_BOSS_DELAY = 60;
         const BOSS_RESPAWN_AFTER_KILL = 90;
         const BOSS_TIMEOUT = 120;
-        const GAME_VERSION = '1.7.45';
+        const GAME_VERSION = '1.7.46';
 
         const CHEST_TYPES = { 
             wood: { hp: 500, gems: [3, 6], color: '#6b4423', metal: '#7f8c8d', weight: 0.70, size: 130 }, 
