@@ -620,7 +620,35 @@
         }
         .close-btn { background: var(--danger); color: white; border: none; border-radius: 8px; padding: 10px 20px; cursor: pointer; font-weight: bold; font-size: 16px; }
         
-        .enc-content { padding: 20px; overflow-y: auto; flex-grow: 1; }
+        .enc-content { padding: 20px; overflow-y: auto; flex-grow: 1; min-height: 0; }
+        /* Global ranks tab — fill Codex body; avoid calc(85vh - 200px) which clips to ~2 rows on mobile */
+        #encyclopedia .enc-content.enc-content-ranks {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        #encyclopedia .enc-ranks-panel {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-height: 0;
+        }
+        #encyclopedia .enc-ranks-panel h3 {
+            flex-shrink: 0;
+            margin-top: 0;
+            color: #fff;
+        }
+        #enc-ranks-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+            padding: 4px 14px 16px 0;
+            box-sizing: border-box;
+            -webkit-overflow-scrolling: touch;
+        }
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 20px; }
         
         .card { background: #34495e; border: 2px solid #555; border-radius: 12px; padding: 15px; text-align: center; display: flex; flex-direction: column; align-items: center; color: white; transition: transform 0.2s; position: relative;}
@@ -1295,8 +1323,11 @@
         #main-menu .mm-stat-mini.mm-stat-gem .mm-stat-mini-val { color: #00d4ff; }
         #main-menu .mm-rail-action {
             display: flex; flex-direction: column;
-            align-items: center; gap: 3px;
-            width: 100%; padding: 9px 4px;
+            align-items: center; justify-content: center;
+            gap: 3px;
+            width: 100%; padding: 7px 4px;
+            min-height: clamp(48px, 7vh, 62px);
+            flex-shrink: 0;
             border: none; border-radius: 10px;
             cursor: pointer; color: #fff;
             font-family: inherit;
@@ -1323,9 +1354,9 @@
             box-shadow: 0 0 12px rgba(155,89,182,0.5);
             transform: translateY(-1px);
         }
-        #main-menu .mm-rail-action-icon { font-size: clamp(18px, 2.4vw, 26px); }
+        #main-menu .mm-rail-action-icon { font-size: clamp(14px, 1.8vw, 20px); }
         #main-menu .mm-rail-action-lbl {
-            font-size: clamp(9px, 1vw, 12px);
+            font-size: clamp(8px, 0.85vw, 10px);
             font-weight: 900; letter-spacing: 0.3px;
             line-height: 1.1; text-align: center;
         }
@@ -2664,7 +2695,7 @@
         const INITIAL_BOSS_DELAY = 60;
         const BOSS_RESPAWN_AFTER_KILL = 90;
         const BOSS_TIMEOUT = 120;
-        const GAME_VERSION = '1.7.35';
+        const GAME_VERSION = '1.7.37';
 
         const CHEST_TYPES = { 
             wood: { hp: 500, gems: [3, 6], color: '#6b4423', metal: '#7f8c8d', weight: 0.70, size: 130 }, 
@@ -5462,6 +5493,7 @@
             if (targetTab) targetTab.classList.add('active');
             
             let content = document.getElementById('enc-content');
+            content.className = tab === 'ranks' ? 'enc-content enc-content-ranks' : 'enc-content';
             
             if (tab === 'boosts') {
                 renderBoostsTab(content);
@@ -5471,8 +5503,10 @@
             if (tab === 'ranks') {
                 let curLv = prog.globalLevel || 1;
                 content.innerHTML = `
-                    <h3 style="margin-top:0; color:#fff;">⭐ Global ranks</h3>
-                    <div id="enc-ranks-list" style="display:flex;flex-direction:column;gap:6px;max-height:calc(85vh - 200px);overflow-y:auto;padding:4px 14px 16px 0;box-sizing:border-box;"></div>
+                    <div class="enc-ranks-panel">
+                        <h3>⭐ Global ranks</h3>
+                        <div id="enc-ranks-list"></div>
+                    </div>
                 `;
                 let listEl = document.getElementById('enc-ranks-list');
                 for (let L = 1; L <= 60; L++) {
