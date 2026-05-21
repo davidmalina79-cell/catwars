@@ -740,7 +740,12 @@
            sprite + title further so a full row stays visible without scrolling. */
         @media (max-height: 480px) {
             #encyclopedia .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
-            #encyclopedia .card { padding: 5px; }
+            #encyclopedia .card {
+                padding: 5px;
+                height: auto;
+                min-height: 0;
+            }
+            #encyclopedia .card img { height: 70px; }
             #encyclopedia .card h3 { font-size: 12px; }
             #encyclopedia .upgrade-btn { font-size: 10px; padding: 4px 5px; }
             #encyclopedia .codex-preview-stack > img { height: 58px !important; }
@@ -873,12 +878,14 @@
             .enc-tabs.lb-tabs {
                 display: flex !important;
                 flex-direction: column;
+                flex-wrap: nowrap;
                 width: 56px;
                 min-width: 56px;
                 flex-shrink: 0;
                 gap: 4px;
                 margin-right: 0;
                 margin-bottom: 0;
+                overflow-y: auto;
             }
             .enc-tabs.lb-tabs .enc-tab {
                 font-size: 10px;
@@ -1828,6 +1835,42 @@
         }
         /* ── END COMPACT OVERLAYS ────────────────────────────────────────── */
 
+        /* ── DAILY SPIN — short screen fix ──────────────────────────────────
+           On landscape phones (height ≤ 620px) the overlay's justify-content:center
+           clips the panel symmetrically when content exceeds viewport height.
+           Switching to flex-start + overflow-y:auto on the overlay itself lets the
+           panel scroll from the top so every button is always reachable. */
+        @media (max-height: 620px) {
+            #daily-spin-screen {
+                align-items: flex-start;
+                justify-content: flex-start;
+                overflow-y: auto;
+                padding-top: 10px;
+            }
+            #daily-spin-screen .panel {
+                max-height: none;
+                padding: 14px 18px;
+            }
+            #daily-spin-screen h1 {
+                font-size: 24px !important;
+                margin-bottom: 3px !important;
+            }
+            #daily-spin-screen > .panel > p {
+                margin: 0 0 8px 0 !important;
+                font-size: 13px !important;
+            }
+            #daily-spin-screen #spin-result {
+                min-height: 48px !important;
+                margin-bottom: 8px !important;
+                font-size: 14px !important;
+            }
+            #daily-spin-screen .btn-main {
+                margin: 4px 0 !important;
+                padding: 9px 14px !important;
+            }
+        }
+        /* ── END DAILY SPIN ──────────────────────────────────────────────── */
+
         .nickname-input {
             width: 80%; max-width: 300px; padding: 12px; margin: 10px 0; font-size: 20px; font-weight: bold; 
             text-align: center; background: #2c3e50; color: white; border: 3px solid var(--primary);
@@ -1866,6 +1909,20 @@
         .mod-label:hover { background: rgba(255,255,255,0.1); }
         .mod-label input { transform: scale(1.2); cursor: pointer; accent-color: var(--danger); }
         .mod-bonus { color: #2ecc71; font-weight: bold; margin-left: auto; font-size: 12px; }
+
+        /* ── LOADING SCREEN — match Hero Focus menu gradient ────────────────
+           Replaces the generic .overlay dark-fill so loading → menu feels like
+           one continuous surface instead of a panel-in-a-box → gradient jump. */
+        #loading-screen {
+            background: radial-gradient(ellipse at 50% 60%, #1a2f44 0%, #0a1219 70%);
+        }
+        #loading-screen .panel {
+            background: transparent;
+            border: none;
+            box-shadow: none;
+            max-width: 520px;
+        }
+        /* ── END LOADING SCREEN ─────────────────────────────────────────── */
     </style>
 </head>
 <body>
@@ -1873,7 +1930,7 @@
     <canvas id="gameCanvas"></canvas>
     
     <div id="loading-screen" class="overlay" style="z-index: 400;">
-        <div class="panel" style="max-width: 500px; padding: 25px; overflow: hidden;">
+        <div class="panel" style="padding: 25px;">
             <div class="game-art-banner" style="margin-bottom: 20px;">
                 <img data-src="img/banner.png" alt="CatWars Battle" loading="lazy" onerror="this.style.display='none';" class="js-banner-img">
             </div>
@@ -2316,12 +2373,10 @@
                     <div class="mode-card" id="mode-team" onclick="selectMode('team')">
                         <div class="mode-icon" style="font-size: 13px; letter-spacing: -1px;">🐱⚔️🐺</div>
                         <div class="mode-name">Cats vs Dogs</div>
-                        <div class="mode-badge" style="background: var(--info);">NEW</div>
                     </div>
                     <div class="mode-card" id="mode-ffa" onclick="selectMode('ffa')">
                         <div class="mode-icon" style="font-size: 13px; letter-spacing: -1px;">🐱⚔️🐱</div>
                         <div class="mode-name">Deathmatch</div>
-                        <div class="mode-badge" style="background: var(--danger);">NEW</div>
                     </div>
                 </div>
             </div>
@@ -2609,7 +2664,7 @@
         const INITIAL_BOSS_DELAY = 60;
         const BOSS_RESPAWN_AFTER_KILL = 90;
         const BOSS_TIMEOUT = 120;
-        const GAME_VERSION = '1.7.33';
+        const GAME_VERSION = '1.7.35';
 
         const CHEST_TYPES = { 
             wood: { hp: 500, gems: [3, 6], color: '#6b4423', metal: '#7f8c8d', weight: 0.70, size: 130 }, 
@@ -5417,7 +5472,7 @@
                 let curLv = prog.globalLevel || 1;
                 content.innerHTML = `
                     <h3 style="margin-top:0; color:#fff;">⭐ Global ranks</h3>
-                    <div id="enc-ranks-list" style="display:flex;flex-direction:column;gap:6px;max-height:calc(85vh - 200px);overflow-y:auto;padding:4px 8px 16px 0;box-sizing:border-box;"></div>
+                    <div id="enc-ranks-list" style="display:flex;flex-direction:column;gap:6px;max-height:calc(85vh - 200px);overflow-y:auto;padding:4px 14px 16px 0;box-sizing:border-box;"></div>
                 `;
                 let listEl = document.getElementById('enc-ranks-list');
                 for (let L = 1; L <= 60; L++) {
@@ -5427,7 +5482,7 @@
                     row.style.gridTemplateColumns = '54px minmax(0,1fr) auto';
                     row.style.alignItems = 'center';
                     row.style.columnGap = '12px';
-                    row.style.padding = '8px 12px';
+                    row.style.padding = '8px 20px 8px 12px';
                     row.style.borderRadius = '10px';
                     row.style.background = L === curLv ? 'rgba(46,204,113,0.22)' : 'rgba(0,0,0,0.28)';
                     row.style.border = `2px solid ${r.color}`;
