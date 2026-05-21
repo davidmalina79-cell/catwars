@@ -1569,6 +1569,7 @@
             width: 100%;
             max-width: clamp(280px, 40vw, 440px);
             padding: clamp(8px, 1.5vh, 12px) 14px;
+            padding-right: 46px; /* room for ✓ button */
             margin: 0;
             font-size: clamp(13px, 1.7vw, 18px);
             font-weight: 700;
@@ -1581,12 +1582,48 @@
             backdrop-filter: blur(4px);
             box-shadow: none;
             z-index: 1;
-            transition: 0.2s;
+            transition: border-color 0.2s, box-shadow 0.2s;
         }
         #main-menu .mm-hero #player-nickname.nickname-input:focus {
             border-color: var(--primary-hover);
             box-shadow: 0 0 20px var(--primary);
         }
+        /* wrapper that holds input + ✓ button together */
+        .nickname-wrap {
+            position: relative;
+            width: 100%;
+            max-width: clamp(280px, 40vw, 440px);
+            display: flex;
+            align-items: center;
+        }
+        .nickname-wrap #player-nickname.nickname-input {
+            max-width: none; /* wrapper controls width */
+            flex: 1;
+        }
+        #btn-save-nick {
+            position: absolute;
+            right: 6px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: var(--success);
+            color: #fff;
+            border: none;
+            border-radius: 7px;
+            width: 34px;
+            height: 34px;
+            font-size: 18px;
+            font-weight: 900;
+            cursor: pointer;
+            display: none; /* shown only when input is non-empty and unsaved */
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 3px 0 #27ae60;
+            transition: background 0.15s, transform 0.1s;
+            z-index: 2;
+        }
+        #btn-save-nick:hover { background: var(--primary); box-shadow: 0 3px 0 #c0392b; }
+        #btn-save-nick.saved { background: #27ae60; }
+        #btn-save-nick.visible { display: flex; }
         /* Re-style existing #btn-start-game as the mega PLAY button */
         #main-menu .mm-hero #btn-start-game.btn-main {
             width: 100%;
@@ -2641,7 +2678,11 @@
                 <div class="mm-hero-title">CatWars.io<span class="beta-badge">BETA</span></div>
                 <div class="mm-hero-sub" id="mm-hero-sub">Survive · Evolve · Dominate</div>
 
-                <input type="text" id="player-nickname" class="nickname-input" placeholder="Enter your name..." autocomplete="off" maxlength="15">
+                <div class="nickname-wrap">
+                    <input type="text" id="player-nickname" class="nickname-input" placeholder="Enter your name..." autocomplete="off" maxlength="15"
+                        oninput="window.onNickInput()" onblur="window.onNickBlur()" onkeydown="if(event.key==='Enter'){window.commitPlayerNickname();this.blur();}">
+                    <button id="btn-save-nick" title="Save name" onclick="window.commitPlayerNickname()">✓</button>
+                </div>
 
                 <button class="btn-main" id="btn-start-game" onclick="window.mmPlayClick()">🗡️ PLAY</button>
 
@@ -2948,7 +2989,7 @@
         const INITIAL_BOSS_DELAY = 60;
         const BOSS_RESPAWN_AFTER_KILL = 90;
         const BOSS_TIMEOUT = 120;
-        const GAME_VERSION = '1.7.49';
+        const GAME_VERSION = '1.7.50';
 
         const CHEST_TYPES = { 
             wood: { hp: 500, gems: [3, 6], color: '#6b4423', metal: '#7f8c8d', weight: 0.70, size: 130 }, 
@@ -3400,6 +3441,59 @@
                 document.getElementById('global-xp-text').innerText = prog.globalLevel >= 60 ? "MAX RANK REACHED" : `${prog.globalXp || 0} / ${rankInfo.nextXp} XP`;
             }
         }
+
+        // ── NICKNAME SAVE ─────────────────────────────────────────────────────
+        // commitPlayerNickname() is the ONLY place that writes prog.nickname.
+        // Called by: ✓ button, Enter key, blur, and Play (when non-empty).
+        // Does NOT persist 'Hero' — that's a runtime-only in-game default.
+        window.commitPlayerNickname = function(opts) {
+            let input = document.getElementById('player-nickname');
+            if (!input) return;
+            let val = input.value.trim();
+            if (!val) return; // never save empty
+            if (val === prog.nickname) return; // nothing changed
+            prog.nickname = val;
+            saveProgress(); // localStorage
+            // For registered accounts, push to cloud immediately so the leaderboard
+            // picks up the new name without waiting for a full banking save.
+            if (opts && opts.cloud !== false) {
+                if (window.saveToFirestore && window.currentUserUid && window.currentUserUid !== 'offline_guest' && window.currentUserUid !== 'cg_guest') {
+                    window.saveToFirestore(prog).catch(e => console.warn('[CatWars] Nick cloud save:', e));
+                }
+            }
+            // Flash ✓ button green briefly then hide
+            let btn = document.getElementById('btn-save-nick');
+            if (btn) {
+                btn.classList.add('saved');
+                btn.textContent = '✓';
+                setTimeout(() => { btn.classList.remove('visible', 'saved'); }, 900);
+            }
+        };
+
+        // Show/hide the ✓ button based on whether input differs from saved nick
+        window.onNickInput = function() {
+            let input = document.getElementById('player-nickname');
+            let btn = document.getElementById('btn-save-nick');
+            if (!input || !btn) return;
+            let val = input.value.trim();
+            if (val && val !== prog.nickname) {
+                btn.classList.add('visible');
+            } else {
+                btn.classList.remove('visible');
+            }
+        };
+
+        // On blur: commit if non-empty and changed (desktop UX convenience)
+        window.onNickBlur = function() {
+            let input = document.getElementById('player-nickname');
+            if (!input) return;
+            if (input.value.trim() && input.value.trim() !== prog.nickname) {
+                window.commitPlayerNickname();
+            }
+            let btn = document.getElementById('btn-save-nick');
+            if (btn) btn.classList.remove('visible');
+        };
+        // ── END NICKNAME SAVE ─────────────────────────────────────────────────
 
         function calcModMultiplier() {
             let mult = 1.0;
@@ -6394,7 +6488,9 @@
             document.getElementById('main-menu').style.display = 'none'; document.getElementById('game-ui').style.display = 'flex'; document.getElementById('dash-container').style.display = 'flex'; document.getElementById('pause-btn').style.display = 'flex'; document.getElementById('minimap').style.display = 'block';
             if (IS_TOUCH_DEV) { document.getElementById('joystick-zone').style.display = 'flex'; document.getElementById('attack-btn').style.display = 'flex'; }
             
-            prog.nickname = document.getElementById('player-nickname').value.trim() || 'Hero';
+            // Commit display name if the player typed something — but never persist 'Hero'.
+            // Hero is the in-run default only (player.name below).
+            window.commitPlayerNickname({ cloud: false }); // local-only; cloud goes via banking
             saveProgress();
 
             isHardcoreMode = (selectedGameMode === 'hardcore');
@@ -6470,7 +6566,7 @@
             let finalMaxHp = pMaxHpBase * pHpMult * pHpBoostMult;
 
             player = { 
-                name: prog.nickname, x: WORLD_SIZE / 2, y: WORLD_SIZE / 2, 
+                name: prog.nickname || 'Hero', x: WORLD_SIZE / 2, y: WORLD_SIZE / 2, 
                 level: startLevel, xp: 0, angle: 0, 
                 attackTimer: 0, attackCooldown: 0.66, hasAttacked: false, 
                 hp: finalMaxHp, maxHp: finalMaxHp, invuln: 2.0, 
@@ -8479,6 +8575,15 @@
                         window.currentUserUid = u.uid;
                         if (window.__catwars_fetchFromFirestoreImpl) window.fetchFromFirestore = window.__catwars_fetchFromFirestoreImpl;
                         if (window.__catwars_saveToFirestoreImpl) window.saveToFirestore = window.__catwars_saveToFirestoreImpl;
+                        // Prefill hero-field hint from login nick — not saved until ✓ or Play
+                        if (!window.prog.nickname) {
+                            let hint = document.getElementById('login-nick');
+                            let nickEl = document.getElementById('player-nickname');
+                            if (hint && nickEl && hint.value.trim()) {
+                                nickEl.value = hint.value.trim();
+                                window.onNickInput();
+                            }
+                        }
                         updateAuthUI(u);
                         window.closeLoginModal();
                     })
@@ -8500,6 +8605,15 @@
                         window.currentUserUid = u.uid;
                         if (window.__catwars_fetchFromFirestoreImpl) window.fetchFromFirestore = window.__catwars_fetchFromFirestoreImpl;
                         if (window.__catwars_saveToFirestoreImpl) window.saveToFirestore = window.__catwars_saveToFirestoreImpl;
+                        // Prefill hero-field hint from login nick — not saved until ✓ or Play
+                        if (!window.prog.nickname) {
+                            let hint = document.getElementById('login-nick');
+                            let nickEl = document.getElementById('player-nickname');
+                            if (hint && nickEl && hint.value.trim()) {
+                                nickEl.value = hint.value.trim();
+                                window.onNickInput();
+                            }
+                        }
                         updateAuthUI(u);
                         window.closeLoginModal();
                     })
@@ -8646,10 +8760,12 @@
                 await setDoc(docRef, dataToSave, { merge: true });
                 
                 if (!auth.currentUser.isAnonymous) {
-                    // Nickname: priorita = co je v progress, fallback email prefix
+                    // Nickname: priority = saved display name → email prefix → 'Guest'.
+                    // Never fall back to 'Hero' so the leaderboard stays human-readable
+                    // without polluting it with uncustomised placeholder names.
                     let nick = (dataToSave.nickname || '').trim();
                     if (!nick && auth.currentUser.email) nick = auth.currentUser.email.split('@')[0];
-                    if (!nick) nick = 'Hero';
+                    if (!nick) nick = 'Guest';
                     
                     const pubRef = doc(db, 'artifacts', appId, 'public', 'data', 'leaderboard', uid);
                     await setDoc(pubRef, {
