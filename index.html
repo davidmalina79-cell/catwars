@@ -433,6 +433,29 @@
         #ob-next-btn { background: var(--success); color: #fff; border: none; border-radius: 12px; padding: 13px 34px; font-size: 17px; font-weight: 900; cursor: pointer; box-shadow: 0 5px 0 #27ae60; transition: transform 0.1s, box-shadow 0.1s; letter-spacing: 0.5px; }
         #ob-next-btn:hover { transform: translateY(2px); box-shadow: 0 3px 0 #27ae60; }
         #ob-next-btn:active { transform: translateY(4px); box-shadow: 0 1px 0 #27ae60; }
+        /* Compact overrides for touch/mobile — ~15% smaller to fit small phone screens */
+        body.touch-device #onboarding-overlay .ob-panel { padding: 20px 22px; }
+        body.touch-device #ob-dots { margin-bottom: 14px; gap: 6px; }
+        body.touch-device .ob-dot { width: 8px; height: 8px; }
+        body.touch-device #ob-icon { font-size: 52px; margin-bottom: 8px; }
+        body.touch-device #ob-title { font-size: 18px; margin-bottom: 8px; }
+        body.touch-device #ob-desc { font-size: 13px; line-height: 1.5; margin-bottom: 16px; }
+        body.touch-device .ob-highlight-box { padding: 7px 12px; margin-top: 6px; font-size: 12px; }
+        body.touch-device #ob-buttons { gap: 8px; }
+        body.touch-device #ob-skip-btn { padding: 8px 14px; font-size: 13px; }
+        body.touch-device #ob-next-btn { padding: 10px 26px; font-size: 15px; }
+        /* Also clamp on any short viewport regardless of touch (e.g. landscape phone) */
+        @media (max-height: 620px) {
+            #onboarding-overlay .ob-panel { padding: 16px 20px; }
+            #ob-dots { margin-bottom: 10px; }
+            #ob-icon { font-size: 44px; margin-bottom: 6px; }
+            #ob-title { font-size: 17px; margin-bottom: 6px; }
+            #ob-desc { font-size: 13px; line-height: 1.45; margin-bottom: 12px; }
+            .ob-highlight-box { padding: 6px 10px; margin-top: 4px; font-size: 12px; }
+            #ob-buttons { gap: 8px; }
+            #ob-skip-btn { padding: 7px 12px; font-size: 13px; }
+            #ob-next-btn { padding: 9px 22px; font-size: 14px; }
+        }
         /* ── END ONBOARDING ────────────────────────────────────────────────── */
 
         .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(18, 28, 38, 0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: auto; z-index: 100; backdrop-filter: blur(8px); padding: 20px; box-sizing: border-box; }
@@ -2782,7 +2805,7 @@
         const INITIAL_BOSS_DELAY = 60;
         const BOSS_RESPAWN_AFTER_KILL = 90;
         const BOSS_TIMEOUT = 120;
-        const GAME_VERSION = '1.7.38';
+        const GAME_VERSION = '1.7.40';
 
         const CHEST_TYPES = { 
             wood: { hp: 500, gems: [3, 6], color: '#6b4423', metal: '#7f8c8d', weight: 0.70, size: 130 }, 
@@ -8310,7 +8333,14 @@
             if (current && current.isAnonymous) {
                 const credential = EmailAuthProvider.credential(email, pass);
                 linkWithCredential(current, credential)
-                    .then(() => { window.closeLoginModal(); })
+                    .then((uc) => {
+                        const u = uc.user;
+                        window.currentUserUid = u.uid;
+                        if (window.__catwars_fetchFromFirestoreImpl) window.fetchFromFirestore = window.__catwars_fetchFromFirestoreImpl;
+                        if (window.__catwars_saveToFirestoreImpl) window.saveToFirestore = window.__catwars_saveToFirestoreImpl;
+                        updateAuthUI(u);
+                        window.closeLoginModal();
+                    })
                     .catch(e => {
                         if (e.code === 'auth/email-already-in-use' || e.code === 'auth/credential-already-in-use') {
                             // Nickname already taken by another account. Anti-fraud rule:
@@ -8324,7 +8354,14 @@
                     });
             } else {
                 createUserWithEmailAndPassword(auth, email, pass)
-                    .then(() => { window.closeLoginModal(); })
+                    .then((uc) => {
+                        const u = uc.user;
+                        window.currentUserUid = u.uid;
+                        if (window.__catwars_fetchFromFirestoreImpl) window.fetchFromFirestore = window.__catwars_fetchFromFirestoreImpl;
+                        if (window.__catwars_saveToFirestoreImpl) window.saveToFirestore = window.__catwars_saveToFirestoreImpl;
+                        updateAuthUI(u);
+                        window.closeLoginModal();
+                    })
                     .catch(e => { errEl.innerText = (e.code === 'auth/email-already-in-use' ? "Nickname already in use." : "Error: " + e.message); });
             }
         };
