@@ -2782,7 +2782,7 @@
         const INITIAL_BOSS_DELAY = 60;
         const BOSS_RESPAWN_AFTER_KILL = 90;
         const BOSS_TIMEOUT = 120;
-        const GAME_VERSION = '1.7.38';
+        const GAME_VERSION = '1.7.39';
 
         const CHEST_TYPES = { 
             wood: { hp: 500, gems: [3, 6], color: '#6b4423', metal: '#7f8c8d', weight: 0.70, size: 130 }, 
@@ -8310,7 +8310,14 @@
             if (current && current.isAnonymous) {
                 const credential = EmailAuthProvider.credential(email, pass);
                 linkWithCredential(current, credential)
-                    .then(() => { window.closeLoginModal(); })
+                    .then((uc) => {
+                        const u = uc.user;
+                        window.currentUserUid = u.uid;
+                        if (window.__catwars_fetchFromFirestoreImpl) window.fetchFromFirestore = window.__catwars_fetchFromFirestoreImpl;
+                        if (window.__catwars_saveToFirestoreImpl) window.saveToFirestore = window.__catwars_saveToFirestoreImpl;
+                        updateAuthUI(u);
+                        window.closeLoginModal();
+                    })
                     .catch(e => {
                         if (e.code === 'auth/email-already-in-use' || e.code === 'auth/credential-already-in-use') {
                             // Nickname already taken by another account. Anti-fraud rule:
@@ -8324,7 +8331,14 @@
                     });
             } else {
                 createUserWithEmailAndPassword(auth, email, pass)
-                    .then(() => { window.closeLoginModal(); })
+                    .then((uc) => {
+                        const u = uc.user;
+                        window.currentUserUid = u.uid;
+                        if (window.__catwars_fetchFromFirestoreImpl) window.fetchFromFirestore = window.__catwars_fetchFromFirestoreImpl;
+                        if (window.__catwars_saveToFirestoreImpl) window.saveToFirestore = window.__catwars_saveToFirestoreImpl;
+                        updateAuthUI(u);
+                        window.closeLoginModal();
+                    })
                     .catch(e => { errEl.innerText = (e.code === 'auth/email-already-in-use' ? "Nickname already in use." : "Error: " + e.message); });
             }
         };
