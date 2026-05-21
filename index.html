@@ -2105,29 +2105,34 @@
         /* ── END LOADING SCREEN ─────────────────────────────────────────── */
 
         /* ── LOGIN MODAL — MOBILE COMPACT ───────────────────────────────────
-           .overlay is flex-direction:column so justify-content controls
-           vertical placement. We anchor to the top so content never overflows
-           below the fold; the overlay itself scrolls for the Google button. */
+           The overlay is pinned to the viewport via 100dvh so overflow-y:auto
+           actually clips to the screen edge. The panel itself is also
+           scrollable as a safety net for very short viewports. */
         @media (max-width: 600px) and (pointer: coarse) {
             #login-screen.overlay {
-                justify-content: flex-start;   /* anchor panel to top, not center */
-                align-items: stretch;
-                padding: 0;
+                justify-content: center;
+                align-items: center;
+                padding: 12px;
                 overflow-y: auto;
+                /* Pin to viewport, not document */
+                position: fixed !important;
+                height: 100vh !important;
+                height: 100dvh !important;
+                box-sizing: border-box;
             }
             #login-screen > .panel {
                 max-width: 100% !important;
                 width: 100% !important;
-                max-height: none !important;
-                overflow-y: visible !important;
-                border-radius: 0 0 16px 16px;
-                border-top: none;
-                padding: 12px 16px 18px !important;
-                margin: 0;
+                max-height: calc(100dvh - 24px) !important;
+                overflow-y: auto !important;
+                border-radius: 16px !important;
+                padding: 14px 16px 16px !important;
+                margin: 0 auto;
+                box-sizing: border-box;
             }
             #login-screen h2 {
-                font-size: 17px !important;
-                margin-bottom: 2px !important;
+                font-size: 18px !important;
+                margin-bottom: 4px !important;
             }
             /* Hide the description text — saves ~50px on small screens */
             #login-screen > .panel > p {
@@ -2141,13 +2146,19 @@
             }
             #login-error {
                 font-size: 12px !important;
-                min-height: 16px !important;
+                min-height: 14px !important;
                 margin: 2px auto 6px !important;
             }
             #login-screen .btn-main {
                 font-size: 15px !important;
-                padding: 10px 18px !important;
+                padding: 10px 16px !important;
                 margin: 3px !important;
+                width: auto !important;
+                max-width: none !important;
+            }
+            /* Keep the Login/Register row side-by-side */
+            #login-screen .btn-main:not([style*="width: 90%"]) {
+                display: inline-block !important;
             }
         }
         /* ── END LOGIN MODAL MOBILE ─────────────────────────────────────── */
@@ -2884,7 +2895,7 @@
         const INITIAL_BOSS_DELAY = 60;
         const BOSS_RESPAWN_AFTER_KILL = 90;
         const BOSS_TIMEOUT = 120;
-        const GAME_VERSION = '1.7.46';
+        const GAME_VERSION = '1.7.47';
 
         const CHEST_TYPES = { 
             wood: { hp: 500, gems: [3, 6], color: '#6b4423', metal: '#7f8c8d', weight: 0.70, size: 130 }, 
