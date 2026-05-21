@@ -53,6 +53,10 @@
                 }
             } catch (e) { window.IS_CRAZYGAMES = false; }
 
+            var host = window.location.hostname;
+            window.IS_BETA = host.startsWith('beta.') || host.indexOf('beta--') !== -1;
+            if (window.IS_BETA) document.documentElement.classList.add('beta-env');
+
             // Tag the document so CSS can hide AdSense-only publisher chrome on CrazyGames.
             if (window.IS_CRAZYGAMES) {
                 document.documentElement.classList.add('crazygames');
@@ -1538,6 +1542,11 @@
             user-select: none;
         }
         #main-menu .mm-hero-title {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
             font-size: clamp(22px, 4.5vw, 52px);
             font-weight: 900;
             color: var(--primary);
@@ -2063,7 +2072,88 @@
             box-shadow: none;
             max-width: 520px;
         }
+        #loading-screen .loading-brand-title,
+        #lobby-screen .loading-brand-title {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            font-size: clamp(28px, 6vw, 52px);
+            font-weight: 900;
+            color: var(--primary);
+            text-shadow: 0 0 30px rgba(243,156,18,0.5), 3px 3px 0 #000;
+            letter-spacing: 3px;
+            text-align: center;
+            margin: 0 0 18px 0;
+        }
+        .beta-badge {
+            display: none;
+            font-size: clamp(11px, 2vw, 15px);
+            font-weight: 800;
+            letter-spacing: 2px;
+            color: #fff;
+            background: #e74c3c;
+            padding: 4px 10px;
+            border-radius: 6px;
+            text-shadow: 1px 1px 0 #000;
+            border: 2px solid rgba(255,255,255,0.2);
+            line-height: 1;
+            vertical-align: middle;
+        }
+        html.beta-env .beta-badge { display: inline-block; }
         /* ── END LOADING SCREEN ─────────────────────────────────────────── */
+
+        /* ── LOGIN MODAL — MOBILE COMPACT ───────────────────────────────────
+           On small phones the default inputs (font-size:20px / padding:15px)
+           and panel padding push the Login/Register buttons off screen.
+           These overrides shrink everything so both buttons are visible without
+           scrolling; the Google button and legal text are still reachable by
+           a short swipe. pointer:coarse limits the rule to real touch devices. */
+        @media (max-width: 600px) and (pointer: coarse) {
+            #login-screen.overlay {
+                align-items: flex-start;
+                padding: 0;
+                overflow-y: auto;
+            }
+            #login-screen > .panel {
+                max-width: 100% !important;
+                width: 100% !important;
+                max-height: none !important;
+                overflow-y: visible !important;
+                min-height: unset;
+                border-radius: 0 0 16px 16px;
+                border-top: none;
+                padding: 14px 16px 20px !important;
+                margin: 0;
+            }
+            #login-screen h2 {
+                font-size: 18px !important;
+                margin-bottom: 4px !important;
+            }
+            #login-screen > .panel > p {
+                font-size: 11px !important;
+                margin-bottom: 10px !important;
+                line-height: 1.35 !important;
+            }
+            #login-nick, #login-pass {
+                font-size: 16px !important;
+                padding: 10px 12px !important;
+                width: 92% !important;
+                margin-bottom: 6px !important;
+            }
+            #login-error {
+                font-size: 12px !important;
+                min-height: 18px !important;
+                margin-bottom: 6px !important;
+            }
+            #login-screen .btn-main {
+                font-size: 15px !important;
+                padding: 10px 18px !important;
+                margin: 3px !important;
+            }
+        }
+        /* ── END LOGIN MODAL MOBILE ─────────────────────────────────────── */
     </style>
 </head>
 <body>
@@ -2072,10 +2162,8 @@
     
     <div id="loading-screen" class="overlay" style="z-index: 400;">
         <div class="panel" style="padding: 25px;">
-            <div class="game-art-banner" style="margin-bottom: 20px;">
-                <img data-src="img/banner.png" alt="CatWars Battle" loading="lazy" onerror="this.style.display='none';" class="js-banner-img">
-            </div>
-            <h1 style="font-size: 35px; margin-bottom: 10px; color: #fff; text-shadow: 2px 2px 4px #000;">Loading CatWars.io</h1>
+            <div class="loading-brand-title">CatWars.io<span class="beta-badge">BETA</span></div>
+            <h1 style="font-size: 35px; margin-bottom: 10px; color: #fff; text-shadow: 2px 2px 4px #000;">Loading</h1>
             <p style="margin: 0 0 18px; color: #ddd; font-size: 15px; line-height: 1.45; font-weight: bold;">
                 Sharpen your claws, grab the food, and get ready to evolve from tiny kitten to arena legend.
             </p>
@@ -2102,18 +2190,12 @@
     </div>
 
     <!-- LOBBY SCREEN — shown once on initial load, before the main menu.
-         Visually mirrors the loading screen (framed panel · banner art ·
-         title · tagline · separator · About) but with the giant green PLAY
+         Visually mirrors the loading screen (yellow CatWars.io title ·
+         tagline · separator · About) but with the giant green PLAY
          button as the single primary call-to-action. -->
     <div id="lobby-screen" class="overlay" style="display: none;">
         <div class="lobby-inner">
-            <div class="game-art-banner" style="margin-bottom: 20px;">
-                <img data-src="img/banner.png"
-                     alt="CatWars.io — Free Browser Survival Game"
-                     loading="lazy"
-                     onerror="this.style.display='none';"
-                     class="js-banner-img">
-            </div>
+            <div class="loading-brand-title">CatWars.io<span class="beta-badge">BETA</span></div>
             <button id="lobby-play-btn" onclick="window.enterFromLobby()"
                     style="font-size: 32px; padding: 20px 70px; background: var(--success); color: #fff;
                            border: none; border-radius: 16px; cursor: pointer; font-weight: 900;
@@ -2495,7 +2577,7 @@
             <!-- HERO CENTRE — title · nickname · PLAY · mode pills -->
             <div class="mm-hero">
                 <div class="mm-hero-cat">🐱</div>
-                <div class="mm-hero-title">CatWars.io</div>
+                <div class="mm-hero-title">CatWars.io<span class="beta-badge">BETA</span></div>
                 <div class="mm-hero-sub" id="mm-hero-sub">Survive · Evolve · Dominate</div>
 
                 <input type="text" id="player-nickname" class="nickname-input" placeholder="Enter your name..." autocomplete="off" maxlength="15">
@@ -2805,7 +2887,7 @@
         const INITIAL_BOSS_DELAY = 60;
         const BOSS_RESPAWN_AFTER_KILL = 90;
         const BOSS_TIMEOUT = 120;
-        const GAME_VERSION = '1.7.41';
+        const GAME_VERSION = '1.7.45';
 
         const CHEST_TYPES = { 
             wood: { hp: 500, gems: [3, 6], color: '#6b4423', metal: '#7f8c8d', weight: 0.70, size: 130 }, 
@@ -5314,8 +5396,9 @@
         // MENUS & UI
 
         function applyGameVersionLabels() {
+            const ver = 'v' + GAME_VERSION + (window.IS_BETA ? ' · BETA' : '');
             document.querySelectorAll('.js-game-version').forEach(el => {
-                el.textContent = 'v' + GAME_VERSION;
+                el.textContent = ver;
             });
         }
         applyGameVersionLabels();
@@ -8117,10 +8200,7 @@
 
         console.log("[CatWars] Initializing Firebase...");
         let isCanvasEnv = typeof __firebase_config !== 'undefined';
-        const isBeta = !isCanvasEnv && (
-            window.location.hostname.startsWith('beta.') ||
-            window.location.hostname.includes('beta--')
-        );
+        const isBeta = !isCanvasEnv && window.IS_BETA;
 
         const firebaseConfigProd = {
             apiKey: "AIzaSyA6EOidw5V5q45xINGnDbh1Szoho5_Ksd0",
