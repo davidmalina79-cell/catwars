@@ -36,7 +36,7 @@ These rules apply to every change in this project. Read them before editing
 - **Goal:** the player is a cat, collects food (XP) and fights endless dog
   hordes. 50 evolution levels (Kitten → God Cat).
 - **Modes:** Solo Survival · Hardcore (with difficulty modifiers) ·
-  Cats vs Dogs (Co-Op with AI cats).
+  Cats vs Dogs (with AI cats).
 - **Meta-progression:** Gems are the currency. Spent on permanent weapon
   and helmet upgrades in the menu (Encyclopedia / Codex).
 - **Backend:** Firebase (Auth, Firestore for progress + leaderboard) with a

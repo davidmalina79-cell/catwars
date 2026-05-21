@@ -893,32 +893,66 @@
         }
 
         /* ── LEADERBOARD MOBILE LAYOUT ─────────────────────────────────────────
-           Applies to any screen narrower than 800px (portrait AND landscape
-           phones, small tablets). NOT scoped to pointer:coarse so it fires on
-           every real device regardless of how the browser reports pointer type. */
-        @media (max-width: 800px) {
-            .lb-back-btn { padding: 6px 10px !important; font-size: 11px !important; min-width: 68px; }
-            .lb-top-spacer { min-width: 68px; }
-            .lb-title { font-size: clamp(13px, 3.8vw, 20px); }
-            /* Turn the body into a row so tabs sit on the left, table on the right */
-            .lb-body { flex-direction: row; gap: 6px; }
+           Portrait/narrow phones (≤800px) AND landscape phones in fullscreen
+           (often >800px wide but short). NOT scoped to pointer:coarse so narrow
+           iframes still get the compact table. */
+        @media (max-width: 800px),
+               ((max-height: 520px) and (orientation: landscape) and (pointer: coarse)) {
+            #leaderboard-screen.overlay {
+                padding: 2px 0;
+                justify-content: flex-start;
+            }
+            #leaderboard-screen > .panel {
+                width: 100% !important;
+                max-width: 100% !important;
+                max-height: 100dvh !important;
+                padding: 6px 4px !important;
+                border-radius: 8px;
+                border-width: 2px;
+            }
+            .lb-top-row {
+                margin-bottom: 4px;
+                gap: 4px;
+                flex-wrap: nowrap;
+            }
+            /* Menu top-right — keeps the left tab rail clear of the back button */
+            .lb-back-btn {
+                order: 2;
+                margin: 0 0 0 auto !important;
+                padding: 2px 7px !important;
+                font-size: 9px !important;
+                min-width: 0 !important;
+                width: auto !important;
+                max-width: none;
+                line-height: 1.1;
+                border-radius: 6px;
+                box-shadow: 0 2px 0 var(--primary-active) !important;
+            }
+            .lb-top-spacer { display: none; }
+            .lb-title {
+                order: 1;
+                flex: 1;
+                text-align: center;
+                font-size: clamp(11px, 3.2vw, 16px);
+            }
+            .lb-body { flex-direction: row; gap: 4px; min-height: 0; }
             /* Vertical tab rail */
             .enc-tabs.lb-tabs {
                 display: flex !important;
                 flex-direction: column;
                 flex-wrap: nowrap;
-                width: 56px;
-                min-width: 56px;
+                width: 46px;
+                min-width: 46px;
                 flex-shrink: 0;
-                gap: 4px;
+                gap: 3px;
                 margin-right: 0;
-                margin-bottom: 0;
+                margin-bottom: 0 !important;
                 overflow-y: auto;
             }
             .enc-tabs.lb-tabs .enc-tab {
-                font-size: 10px;
-                padding: 6px 2px;
-                min-height: 54px;
+                font-size: 9px;
+                padding: 3px 2px;
+                min-height: 34px;
                 height: auto;
                 white-space: normal;
                 overflow: visible;
@@ -927,21 +961,74 @@
                 flex-direction: column;
                 align-items: center;
                 justify-content: center;
-                line-height: 1.3;
+                line-height: 1.15;
             }
+            .lb-tab-short { gap: 1px; }
             /* Swap long labels for short icon+word labels */
             .lb-tab-full  { display: none; }
             .lb-tab-short { display: flex; flex-direction: column; align-items: center; gap: 2px; }
-            /* Hide Level + Max Cat Lv. columns — 3-column table (Rank/Player/Score) fits fine */
+            #leaderboard-screen .lb-table-area {
+                padding: 4px !important;
+                border-radius: 6px;
+            }
+            /* Hide Level + Max Cat Lv. columns — 3-column table fits */
             #lb-header th:nth-child(3),
             #lb-header th:nth-child(4),
             #lb-table-body tr td:nth-child(3),
             #lb-table-body tr td:nth-child(4),
             #lb-current-player tr td:nth-child(3),
             #lb-current-player tr td:nth-child(4) { display: none !important; }
-            /* Tighten table padding so player names have room */
-            table.stats-table th,
-            table.stats-table td { padding: 8px 6px; font-size: 13px; }
+            #leaderboard-screen table.stats-table th,
+            #leaderboard-screen table.stats-table td {
+                padding: 3px 4px;
+                font-size: 11px;
+                line-height: 1.15;
+            }
+            #leaderboard-screen #lb-current-player tr td {
+                padding: 4px 4px;
+            }
+        }
+        /* Landscape phone fullscreen: width often >800px — keep tabs in a
+           single top row (not left rail) but same compact panel + rows. */
+        @media (min-width: 801px) and (max-height: 520px) and (orientation: landscape) and (pointer: coarse) {
+            #leaderboard-screen.overlay { padding: 2px 0; justify-content: flex-start; }
+            #leaderboard-screen > .panel {
+                width: 100% !important;
+                max-width: 100% !important;
+                max-height: 96dvh !important;
+                padding: 6px 4px !important;
+            }
+            .lb-top-row { margin-bottom: 4px; gap: 4px; }
+            .lb-back-btn {
+                order: 2;
+                margin: 0 0 0 auto !important;
+                padding: 2px 7px !important;
+                font-size: 9px !important;
+                min-width: 0 !important;
+                width: auto !important;
+            }
+            .lb-top-spacer { display: none; }
+            .lb-title { order: 1; flex: 1; font-size: 14px; }
+            .enc-tabs.lb-tabs { margin-bottom: 6px !important; gap: 3px; }
+            .enc-tabs.lb-tabs .enc-tab {
+                min-height: 30px;
+                padding: 3px 2px;
+                font-size: 9px;
+            }
+            .lb-tab-full  { display: none; }
+            .lb-tab-short { display: flex; flex-direction: column; align-items: center; gap: 1px; }
+            #lb-header th:nth-child(3),
+            #lb-header th:nth-child(4),
+            #lb-table-body tr td:nth-child(3),
+            #lb-table-body tr td:nth-child(4),
+            #lb-current-player tr td:nth-child(3),
+            #lb-current-player tr td:nth-child(4) { display: none !important; }
+            #leaderboard-screen table.stats-table th,
+            #leaderboard-screen table.stats-table td {
+                padding: 3px 4px;
+                font-size: 11px;
+                line-height: 1.15;
+            }
         }
 
         /* SHORT DESKTOP IFRAME — death / pause panels overflow the top of the
@@ -2695,7 +2782,7 @@
         const INITIAL_BOSS_DELAY = 60;
         const BOSS_RESPAWN_AFTER_KILL = 90;
         const BOSS_TIMEOUT = 120;
-        const GAME_VERSION = '1.7.37';
+        const GAME_VERSION = '1.7.38';
 
         const CHEST_TYPES = { 
             wood: { hp: 500, gems: [3, 6], color: '#6b4423', metal: '#7f8c8d', weight: 0.70, size: 130 }, 
