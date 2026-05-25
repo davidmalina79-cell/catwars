@@ -3020,7 +3020,7 @@
         const INITIAL_BOSS_DELAY = 60;
         const BOSS_RESPAWN_AFTER_KILL = 90;
         const BOSS_TIMEOUT = 120;
-        const GAME_VERSION = '1.7.55';
+        const GAME_VERSION = '1.7.56';
 
         const CHEST_TYPES = { 
             wood: { hp: 500, gems: [3, 6], color: '#6b4423', metal: '#7f8c8d', weight: 0.70, size: 130 }, 
@@ -3177,6 +3177,45 @@
             wide:     { cdMult: 1.2, dmgMult: 0.8, reachMult: 1.1, knockback: 80, sweepAngle: Math.PI / 1.5 },
             reach:    { cdMult: 1.15, dmgMult: 0.85, reachMult: 1.35, knockback: 250, sweepAngle: Math.PI / 2.5 },
         };
+
+        // Returns weapon arm angle and arm-extend for drawEntity, driven by ARCH_STATS
+        // so the visual sweep matches the real hit cone.
+        // attackProgress: 0=idle, 0–0.15=windup, 0.15–0.25=strike, 0.25–1.0=recovery.
+        function getWeaponSwingAngle(attackProgress, archKey) {
+            let sweep = (ARCH_STATS[archKey] || ARCH_STATS.balanced).sweepAngle;
+            let reachMult = (ARCH_STATS[archKey] || ARCH_STATS.balanced).reachMult;
+
+            // Per-archetype visual scale (animation only — never affects hitbox).
+            // Wide is capped so it doesn't look like a full spin.
+            const VIS = { balanced: 0.85, fast: 0.70, heavy: 0.90, wide: 0.95, reach: 0.75 };
+            let vis = VIS[archKey] || 0.85;
+
+            let swingAng, extendBonus = 0;
+
+            if (attackProgress <= 0) {
+                // Idle rest pose
+                swingAng = Math.PI / 4;
+            } else if (attackProgress < 0.15) {
+                // Windup — pull to back edge of cone
+                let t = attackProgress / 0.15;
+                let eased = t * t; // ease in
+                swingAng = (Math.PI / 4) + eased * (sweep * vis); // rotate away from center
+            } else if (attackProgress < 0.25) {
+                // Strike — sweep across the full arc; damage fires at 0.25
+                let t = (attackProgress - 0.15) / 0.10;
+                let eased = 1 - (1 - t) * (1 - t); // ease out (fast start)
+                swingAng = (sweep * vis) - eased * (sweep * vis * 2);
+                // Reach archetype lunges forward during strike
+                if (archKey === 'reach') extendBonus = eased * 0.25 * reachMult;
+            } else {
+                // Recovery — return to idle
+                let t = (attackProgress - 0.25) / 0.75;
+                let eased = t * t; // ease in
+                swingAng = -(sweep * vis) + eased * (sweep * vis + Math.PI / 4);
+            }
+
+            return { swingAng, extendBonus };
+        }
 
         // UI helpers — sweepAngle is half-cone; display full attack arc in degrees.
         function getArchSweepDegrees(archKey) {
@@ -5450,22 +5489,19 @@
             ctx.beginPath(); ctx.moveTo(size*0.6, -size*1.0); ctx.lineTo(size*0.7, -size*1.0); ctx.stroke();
             ctx.restore();
 
-            ctx.save(); let swingAng = Math.PI / 4, armExtend = size * 1.1; 
-            if (attackProgress > 0) { 
-                if (attackProgress < 0.2) swingAng = Math.PI/3 + attackProgress*0.2; 
-                else if (attackProgress < 0.4) swingAng = Math.PI*0.4 - ((attackProgress-0.2)/0.2)*Math.PI; 
-                else swingAng = -Math.PI*0.6 + ((attackProgress-0.4)/0.6)*Math.PI*0.6; 
-            } 
+            let _swing = getWeaponSwingAngle(attackProgress, arch);
+            ctx.save(); let swingAng = _swing.swingAng, armExtend = size * (1.1 + _swing.extendBonus); 
             ctx.rotate(swingAng); ctx.translate(armExtend, 0); 
             ctx.save(); ctx.rotate(Math.PI/8); ctx.strokeStyle = '#000000'; ctx.lineWidth = 2; 
             
-            // RED GLOW BĚHEM NÁPŘAHU (WINDUP)
-            if (attackProgress > 0 && attackProgress <= 0.2 && !isCat) {
+            // RED GLOW BĚHEM NÁPŘAHU (WINDUP) — windup ends at 0.15
+            if (attackProgress > 0 && attackProgress <= 0.15 && !isCat) {
                 ctx.shadowColor = '#ff0000';
                 ctx.shadowBlur = 25;
             }
             
-            if (attackProgress > 0.25) ctx.globalAlpha = 0.4; // Zbraň je v cooldownu vizuálně potlačena
+            // Full opacity through strike (0–0.25); dim during recovery only
+            if (attackProgress > 0.25) ctx.globalAlpha = 0.4;
             drawWeaponShape(ctx, wLen, wWid, weaponType, color, currentTier, level); 
             ctx.restore(); 
             
@@ -8009,9 +8045,9 @@
             let renderWeapon = playerStats.weaponType;
             let renderWTier = -1;
             if (pLegKey) { renderWeapon = LEGENDARY_WEAPONS[pLegKey].weaponType; renderWTier = 5; }
-            // Attack cone telegraph — only while actually swinging. Uses the SAME sweep
-            // angle and reach as the real hitbox so what you see is exactly what you hit.
-            if (player.attackProgress > 0.15 && player.attackProgress < 0.7) {
+            // Attack cone telegraph — shown during strike + brief aftermath (0.15–0.40).
+            // Uses the SAME sweep angle and reach as the real hitbox so what you see is exactly what you hit.
+            if (player.attackProgress > 0.15 && player.attackProgress < 0.40) {
                 let _arch = getWeaponArchetype(renderWeapon === playerStats.weaponType ? playerStats.weaponType : renderWeapon);
                 let _sweep = ARCH_STATS[_arch].sweepAngle;
                 let _tierForReach = (renderWTier === 5) ? 5 : (prog.weaponUpgrades[player.level] || 0);

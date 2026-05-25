@@ -1,6 +1,6 @@
 # CatWars.io — Feature Specification
 
-**Version described:** v1.7.55
+**Version described:** v1.7.56
 **Date:** 2026-05-21
 **Status:** This document describes how the game **currently works** in the version above. It is the intended-behavior reference. When an AI tool edits the game and a feature stops matching this document, that mismatch is a regression — fix the code, or deliberately update this spec and bump the version.
 
@@ -123,6 +123,8 @@ Unlocks per cat level once that level's **weapon reaches Diamond** (tier 4).
 
 ### 6.1 Player attack resolution
 On attack, once `attackProgress >= 0.25` and not yet swung this stroke, the game checks all chests/enemies (and AI cats in Deathmatch) within reach. Reach = `playerSize * 1.5 + weaponLength * reachMult`. Enemies must also be within the archetype's sweep cone. Chests ignore the angle check (inanimate — hit on overlap).
+
+**Visuals:** a semi-transparent attack cone telegraph is drawn for the player during `attackProgress` 0.15–0.40, using the same `sweepAngle` and reach as the hitbox. Weapon arm animation (`getWeaponSwingAngle`) is driven by the same archetype stats: windup 0–0.15, strike sweep 0.15–0.25 (aligned to the damage frame), recovery 0.25–1.0. Applies to player, AI cats, and dogs via `drawEntity`.
 
 ### 6.2 Combo system (`BALANCE` constants)
 Combo increments on each kill; resets if no kill within `COMBO_WINDOW` (3.0s) or when the player is hit (unless Hunter's Eye boost is active). Tiered bonuses:
@@ -301,6 +303,7 @@ Other top-level constants worth knowing: `WORLD_SIZE` 6000, `FOOD_COUNT` 800, `E
 
 | Version | Date | Notes |
 |---------|------|-------|
+| 1.7.56 | 2026-05-25 | Archetype-aware weapon swing animation (`getWeaponSwingAngle`): arm sweeps driven by `ARCH_STATS.sweepAngle`; windup 0–0.15, strike 0.15–0.25, recovery 0.25–1.0; cone telegraph tightened to 0.15–0.40; weapon stays full opacity through strike. |
 | 1.7.55 | 2026-05-25 | Hardcore gem multiplier now applies to gem rewards and revive cost via `calcModMultiplier()` at run start. |
 | 1.7.54 | 2026-05-25 | Combo tier player aura; attack cone telegraph during swing; reduced enemy shadowBlur cost; Hardcore label "Gem Multiplier". |
 | 1.7.53 | 2026-05-21 | Initial spec written from current code. |
