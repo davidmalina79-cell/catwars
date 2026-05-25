@@ -1,14 +1,22 @@
 # Catwars.io — Agent Instructions
 
 These rules apply to every change in this project. Read them before editing
-`catwars.html`.
+`index.html`.
+
+> **Companion document:** a feature spec (`CatWars-Feature-Spec.md`) describes
+> the game's *intended behavior* as of a stated version. It is a **reference,
+> not a mandate**: if the code and the spec disagree, **the code wins** and the
+> spec should be updated. Check the spec's version header against `GAME_VERSION`
+> in the code — if `GAME_VERSION` is higher, treat the spec as possibly stale
+> and verify against the code before relying on it. AGENTS.md (this file) is the
+> mandatory rules-of-the-road; the spec is background on what each system does.
 
 ---
 
 ## 1. Project shape
 
-- **Single-file project.** The entire game lives in `catwars.html`
-  (~4 200 lines: HTML + inline CSS + inline `<script>`). **Do not** split it
+- **Single-file project.** The entire game lives in `index.html`
+  (~4 000+ lines: HTML + inline CSS + inline `<script>`). **Do not** split it
   into separate `.js`/`.css` files, do not introduce a build step, and do not
   add `npm`/bundler dependencies unless explicitly asked.
 - **Vanilla JavaScript only.** No frameworks (React, Vue, jQuery, …), no
@@ -36,7 +44,8 @@ These rules apply to every change in this project. Read them before editing
 - **Goal:** the player is a cat, collects food (XP) and fights endless dog
   hordes. 50 evolution levels (Kitten → God Cat).
 - **Modes:** Solo Survival · Hardcore (with difficulty modifiers) ·
-  Cats vs Dogs (with AI cats).
+  Cats vs Dogs (with AI cat allies) · Deathmatch (FFA — cats vs cats PvP plus
+  the dog horde).
 - **Meta-progression:** Gems are the currency. Spent on permanent weapon
   and helmet upgrades in the menu (Encyclopedia / Codex).
 - **Backend:** Firebase (Auth, Firestore for progress + leaderboard) with a
@@ -60,7 +69,8 @@ Central in-memory arrays that hold game state:
 ### 5.1 The `gameLoop` trap
 
 `gameLoop()` (starts around `function gameLoop(currentTime)`) is huge.
-Inside it there are **two similar attack / collision passes**:
+Inside it there are **three similar attack / collision passes** that look
+alike but use different loop variables and field names:
 
 ```js
 // A) AI cats — iterates aiCats, variable `c`, target is `targetDog`
@@ -72,11 +82,20 @@ aiCats.forEach(c => {
 enemies.forEach(e => {
     // ... e.playerDamaged ...
 });
+
+// C) Deathmatch (FFA) only — player vs AI cats, variable `ac`
+// (a backwards index loop over aiCats inside the player-attack block).
+// Named `ac` ("ai cat") on purpose so it stays distinct from `c` (the AI-cat
+// pass above) and `c` used for chests in the same attack block.
+for (let ai = aiCats.length - 1; ai >= 0; ai--) {
+    let ac = aiCats[ai];
+    // ... ac.playerDamaged ...
+}
 ```
 
-**Never copy-paste logic from the AI-cat block into the player block (or
-vice versa).** They use different variable names (`c` vs `e`) and different
-field names (`c.xp` vs `e.playerDamaged`). Mixing them up corrupts brace
+**Never copy-paste logic between these blocks.** They use different variable
+names (`c` vs `e` vs `ac`) and different field names (`c.xp` vs
+`e.playerDamaged` vs `ac.playerDamaged`). Mixing them up corrupts brace
 pairing and crashes the parser on `Unexpected token 'catch'`.
 
 ### 5.2 Performance — use the spatial grid
@@ -147,7 +166,7 @@ These IDs in `<head>` are live production values. Don't change, remove, or
 ## 7. Workflow checklist (before finishing an edit)
 
 1. Did I locate the target by function name, not line number?
-2. Am I editing the right block (AI-cat `c` vs player/enemy `e`)?
+2. Am I editing the right block (AI-cat `c` vs player/enemy `e` vs FFA `ac`)?
 3. For per-frame proximity work: am I using `queryGridMap(...)`?
 4. For new movement code: did I apply separation × `dt * 60`?
 5. For new sound / VFX: is it gated by `viewRadius`?

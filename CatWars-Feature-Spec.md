@@ -1,6 +1,6 @@
 # CatWars.io — Feature Specification
 
-**Version described:** v1.7.53
+**Version described:** v1.7.55
 **Date:** 2026-05-21
 **Status:** This document describes how the game **currently works** in the version above. It is the intended-behavior reference. When an AI tool edits the game and a feature stops matching this document, that mismatch is a regression — fix the code, or deliberately update this spec and bump the version.
 
@@ -293,7 +293,7 @@ Central place to adjust balance without touching the game loop:
 | DAILY_STREAK_RESET_MS | 48h | Streak window |
 | AD_BOOST_COOLDOWN_MS | 4h | Ad-boost cooldown |
 
-Other top-level constants worth knowing: `WORLD_SIZE` 6000, `FOOD_COUNT` 800, `ENEMY_COUNT` 45, `DECORATION_COUNT` 300, `CHEST_COUNT` 25, `GRID_CELL` 400, `GAME_VERSION` '1.7.53'.
+Other top-level constants worth knowing: `WORLD_SIZE` 6000, `FOOD_COUNT` 800, `ENEMY_COUNT` 45, `DECORATION_COUNT` 300, `CHEST_COUNT` 25, `GRID_CELL` 400, `GAME_VERSION` '1.7.55'.
 
 ---
 
@@ -301,6 +301,8 @@ Other top-level constants worth knowing: `WORLD_SIZE` 6000, `FOOD_COUNT` 800, `E
 
 | Version | Date | Notes |
 |---------|------|-------|
+| 1.7.55 | 2026-05-25 | Hardcore gem multiplier now applies to gem rewards and revive cost via `calcModMultiplier()` at run start. |
+| 1.7.54 | 2026-05-25 | Combo tier player aura; attack cone telegraph during swing; reduced enemy shadowBlur cost; Hardcore label "Gem Multiplier". |
 | 1.7.53 | 2026-05-21 | Initial spec written from current code. |
 
 *(Add a row each time behavior changes. Keep `GAME_VERSION` in the code and the version at the top of this file in sync.)*
