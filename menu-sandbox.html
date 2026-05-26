@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CatWars — Main Menu Sandbox</title>
+    <style>
+        /* ── DESIGN TOKENS ─────────────────────────────────────────────────── */
+        :root {
+            --primary: #f39c12;
+            --primary-hover: #f1c40f;
+            --primary-active: #d68910;
+            --bg-dark: #121c26;
+            --panel-bg: #1a252f;
+            --panel-light: #2c3e50;
+            --text-main: #ffffff;
+            --danger: #e74c3c;
+            --info: #3498db;
+            --success: #2ecc71;
+        }
+
+        body, html {
+            margin: 0; padding: 0;
+            background: var(--bg-dark);
+            color: var(--text-main);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            width: 100%; height: 100%;
+        }
+
+        /* ── SHARED COMPONENTS ─────────────────────────────────────────────── */
+        .overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(18, 28, 38, 0.95); display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            pointer-events: auto; z-index: 100;
+            backdrop-filter: blur(8px); padding: 20px; box-sizing: border-box;
+        }
+
+        #main-menu.overlay {
+            justify-content: flex-start;
+            overflow-y: auto;
+            height: 100vh;
+            height: 100dvh;
+        }
+
+        .stat-box {
+            background: rgba(0,0,0,0.7); border: 2px solid #555; padding: 8px 15px;
+            border-radius: 12px; color: var(--text-main); font-weight: bold; font-size: 18px;
+            text-shadow: 1px 1px 2px #000; box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            backdrop-filter: blur(4px);
+        }
+        .gem-text { color: #00d4ff; }
+
+        button.btn-main {
+            margin: 10px 5px; padding: 15px 30px; font-size: clamp(16px, 4vw, 22px);
+            cursor: pointer; background: var(--primary); color: #ffffff;
+            text-shadow: 1px 1px 2px #000; border: none; border-radius: 12px;
+            font-weight: bold; box-shadow: 0 4px 0 var(--primary-active);
+            transition: all 0.1s; width: calc(100% - 10px); max-width: 400px;
+            text-transform: uppercase;
+        }
+        button.btn-main:hover { background: var(--primary-hover); transform: translateY(2px); box-shadow: 0 2px 0 var(--primary-active); }
+        button.btn-main:active { transform: translateY(4px); box-shadow: none; }
+        button.btn-main:disabled { background: #555; color: #888; cursor: not-allowed; box-shadow: 0 4px 0 #333; }
+
+        .game-art-banner {
+            margin-bottom: 15px; overflow: hidden; border-radius: 12px;
+            border: 2px solid #34495e;
+            background: linear-gradient(135deg, var(--panel-bg) 0%, var(--panel-light) 100%);
+            min-height: 180px; display: flex; align-items: center; justify-content: center; position: relative;
+        }
+        .game-art-banner img {
+            width: 100%; height: 100%; max-height: 240px; object-fit: contain; display: block;
+            filter: drop-shadow(0 0 10px rgba(243, 156, 18, 0.3));
+        }
+
+        /* ── MENU LAYOUT ───────────────────────────────────────────────────── */
+        .menu-container {
+            display: flex; flex-direction: row; flex-wrap: wrap; gap: 20px;
+            width: 95%; max-width: 1200px;
+            height: auto; justify-content: center; align-items: stretch; margin-top: 10px;
+        }
+        #main-menu .menu-container > .menu-col { min-height: 85vh; }
+
+        .menu-col {
+            background: var(--panel-bg); border: 4px solid var(--primary); border-radius: 20px;
+            padding: 15px; box-shadow: 0 0 50px rgba(0,0,0,0.8); display: flex;
+            flex-direction: column; overflow-y: auto; overflow-x: hidden; text-align: center;
+            box-sizing: border-box;
+        }
+        .menu-col.side { flex: 1; min-width: 200px; max-width: 320px; }
+        .menu-col.center { flex: 2; min-width: 300px; align-items: center; justify-content: flex-start; }
+
+        /* ── RIGHT COLUMN — codex tiles ──────────────────────────────────── */
+        .mm-codex-nav { display: flex; flex-direction: column; gap: 4px; width: 100%; flex-grow: 1; }
+        .mm-codex-tile {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            gap: 2px; width: 100%; padding: 8px 6px 6px; margin: 0; border: none;
+            border-radius: 10px; cursor: pointer; background: rgba(0,0,0,0.4);
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.07);
+            transition: background 0.15s, transform 0.1s, filter 0.15s;
+            position: relative; font-family: inherit; -webkit-tap-highlight-color: transparent;
+        }
+        .mm-codex-tile:hover { background: rgba(255,255,255,0.1); filter: brightness(1.08); transform: translateY(-1px); }
+        .mm-codex-tile:active { transform: translateY(1px); filter: brightness(0.96); }
+        .mm-codex-tile:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+        .mm-codex-tile-icon { width: 76px; height: 76px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .mm-codex-tile-icon img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.55)); pointer-events: none; }
+        .mm-codex-tile-label {
+            font-size: 15px; font-weight: 900; color: #fff; letter-spacing: 0.3px;
+            text-shadow: 1px 1px 0 #000, -1px 1px 0 #000, 1px -1px 0 #000, -1px -1px 0 #000;
+            line-height: 1.15; text-align: center;
+        }
+        #boost-equip-badge.mm-codex-badge {
+            position: absolute; top: 4px; right: 4px; background: var(--success); color: #fff;
+            font-size: 10px; padding: 2px 6px; border-radius: 8px; font-weight: bold;
+            border: 2px solid #111; text-transform: uppercase; display: none; pointer-events: none;
+        }
+
+        /* Rank badge (acts as button to open Codex) */
+        button.mm-rank-codex-hit {
+            width: 100%; cursor: pointer; border: none; background: transparent;
+            padding: 0; margin: 0 0 2px 0; text-align: center; font: inherit; color: inherit;
+            border-radius: 14px; transition: filter 0.15s ease, transform 0.1s ease; box-sizing: border-box;
+        }
+        button.mm-rank-codex-hit:hover { filter: brightness(1.07); }
+        button.mm-rank-codex-hit:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
+        button.mm-rank-codex-hit:active { transform: scale(0.992); }
+
+        /* ── NICKNAME INPUT ────────────────────────────────────────────────── */
+        .nickname-input {
+            width: 80%; max-width: 300px; padding: 12px; margin: 10px 0;
+            font-size: 20px; font-weight: bold; text-align: center;
+            background: #2c3e50; color: white; border: 3px solid var(--primary);
+            border-radius: 12px; outline: none; box-shadow: inset 0 0 10px #000; transition: 0.2s;
+        }
+        .nickname-input:focus { border-color: var(--primary-hover); box-shadow: 0 0 20px var(--primary); }
+
+        /* ── MODE CARDS ────────────────────────────────────────────────────── */
+        .modes-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+            width: 100%; max-width: 400px; margin: 0 0 8px 0; align-items: stretch;
+        }
+        .mode-card {
+            background: rgba(0,0,0,0.4); border: 3px solid #444; border-radius: 12px; padding: 8px 5px;
+            cursor: pointer; transition: all 0.2s; position: relative;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            min-height: 100px; box-sizing: border-box;
+        }
+        .mode-card:hover:not(.locked) { border-color: var(--primary-hover); background: rgba(243,156,18,0.1); transform: translateY(-2px); }
+        .mode-card.active { border-color: var(--primary); background: rgba(243,156,18,0.2); box-shadow: 0 0 15px rgba(243,156,18,0.4); }
+        .mode-card.locked { opacity: 0.5; cursor: not-allowed; filter: grayscale(1); }
+        .mode-icon { font-size: 26px; margin-bottom: 2px; filter: drop-shadow(2px 2px 2px #000); }
+        .mode-name { font-size: 13px; font-weight: bold; color: white; text-align: center; min-height: 2.65em; display: flex; align-items: center; justify-content: center; line-height: 1.2; }
+        .mode-badge { position: absolute; top: -8px; right: -8px; background: var(--danger); color: white; font-size: 10px; padding: 3px 6px; border-radius: 8px; font-weight: bold; border: 2px solid #111; letter-spacing: 0.5px; text-transform: uppercase; }
+
+        /* ── HARDCORE MODIFIERS ────────────────────────────────────────────── */
+        .mod-label { color: white; font-size: 14px; cursor: pointer; display: flex; align-items: center; gap: 8px; padding: 5px; border-radius: 8px; transition: background 0.2s; }
+        .mod-label:hover { background: rgba(255,255,255,0.1); }
+        .mod-label input { transform: scale(1.2); cursor: pointer; accent-color: var(--danger); }
+        .mod-bonus { color: #2ecc71; font-weight: bold; margin-left: auto; font-size: 12px; }
+
+        /* ── RESPONSIVE — mobile portrait ─────────────────────────────────── */
+        @media (max-width: 850px) and (pointer: coarse) {
+            #main-menu.overlay { padding: 12px 12px 0 12px; }
+            .menu-container { flex-direction: column; height: auto; min-height: 0; overflow-y: visible; align-items: center; padding-right: 0; margin-top: 0; }
+            #main-menu .menu-container > .menu-col.side,
+            #main-menu .menu-container > .menu-col.center { width: 100%; max-width: 500px; min-height: auto; flex: none; overflow-y: visible; }
+        }
+
+        /* ── RESPONSIVE — narrow desktop iframe ────────────────────────────── */
+        @media (max-width: 850px) and (pointer: fine) {
+            #main-menu.overlay { padding: 8px 8px 0 8px; }
+            .menu-container { gap: 6px; width: 99%; }
+            #main-menu .menu-container > .menu-col { min-height: 75vh; }
+            .menu-col.side { min-width: 130px; max-width: 200px; padding: 10px 8px; }
+            .menu-col.center { min-width: 200px; padding: 10px 8px; }
+        }
+
+        /* ── RESPONSIVE — short desktop / iframe ────────────────────────────── */
+        @media (max-height: 720px) and (pointer: fine),
+               (max-width: 850px) and (pointer: fine) {
+            #main-menu.overlay { padding: 6px 8px 0 8px; }
+            #main-menu .menu-container { margin-top: 0; }
+            #main-menu .menu-container > .menu-col { min-height: 0; padding: 10px 10px; }
+            #main-menu .game-art-banner { margin-bottom: 8px !important; }
+            #mm-global-rank-badge { font-size: 13px !important; padding: 6px 10px !important; margin: 4px auto 6px auto !important; }
+            #main-menu #mm-global-level { font-size: 12px !important; }
+            #main-menu .menu-col.side button.mm-rank-codex-hit > div:nth-of-type(1) { font-size: 12px !important; margin-bottom: 5px !important; }
+            #main-menu .menu-col.side button.mm-rank-codex-hit > div:nth-of-type(2) { height: 12px !important; }
+            #global-xp-text { font-size: 10px !important; margin-bottom: 10px !important; }
+            #main-menu .menu-col.side .stat-box { font-size: 12px !important; padding: 5px 8px !important; margin-bottom: 6px !important; }
+            #mm-best-solo, #mm-best-hardcore { font-size: 11px !important; }
+            #main-menu .menu-col.side > button.btn-main { font-size: 13px !important; padding: 9px 8px !important; line-height: 1.15 !important; }
+            #daily-spin-sub { font-size: 11px !important; }
+            #auth-status-text { font-size: 11px !important; }
+            #auth-action-btn  { font-size: 12px !important; padding: 8px 10px !important; }
+            #auth-section     { padding-top: 8px !important; gap: 6px !important; }
+            #main-menu .mm-codex-nav { gap: 2px !important; }
+            #main-menu .mm-codex-tile { padding: 5px 4px 4px !important; }
+            #main-menu .mm-codex-tile-icon { width: 52px !important; height: 52px !important; }
+            #main-menu .mm-codex-tile-label { font-size: 12px !important; }
+            #btn-start-game { font-size: 18px !important; padding: 11px 16px !important; }
+            #player-nickname { font-size: 15px !important; padding: 8px !important; }
+            .mode-card { padding: 6px 4px !important; }
+            .mode-card .mode-icon { font-size: 20px !important; }
+            .mode-card .mode-name { font-size: 11px !important; }
+            #solo-panel, #team-panel, #ffa-panel { padding: 8px 10px !important; }
+            #solo-panel h3, #team-panel h3, #ffa-panel h3 { font-size: 13px !important; }
+            #solo-panel p, #team-panel p, #ffa-panel p { font-size: 12px !important; margin: 0 0 6px 0 !important; }
+            #solo-panel ul, #team-panel ul, #ffa-panel ul { font-size: 11px !important; line-height: 1.5 !important; }
+            .menu-about-footer { font-size: 10px !important; line-height: 1.4 !important; padding: 6px 4px calc(4px + env(safe-area-inset-bottom, 0px)) !important; margin-top: 8px !important; }
+        }
+
+        /* ── RESPONSIVE — mobile landscape tab bar ─────────────────────────── */
+        .mobile-tab-bar { display: none; }
+
+        @media (max-height: 520px) and (orientation: landscape) and (pointer: coarse) {
+            #main-menu .game-art-banner { display: none; }
+            #main-menu.overlay { padding: 8px 8px 64px 8px; overflow: hidden; justify-content: flex-start; }
+            #main-menu .menu-container { flex-direction: row; flex-wrap: nowrap; width: 100%; max-width: none; height: calc(100dvh - 72px); max-height: calc(100dvh - 72px); margin-top: 0; gap: 0; align-items: stretch; }
+            #main-menu .menu-container > .menu-col { display: none; flex: 1; width: 100%; max-width: none; min-width: 0; min-height: 0; max-height: 100%; overflow-y: auto; }
+            body.mb-tab-profile #main-menu .menu-container > .menu-col:nth-child(1) { display: flex; }
+            body.mb-tab-play    #main-menu .menu-container > .menu-col:nth-child(2) { display: flex; }
+            body.mb-tab-codex   #main-menu .menu-container > .menu-col:nth-child(3) { display: flex; }
+            .mobile-tab-bar { display: flex; position: fixed; left: 0; right: 0; bottom: 0; height: calc(56px + env(safe-area-inset-bottom, 0px)); padding-bottom: env(safe-area-inset-bottom, 0px); background: rgba(10,18,26,0.97); border-top: 2px solid var(--primary); box-shadow: 0 -4px 16px rgba(0,0,0,0.5); z-index: 110; box-sizing: border-box; }
+            .mobile-tab-bar button { flex: 1; background: transparent; color: #aaa; border: none; font-size: 11px; font-weight: bold; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 4px; transition: color 0.15s, background 0.15s; }
+            .mobile-tab-bar button .icon { font-size: 22px; line-height: 1; }
+            body.mb-tab-profile .mobile-tab-bar button[data-tab="profile"],
+            body.mb-tab-play    .mobile-tab-bar button[data-tab="play"],
+            body.mb-tab-codex   .mobile-tab-bar button[data-tab="codex"] { color: var(--primary); background: rgba(243,156,18,0.12); }
+            #main-menu .mm-codex-tile { padding: 6px 4px 4px !important; }
+            #main-menu .mm-codex-tile-icon { width: 56px !important; height: 56px !important; }
+            #main-menu .mm-codex-tile-label { font-size: 13px !important; }
+            #main-menu .mm-codex-nav { gap: 3px !important; }
+            #main-menu .menu-container > .menu-col { -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 18px), transparent 100%); mask-image: linear-gradient(to bottom, #000 calc(100% - 18px), transparent 100%); }
+        }
+    </style>
+</head>
+<body class="mb-tab-play">
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         MAIN MENU  (extracted from index.html for sandbox design iteration)
+         ═══════════════════════════════════════════════════════════════════ -->
+    <div id="main-menu" class="overlay">
+
+        <div class="menu-container">
+
+            <!-- LEFT COLUMN: Profile & Stats -->
+            <div class="menu-col side">
+
+                <!-- Global rank badge — acts as a button to open Codex → ranks -->
+                <button type="button" class="mm-rank-codex-hit" onclick="stub('openEncyclopedia(ranks)')" title="Global ranks" aria-label="Open Global ranks in Codex">
+                    <div id="mm-global-rank-badge" style="background: #2980b9; color: white; padding: 10px 18px; border-radius: 10px; font-weight: bold; border: 3px solid #fff; display: inline-block; margin: 10px auto 10px auto; font-size: 18px; text-shadow: 1px 1px 3px #000; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">
+                        Iron Paw ★★
+                    </div>
+                    <div style="font-size: 15px; color: #aaa; margin-bottom: 8px; font-weight: bold;">Global Level: <span id="mm-global-level" style="color: #fff;">12</span></div>
+                    <div style="width: 100%; height: 18px; background: rgba(0,0,0,0.6); border-radius: 9px; border: 2px solid #444; overflow: hidden; position: relative;">
+                        <div id="global-xp-bar" style="height: 100%; width: 63%; background: linear-gradient(90deg, #3498db, #2ecc71); transition: width 0.3s ease-out;"></div>
+                    </div>
+                    <div id="global-xp-text" style="font-size: 13px; color: #fff; margin-top: 5px; margin-bottom: 25px; font-weight: bold;">6 300 / 10 000 XP</div>
+                </button>
+
+                <div style="font-size: 14px; color: #aaa; margin-bottom: 12px; font-weight: bold; background: rgba(0,0,0,0.4); padding: 8px; border-radius: 8px; text-align: left;">
+                    ⏱️ Best Solo: <span id="mm-best-solo" style="color: #fff; float: right;">12:34</span><br>
+                    💀 Best Hardcore: <span id="mm-best-hardcore" style="color: #fff; float: right;">4:07</span>
+                </div>
+
+                <div class="stat-box" style="margin-bottom: 12px; font-size: 16px;">Kills: <span id="mm-kills">2 847</span></div>
+                <div class="stat-box" style="margin-bottom: 12px; font-size: 16px;">Max Lv: <span id="mm-level">38</span></div>
+                <div class="stat-box gem-text" style="margin-bottom: 12px; font-size: 18px;">💎 <span id="mm-gems">14 200</span></div>
+
+                <button class="btn-main" onclick="stub('openLeaderboard')" style="background: #e67e22; box-shadow: 0 6px 0 #d35400; width: 100%; font-size: 18px; padding: 15px; margin-top: 0;">🏆 Leaderboard</button>
+                <button class="btn-main" id="btn-daily-spin" onclick="stub('openDailySpin')" style="background: #9b59b6; box-shadow: 0 6px 0 #8e44ad; width: 100%; font-size: 18px; padding: 15px; margin: 8px 0 0 0; line-height: 1.2;">🎰 Daily Spin<br><span id="daily-spin-sub" style="font-size: 14px;">Ready!</span></button>
+
+                <div id="auth-section" style="margin-top: auto; border-top: 2px solid rgba(255,255,255,0.1); padding-top: 12px; display: flex; flex-direction: column; gap: 8px;">
+                    <div id="auth-status-text" style="color: #aaa; font-size: 13px; font-weight: bold; text-shadow: 1px 1px 2px black; text-align: center;">Playing as: Guest</div>
+                    <button id="auth-action-btn" class="btn-main" onclick="stub('handleAuthAction')" style="font-size: 15px; padding: 12px 16px; margin: 0; background: var(--success); box-shadow: 0 4px 0 #27ae60; width: 100%;">🔑 Sign In to Save</button>
+                </div>
+            </div>
+
+            <!-- CENTER COLUMN: Play Area -->
+            <div class="menu-col center">
+                <div class="game-art-banner" style="margin-bottom: 12px; flex-shrink: 0; width: 100%;">
+                    <img src="img/banner.png" alt="CatWars Battle" onerror="this.style.display='none';">
+                </div>
+
+                <input type="text" id="player-nickname" class="nickname-input" value="CatWarrior" placeholder="Enter your name..." autocomplete="off" maxlength="15" style="margin: 0 0 12px 0; width: 100%; max-width: 400px; box-sizing: border-box; flex-shrink: 0;">
+
+                <button class="btn-main" id="btn-start-game" onclick="stub('startGame')" style="font-size: 26px; padding: 15px 30px; width: 100%; max-width: 400px; margin: 0 0 12px 0; flex-shrink: 0; background: var(--success); box-shadow: 0 6px 0 #27ae60;">🗡️ PLAY SOLO</button>
+
+                <!-- Mode selector grid -->
+                <div class="modes-grid" style="flex-shrink: 0; margin: 0 0 8px 0;">
+                    <div class="mode-card active" id="mode-solo" onclick="selectMode('solo')">
+                        <div class="mode-icon">🗡️</div>
+                        <div class="mode-name">Solo Survival</div>
+                    </div>
+                    <div class="mode-card" id="mode-hardcore" onclick="selectMode('hardcore')">
+                        <div class="mode-icon">💀</div>
+                        <div class="mode-name">Hardcore</div>
+                    </div>
+                    <div class="mode-card" id="mode-team" onclick="selectMode('team')">
+                        <div class="mode-icon" style="font-size: 17px; letter-spacing: -1px; white-space: nowrap;">🐱⚔️🐺</div>
+                        <div class="mode-name">Cats vs Dogs</div>
+                    </div>
+                    <div class="mode-card" id="mode-ffa" onclick="selectMode('ffa')">
+                        <div class="mode-icon" style="font-size: 17px; letter-spacing: -1px; white-space: nowrap;">🐱⚔️🐱</div>
+                        <div class="mode-name">Deathmatch</div>
+                    </div>
+                </div>
+
+                <!-- Hardcore modifiers panel (hidden by default) -->
+                <div id="modifiers-panel" style="display: none; flex-direction: column; background: rgba(0,0,0,0.5); padding: 6px 12px; border-radius: 12px; border: 2px solid var(--danger); width: 100%; max-width: 400px; margin-bottom: 0; box-sizing: border-box; gap: 2px; flex-shrink: 0; flex-grow: 1; justify-content: space-between;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #444; padding-bottom: 4px;">
+                        <h3 style="margin: 0; color: var(--danger); font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">💀 Hardcore Mods</h3>
+                        <div style="font-weight: bold; color: #f1c40f; font-size: 14px; text-shadow: 1px 1px 2px #000;">
+                            Multiplier: <span id="mod-total-mult" style="font-size: 18px;">1.0</span>x
+                        </div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 2px; text-align: left;">
+                        <label class="mod-label" style="font-size: 12px; padding: 2px 5px;"><input type="checkbox" id="mod-double-dmg" onchange="calcModMultiplier()"> 💀 Double Damage <span class="mod-bonus">+200%</span></label>
+                        <label class="mod-label" style="font-size: 12px; padding: 2px 5px;"><input type="checkbox" id="mod-fast" onchange="calcModMultiplier()"> ⚡ Fast Dogs <span class="mod-bonus">+50%</span></label>
+                        <label class="mod-label" style="font-size: 12px; padding: 2px 5px;"><input type="checkbox" id="mod-noheal" onchange="calcModMultiplier()"> 🚫 No Food Heal <span class="mod-bonus">+100%</span></label>
+                        <label class="mod-label" style="font-size: 12px; padding: 2px 5px;"><input type="checkbox" id="mod-nodash" onchange="calcModMultiplier()"> 🐢 No Dash <span class="mod-bonus">+50%</span></label>
+                        <label class="mod-label" style="font-size: 12px; padding: 2px 5px;"><input type="checkbox" id="mod-doubleboss" onchange="calcModMultiplier()"> 👹 Double Bosses <span class="mod-bonus">+100%</span></label>
+                    </div>
+                    <div style="border-top: 1px solid #444; padding-top: 6px; display: flex; justify-content: center; margin-top: auto;">
+                        <label class="mod-label" style="padding: 4px 10px; background: rgba(231,76,60,0.15); border-radius: 8px; border: 1px solid var(--danger); width: 100%; justify-content: center;">
+                            <input type="checkbox" id="mod-comp-hardcore" onchange="toggleCompetitiveHardcore()">
+                            <span style="color: #f1c40f; font-weight: 900; text-shadow: 1px 1px 2px #000; font-size: 13px; letter-spacing: 0.5px;">🏆 COMPETITIVE HARDCORE</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Solo info panel -->
+                <div id="solo-panel" style="display: flex; flex-direction: column; background: rgba(0,0,0,0.5); padding: 12px; border-radius: 12px; border: 2px solid var(--success); width: 100%; max-width: 400px; margin-bottom: 0; box-sizing: border-box; flex-shrink: 0; flex-grow: 0; justify-content: flex-start; text-align: left;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #444; padding-bottom: 4px; margin-bottom: 12px;">
+                        <h3 style="margin: 0; color: var(--success); font-size: 15px; text-transform: uppercase; letter-spacing: 0.5px;">🗡️ Classic Survival</h3>
+                    </div>
+                    <p style="color: #ccc; font-size: 14px; margin: 0 0 10px 0; line-height: 1.4;">The standard CatWars experience. Survive against endless waves of dogs, level up your feline warrior, and collect gems.</p>
+                    <ul style="color: #aaa; font-size: 13px; margin: 0; padding-left: 20px; line-height: 1.7;">
+                        <li>Hunt food to evolve up to Level 50.</li>
+                        <li>Defeat Bosses to earn massive gem rewards.</li>
+                        <li>Find chests and complete your daily quests.</li>
+                    </ul>
+                </div>
+
+                <!-- Cats vs Dogs info panel -->
+                <div id="team-panel" style="display: none; flex-direction: column; background: rgba(0,0,0,0.5); padding: 12px; border-radius: 12px; border: 2px solid var(--info); width: 100%; max-width: 400px; margin-bottom: 0; box-sizing: border-box; flex-shrink: 0; flex-grow: 0; justify-content: flex-start; text-align: left;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #444; padding-bottom: 4px; margin-bottom: 12px;">
+                        <h3 style="margin: 0; color: var(--info); font-size: 15px; text-transform: uppercase; letter-spacing: 0.5px;">🔵 Cats vs Dogs Domination</h3>
+                    </div>
+                    <p style="color: #ccc; font-size: 14px; margin: 0 0 10px 0; line-height: 1.4;">Fight alongside AI-controlled cat allies! Work together to clear the map, share the aggro, and dominate the dog hordes.</p>
+                    <ul style="color: #aaa; font-size: 13px; margin: 0; padding-left: 20px; line-height: 1.7;">
+                        <li>8 Allied Cats roam the map with you.</li>
+                        <li>Watch out: Allies steal your kills and food!</li>
+                        <li>Chaotic battles perfect for casual play.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- RIGHT COLUMN: Codex / Upgrades -->
+            <div class="menu-col side">
+                <div class="mm-codex-nav">
+                    <button class="mm-codex-tile" onclick="stub('openEncyclopedia(cats)')" style="background: linear-gradient(135deg, rgba(52,152,219,0.25), rgba(52,152,219,0.08));">
+                        <div class="mm-codex-tile-icon"><span style="font-size: 64px; line-height: 1;">🐱</span></div>
+                        <div class="mm-codex-tile-label">UPGRADES</div>
+                    </button>
+                    <button class="mm-codex-tile" onclick="stub('openEncyclopedia(dogs)')" style="background: linear-gradient(135deg, rgba(155,89,182,0.25), rgba(155,89,182,0.08));">
+                        <div class="mm-codex-tile-icon"><span style="font-size: 64px; line-height: 1;">🐺</span></div>
+                        <div class="mm-codex-tile-label">BESTIARY</div>
+                    </button>
+                    <button class="mm-codex-tile" onclick="stub('openEncyclopedia(armory)')" style="background: linear-gradient(135deg, rgba(241,196,15,0.25), rgba(241,196,15,0.08));">
+                        <div class="mm-codex-tile-icon"><span style="font-size: 64px; line-height: 1;">⚔️</span></div>
+                        <div class="mm-codex-tile-label">WEAPONS</div>
+                    </button>
+                    <button class="mm-codex-tile" onclick="stub('openEncyclopedia(boosts)')" style="background: linear-gradient(135deg, rgba(230,126,34,0.25), rgba(230,126,34,0.08)); position: relative;">
+                        <div class="mm-codex-tile-icon"><span style="font-size: 64px; line-height: 1;">🔥</span></div>
+                        <div class="mm-codex-tile-label">BOOSTS</div>
+                        <div id="boost-equip-badge" class="mm-codex-badge">2/3</div>
+                    </button>
+                    <button class="mm-codex-tile" onclick="stub('openEncyclopedia(quests)')" style="background: linear-gradient(135deg, rgba(231,76,60,0.25), rgba(231,76,60,0.08));">
+                        <div class="mm-codex-tile-icon"><span style="font-size: 64px; line-height: 1;">💎</span></div>
+                        <div class="mm-codex-tile-label">QUESTS</div>
+                    </button>
+                </div>
+
+                <!-- Footer -->
+                <footer class="menu-about-footer" style="margin-top: 12px; padding: 10px 4px calc(6px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid rgba(255,255,255,0.08); font-size: 11px; line-height: 1.5; color: #888; text-align: center;">
+                    <div style="margin-bottom: 5px;">
+                        <a href="#" onclick="stub('openPrivacy(about)'); return false;" style="color: #bbb; text-decoration: none;">About</a>
+                        <span style="margin: 0 5px; color: #555;">·</span>
+                        <a href="#" onclick="stub('openPrivacy(howto)'); return false;" style="color: #bbb; text-decoration: none;">How to play</a>
+                        <span style="margin: 0 5px; color: #555;">·</span>
+                        <a href="#" onclick="stub('openPrivacy(privacy)'); return false;" style="color: #bbb; text-decoration: none;">Privacy</a>
+                        <span style="margin: 0 5px; color: #555;">·</span>
+                        <a href="#" onclick="stub('openPrivacy(cookies)'); return false;" style="color: #bbb; text-decoration: none;">Cookies &amp; Ads</a>
+                    </div>
+                    <b style="color: #ccc;">CatWars.io</b> — free 2D browser survival game.
+                    Hunt food, evolve through <b>50 levels</b>, survive endless dog hordes.
+                    Solo · Hardcore · Cats vs Dogs · no install · no pay‑to‑win.
+                    <span class="js-game-version" style="display: block; margin-top: 4px; color: #555;">v1.7.33</span>
+                </footer>
+            </div>
+        </div>
+
+        <!-- Mobile landscape tab bar — only visible via CSS on short landscape touch viewports -->
+        <nav class="mobile-tab-bar" aria-label="Menu sections">
+            <button type="button" data-tab="profile" onclick="switchMobileTab('profile')">
+                <span class="icon">👤</span>
+                <span>Profile</span>
+            </button>
+            <button type="button" data-tab="play" onclick="switchMobileTab('play')">
+                <span class="icon">🗡️</span>
+                <span>Play</span>
+            </button>
+            <button type="button" data-tab="codex" onclick="switchMobileTab('codex')">
+                <span class="icon">📖</span>
+                <span>Codex</span>
+            </button>
+        </nav>
+    </div>
+
+    <script>
+        // ── STUB HANDLER ──────────────────────────────────────────────────────
+        // All game-side function calls are no-ops here — just logs.
+        function stub(name) {
+            console.log('[sandbox stub]', name);
+        }
+
+        // ── MODE SELECTION ────────────────────────────────────────────────────
+        let selectedGameMode = 'solo';
+
+        function selectMode(mode) {
+            document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('active'));
+            document.getElementById('mode-' + mode).classList.add('active');
+            selectedGameMode = mode;
+
+            let startBtn  = document.getElementById('btn-start-game');
+            let modPanel  = document.getElementById('modifiers-panel');
+            let soloPanel = document.getElementById('solo-panel');
+            let teamPanel = document.getElementById('team-panel');
+
+            if (modPanel)  modPanel.style.display  = 'none';
+            if (soloPanel) soloPanel.style.display  = 'none';
+            if (teamPanel) teamPanel.style.display  = 'none';
+
+            if (mode === 'solo') {
+                if (soloPanel) soloPanel.style.display = 'flex';
+                startBtn.innerHTML = '🗡️ PLAY SOLO';
+                startBtn.style.background = 'var(--success)';
+                startBtn.style.boxShadow  = '0 6px 0 #27ae60';
+            } else if (mode === 'hardcore') {
+                if (modPanel) modPanel.style.display = 'flex';
+                startBtn.innerHTML = '💀 PLAY HARDCORE';
+                startBtn.style.background = '#e74c3c';
+                startBtn.style.boxShadow  = '0 6px 0 #c0392b';
+            } else if (mode === 'team') {
+                if (teamPanel) teamPanel.style.display = 'flex';
+                startBtn.innerHTML = '<span style="font-size: 0.82em; letter-spacing: -0.06em; white-space: nowrap; vertical-align: middle;">🐱⚔️🐺</span> PLAY CATS VS DOGS';
+                startBtn.style.background = 'var(--info)';
+                startBtn.style.boxShadow  = '0 6px 0 #2980b9';
+            } else if (mode === 'ffa') {
+                if (soloPanel) soloPanel.style.display = 'flex';
+                startBtn.innerHTML = '<span style="font-size: 0.82em; letter-spacing: -0.06em; white-space: nowrap; vertical-align: middle;">🐱⚔️🐱</span> PLAY DEATHMATCH';
+                startBtn.style.background = 'var(--danger)';
+                startBtn.style.boxShadow  = '0 6px 0 #c0392b';
+            }
+        }
+
+        // ── HARDCORE MODIFIERS ────────────────────────────────────────────────
+        function calcModMultiplier() {
+            let mult = 1.0;
+            if (document.getElementById('mod-double-dmg').checked) mult += 2.0;
+            if (document.getElementById('mod-noheal').checked)     mult += 1.0;
+            if (document.getElementById('mod-doubleboss').checked)  mult += 1.0;
+            if (document.getElementById('mod-fast').checked)        mult += 0.5;
+            if (document.getElementById('mod-nodash').checked)      mult += 0.5;
+            document.getElementById('mod-total-mult').innerText = mult.toFixed(1);
+            return mult;
+        }
+
+        function toggleCompetitiveHardcore() {
+            let isChecked = document.getElementById('mod-comp-hardcore').checked;
+            let mods = ['mod-double-dmg', 'mod-noheal', 'mod-doubleboss', 'mod-fast', 'mod-nodash'];
+            for (let id of mods) {
+                let cb = document.getElementById(id);
+                if (isChecked) {
+                    cb.checked = true;
+                    cb.disabled = true;
+                    cb.parentElement.style.pointerEvents = 'none';
+                    cb.parentElement.style.opacity = '0.5';
+                } else {
+                    cb.disabled = false;
+                    cb.parentElement.style.pointerEvents = 'auto';
+                    cb.parentElement.style.opacity = '1';
+                }
+            }
+            calcModMultiplier();
+        }
+
+        // ── MOBILE TAB BAR ────────────────────────────────────────────────────
+        function switchMobileTab(tab) {
+            document.body.classList.remove('mb-tab-profile', 'mb-tab-play', 'mb-tab-codex');
+            document.body.classList.add('mb-tab-' + tab);
+        }
+    </script>
+</body>
+</html>
