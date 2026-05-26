@@ -4412,8 +4412,12 @@
 
         // Returns a cached offscreen canvas containing ONLY the static body
         // (face, pattern, ears, eyes, helmet for cats) at BODY_SPRITE_RENDER_SIZE,
-        // pre-rotated by Math.PI/2 exactly like getSpriteDataURL so orientation matches.
-        // colorKey/accentKey are REQUIRED in the cache key so elite recolors don't collide
+        // in NEUTRAL entity-local orientation (nose at +x). The live draw loop applies the
+        // entity's own e.angle/c.angle to aim it at the target — same as the old live
+        // drawEntity call did. Do NOT add Math.PI/2 here: getSpriteDataURL needs that only
+        // because Codex thumbnails render vertically, and adding it here double-rotated
+        // dogs/cats 90° so they stopped facing the cat.
+        // color/accent are REQUIRED in the cache key so elite recolors don't collide
         // with normal dogs of the same level.
         function getBodyCanvas(type, level, color, accent, pattern, helmetTier, legendaryType) {
             let key = `${level}_${color}_${accent}_${pattern}_${helmetTier}_${legendaryType || ''}`;
@@ -4423,7 +4427,6 @@
             c.width = BODY_SPRITE_PAD; c.height = BODY_SPRITE_PAD;
             let tc = c.getContext('2d');
             tc.translate(BODY_SPRITE_CENTER, BODY_SPRITE_CENTER);
-            tc.rotate(Math.PI / 2);
 
             let isCat = type === 'cats';
             // bodyOnly=true → drawEntity draws the body + any level auras and SKIPS the arm.
