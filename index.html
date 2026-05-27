@@ -536,6 +536,22 @@
         .lobby-desc b, .lobby-desc strong { color: var(--primary-hover); }
         #lobby-play-btn:hover  { transform: translateY(2px); box-shadow: 0 6px 0 #27ae60, 0 0 30px rgba(46,204,113,0.3); }
         #lobby-play-btn:active { transform: translateY(5px); box-shadow: 0 3px 0 #27ae60; }
+        #lobby-screen .lobby-cover {
+            display: block;
+            width: 100%;
+            max-width: 700px;
+            margin: 0 auto 20px;
+            aspect-ratio: 16 / 9;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 2px solid #34495e;
+            box-shadow: 0 0 40px rgba(243,156,18,0.2);
+        }
+        #lobby-screen .lobby-cover img {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            display: block;
+        }
         /* Rotate-device overlay — visible only after lobby Play click on portrait mobile.
            pointer-events: auto so the player can't accidentally tap menu buttons hidden
            behind it (we want to block all input until the device is rotated). */
@@ -1564,13 +1580,41 @@
             padding: clamp(8px, 1.5vh, 16px);
             gap: clamp(7px, 1.3vh, 13px);
         }
-        #main-menu .mm-hero-cat {
+        /* Cover art background — replaces .mm-hero-cat emoji watermark */
+        #main-menu .mm-hero-cover {
             position: absolute; inset: 0;
-            display: flex; align-items: center; justify-content: center;
-            font-size: clamp(140px, 32vh, 340px);
-            opacity: 0.07;
+            width: 100%; height: 100%;
+            display: block;
             pointer-events: none;
             user-select: none;
+            z-index: 0;
+        }
+        #main-menu .mm-hero-cover img {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            object-position: center;
+            opacity: 0.8;
+            display: block;
+        }
+        /* Radial vignette — keeps centre bright, darkens corners so UI reads */
+        #main-menu .mm-hero-vignette {
+            position: absolute; inset: 0;
+            background:
+                radial-gradient(ellipse at center,
+                    rgba(14,26,19,0) 30%,
+                    rgba(14,26,19,0.35) 65%,
+                    rgba(14,26,19,0.85) 100%),
+                linear-gradient(180deg,
+                    rgba(14,26,19,0.55) 0%,
+                    rgba(14,26,19,0) 22%,
+                    rgba(14,26,19,0) 70%,
+                    rgba(14,26,19,0.75) 100%);
+            pointer-events: none;
+            z-index: 1;
+        }
+        #main-menu .mm-hero > *:not(.mm-hero-cover):not(.mm-hero-vignette) {
+            position: relative;
+            z-index: 2;
         }
         #main-menu .mm-hero-title {
             display: flex;
@@ -1581,7 +1625,12 @@
             font-size: clamp(22px, 4.5vw, 52px);
             font-weight: 900;
             color: var(--primary);
-            text-shadow: 0 0 30px rgba(243,156,18,0.5), 3px 3px 0 #000;
+            text-shadow:
+                0 0 30px rgba(243,156,18,0.6),
+                3px 3px 0 #000,
+                -1px -1px 0 #000,
+                1px -1px 0 #000,
+                -1px 1px 0 #000;
             letter-spacing: 3px;
             text-align: center;
             z-index: 1; line-height: 1;
@@ -1589,7 +1638,8 @@
         }
         #main-menu .mm-hero-sub {
             font-size: clamp(10px, 1.3vw, 15px);
-            color: #888;
+            color: #ddd;
+            text-shadow: 0 2px 4px #000, 0 0 8px #000;
             letter-spacing: 4px;
             text-transform: uppercase;
             margin-top: -4px;
@@ -2324,6 +2374,21 @@
          button as the single primary call-to-action. -->
     <div id="lobby-screen" class="overlay" style="display: none;">
         <div class="lobby-inner">
+            <picture class="lobby-cover">
+                <source type="image/webp"
+                        srcset="assets/catwars-cover-640.webp 640w,
+                                assets/catwars-cover-1280.webp 1280w,
+                                assets/catwars-cover-1920.webp 1920w"
+                        sizes="(max-width: 800px) 100vw, min(700px, 90vw)">
+                <img src="assets/catwars-cover-1280.jpg"
+                     srcset="assets/catwars-cover-640.jpg 640w,
+                             assets/catwars-cover-1280.jpg 1280w,
+                             assets/catwars-cover-1920.jpg 1920w"
+                     sizes="(max-width: 800px) 100vw, min(700px, 90vw)"
+                     alt="CatWars.io — a cat surrounded by dogs guarding a treasure chest of gems"
+                     loading="eager"
+                     decoding="async">
+            </picture>
             <div class="loading-brand-title">CatWars.io<span class="beta-badge">BETA</span></div>
             <button id="lobby-play-btn" onclick="window.enterFromLobby()"
                     style="font-size: 32px; padding: 20px 70px; background: var(--success); color: #fff;
@@ -2705,7 +2770,22 @@
 
             <!-- HERO CENTRE — title · nickname · PLAY · mode pills -->
             <div class="mm-hero">
-                <div class="mm-hero-cat">🐱</div>
+                <picture class="mm-hero-cover">
+                    <source type="image/webp"
+                            srcset="assets/catwars-cover-640.webp 640w,
+                                    assets/catwars-cover-1280.webp 1280w,
+                                    assets/catwars-cover-1920.webp 1920w"
+                            sizes="(max-width: 800px) 100vw, 60vw">
+                    <img src="assets/catwars-cover-1280.jpg"
+                         srcset="assets/catwars-cover-640.jpg 640w,
+                                 assets/catwars-cover-1280.jpg 1280w,
+                                 assets/catwars-cover-1920.jpg 1920w"
+                         sizes="(max-width: 800px) 100vw, 60vw"
+                         alt=""
+                         loading="eager"
+                         decoding="async">
+                </picture>
+                <div class="mm-hero-vignette" aria-hidden="true"></div>
                 <div class="mm-hero-title">CatWars.io<span class="beta-badge">BETA</span></div>
                 <div class="mm-hero-sub" id="mm-hero-sub">Survive · Evolve · Dominate</div>
 
@@ -3020,7 +3100,7 @@
         const INITIAL_BOSS_DELAY = 60;
         const BOSS_RESPAWN_AFTER_KILL = 90;
         const BOSS_TIMEOUT = 120;
-        const GAME_VERSION = '1.8.2';
+        const GAME_VERSION = '1.8.3';
 
         const CHEST_TYPES = { 
             wood: { hp: 500, gems: [3, 6], color: '#6b4423', metal: '#7f8c8d', weight: 0.70, size: 130 }, 
