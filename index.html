@@ -251,6 +251,9 @@
         };
     </script>
     
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lilita+One&display=swap" rel="stylesheet">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐱</text></svg>">
     
     <style>
@@ -1576,45 +1579,43 @@
             top: clamp(44px, 7vh, 62px);
             bottom: clamp(38px, 6vh, 52px);
             display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-            padding: clamp(8px, 1.5vh, 16px);
-            gap: clamp(7px, 1.3vh, 13px);
+            align-items: center; justify-content: flex-start;
+            padding: clamp(8px, 2vh, 20px) clamp(8px, 1.5vh, 16px) clamp(8px, 1.5vh, 16px);
+            gap: clamp(4px, 0.8vh, 9px);
         }
-        /* Cover art background — replaces .mm-hero-cat emoji watermark */
+        /* Cover image — inset element that breathes between title and PLAY.
+           Desktop: shown as a contained 16:9 box, clamped in height so PLAY stays visible.
+           Mobile: hidden (the existing tight vertical layout has no room for it). */
         #main-menu .mm-hero-cover {
-            position: absolute; inset: 0;
-            width: 100%; height: 100%;
             display: block;
-            pointer-events: none;
-            user-select: none;
-            z-index: 0;
-        }
-        #main-menu .mm-hero-cover img {
-            width: 100%; height: 100%;
-            object-fit: cover;
-            object-position: center;
-            opacity: 0.8;
-            display: block;
-        }
-        /* Radial vignette — keeps centre bright, darkens corners so UI reads */
-        #main-menu .mm-hero-vignette {
-            position: absolute; inset: 0;
-            background:
-                radial-gradient(ellipse at center,
-                    rgba(14,26,19,0) 30%,
-                    rgba(14,26,19,0.35) 65%,
-                    rgba(14,26,19,0.85) 100%),
-                linear-gradient(180deg,
-                    rgba(14,26,19,0.55) 0%,
-                    rgba(14,26,19,0) 22%,
-                    rgba(14,26,19,0) 70%,
-                    rgba(14,26,19,0.75) 100%);
-            pointer-events: none;
+            width: 100%;
+            max-width: clamp(340px, 50vw, 620px);
+            aspect-ratio: 16 / 9;
+            max-height: clamp(120px, 28vh, 280px);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 2px solid rgba(243,156,18,0.35);
+            box-shadow: 0 0 30px rgba(243,156,18,0.15), 0 6px 20px rgba(0,0,0,0.4);
+            margin: clamp(4px, 1vh, 10px) auto;
+            flex-shrink: 1;
             z-index: 1;
         }
-        #main-menu .mm-hero > *:not(.mm-hero-cover):not(.mm-hero-vignette) {
-            position: relative;
-            z-index: 2;
+        #main-menu .mm-hero-cover img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+            display: block;
+        }
+        @media (max-height: 720px) {
+            #main-menu .mm-hero-cover {
+                max-height: clamp(90px, 22vh, 180px);
+            }
+        }
+        @media (max-width: 800px), (orientation: portrait) and (pointer: coarse) {
+            #main-menu .mm-hero-cover {
+                display: none;
+            }
         }
         #main-menu .mm-hero-title {
             display: flex;
@@ -1622,24 +1623,19 @@
             justify-content: center;
             flex-wrap: wrap;
             gap: 10px;
+            font-family: 'Lilita One', 'Segoe UI', sans-serif;
             font-size: clamp(22px, 4.5vw, 52px);
-            font-weight: 900;
+            font-weight: 400;
             color: var(--primary);
-            text-shadow:
-                0 0 30px rgba(243,156,18,0.6),
-                3px 3px 0 #000,
-                -1px -1px 0 #000,
-                1px -1px 0 #000,
-                -1px 1px 0 #000;
-            letter-spacing: 3px;
+            text-shadow: 0 0 30px rgba(243,156,18,0.5), 3px 3px 0 #000;
+            letter-spacing: 1px;
             text-align: center;
             z-index: 1; line-height: 1;
             margin: 0;
         }
         #main-menu .mm-hero-sub {
             font-size: clamp(10px, 1.3vw, 15px);
-            color: #ddd;
-            text-shadow: 0 2px 4px #000, 0 0 8px #000;
+            color: #888;
             letter-spacing: 4px;
             text-transform: uppercase;
             margin-top: -4px;
@@ -2197,11 +2193,12 @@
             justify-content: center;
             flex-wrap: wrap;
             gap: 10px;
+            font-family: 'Lilita One', 'Segoe UI', sans-serif;
             font-size: clamp(28px, 6vw, 52px);
-            font-weight: 900;
+            font-weight: 400;
             color: var(--primary);
             text-shadow: 0 0 30px rgba(243,156,18,0.5), 3px 3px 0 #000;
-            letter-spacing: 3px;
+            letter-spacing: 1px;
             text-align: center;
             margin: 0 0 18px 0;
         }
@@ -2770,6 +2767,9 @@
 
             <!-- HERO CENTRE — title · nickname · PLAY · mode pills -->
             <div class="mm-hero">
+                <div class="mm-hero-title">CatWars.io<span class="beta-badge">BETA</span></div>
+                <div class="mm-hero-sub" id="mm-hero-sub">Survive · Evolve · Dominate</div>
+
                 <picture class="mm-hero-cover">
                     <source type="image/webp"
                             srcset="assets/catwars-cover-640.webp 640w,
@@ -2785,9 +2785,6 @@
                          loading="eager"
                          decoding="async">
                 </picture>
-                <div class="mm-hero-vignette" aria-hidden="true"></div>
-                <div class="mm-hero-title">CatWars.io<span class="beta-badge">BETA</span></div>
-                <div class="mm-hero-sub" id="mm-hero-sub">Survive · Evolve · Dominate</div>
 
                 <div class="nickname-wrap">
                     <input type="text" id="player-nickname" class="nickname-input" placeholder="Enter your name..." autocomplete="off" maxlength="15"
@@ -3100,7 +3097,7 @@
         const INITIAL_BOSS_DELAY = 60;
         const BOSS_RESPAWN_AFTER_KILL = 90;
         const BOSS_TIMEOUT = 120;
-        const GAME_VERSION = '1.8.3';
+        const GAME_VERSION = '1.8.4';
 
         const CHEST_TYPES = { 
             wood: { hp: 500, gems: [3, 6], color: '#6b4423', metal: '#7f8c8d', weight: 0.70, size: 130 }, 
