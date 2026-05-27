@@ -3020,7 +3020,7 @@
         const INITIAL_BOSS_DELAY = 60;
         const BOSS_RESPAWN_AFTER_KILL = 90;
         const BOSS_TIMEOUT = 120;
-        const GAME_VERSION = '1.8.0';
+        const GAME_VERSION = '1.8.1';
 
         const CHEST_TYPES = { 
             wood: { hp: 500, gems: [3, 6], color: '#6b4423', metal: '#7f8c8d', weight: 0.70, size: 130 }, 
@@ -3364,6 +3364,10 @@
         
         let width = window.innerWidth;
         let height = window.innerHeight;
+        // Mobile perf flag — defined early so resize() (called on definition,
+        // before the later IS_TOUCH_DEV const) can cap the render DPR.
+        // Single source of truth for all mobile rendering downgrades.
+        const IS_MOBILE_RENDER = ('ontouchstart' in window || (navigator.maxTouchPoints || 0) > 0);
         let mouseX = width / 2;
         let mouseY = height / 2;
         let isMouseDown = false;
@@ -4176,7 +4180,12 @@
         }
 
         function resize() { 
-            let dpr = window.devicePixelRatio || 1;
+            // Cap the backing-buffer resolution. Phones often report DPR 3, which
+            // makes every per-frame fill/blit/shadowBlur cost ~9x a DPR=1 buffer.
+            // 1.5 on mobile is visually near-indistinguishable at arm's length but
+            // roughly quarters the fill cost vs DPR=3. Desktop keeps up to 2.
+            let rawDpr = window.devicePixelRatio || 1;
+            let dpr = Math.min(rawDpr, IS_MOBILE_RENDER ? 1.5 : 2);
             width = window.innerWidth; 
             height = window.innerHeight; 
             canvas.width = width * dpr; 
@@ -4348,7 +4357,8 @@
         
         const particlePool = [];
         const dmgNumberPool = [];
-        const MAX_PARTICLES = 250;
+        // Fewer live particles on mobile = fewer per-frame draws over the big buffer.
+        const MAX_PARTICLES = (('ontouchstart' in window) || (navigator.maxTouchPoints || 0) > 0) ? 120 : 250;
         function getParticle() {
             if (particles.length >= MAX_PARTICLES) return null;
             let p = particlePool.pop();
@@ -8094,18 +8104,22 @@
             });
             
             ctx.save(); ctx.translate(player.x, player.y); ctx.rotate(player.angle); if (player.invuln > 0 && Math.floor(Date.now() / 150) % 2 === 0) ctx.globalAlpha = 0.5;
+            // Mobile: keep the color cue but cut blur radius hard. A 22-38px blur
+            // re-run every frame over the full buffer is the most expensive single
+            // op left in the mobile frame. Desktop keeps the full pulsing glow.
+            let comboBlurScale = IS_MOBILE_RENDER ? 0.4 : 1;
             if (combo >= BALANCE.COMBO_TIER_PIERCE) {            // 30+ : white-hot / cyan, strong pulse
                 ctx.shadowColor = '#00eaff';
-                ctx.shadowBlur = 28 + Math.sin(Date.now() / 90) * 10;
+                ctx.shadowBlur = (28 + Math.sin(Date.now() / 90) * 10) * comboBlurScale;
             } else if (combo >= BALANCE.COMBO_TIER_AOE) {         // 20+ : orange, medium pulse
                 ctx.shadowColor = '#ff8c00';
-                ctx.shadowBlur = 24 + Math.sin(Date.now() / 110) * 8;
+                ctx.shadowBlur = (24 + Math.sin(Date.now() / 110) * 8) * comboBlurScale;
             } else if (combo >= BALANCE.COMBO_TIER_CRIT) {        // 10+ : bright gold, faint pulse
                 ctx.shadowColor = '#ffd700';
-                ctx.shadowBlur = 22 + Math.sin(Date.now() / 130) * 6;
+                ctx.shadowBlur = (22 + Math.sin(Date.now() / 130) * 6) * comboBlurScale;
             } else if (combo >= COMBO_BUFF_THRESHOLD) {           // 5+  : soft yellow (original)
                 ctx.shadowColor = '#f1c40f';
-                ctx.shadowBlur = 20;
+                ctx.shadowBlur = 20 * comboBlurScale;
             }
             let pHTier = prog.helmetUpgrades[player.level] || 0;
             // Legendary override → render with the legendary weapon shape + tier 5 bracket visuals.
