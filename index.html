@@ -1603,21 +1603,31 @@
             object-fit: cover;
             object-position: 44% center;
             opacity: 0.9;
+            /* Moderate dim + slight desaturation pushes the busy dog art back so the
+               cat and the UI chrome read as the focal point. Tune brightness here. */
+            filter: brightness(0.72) saturate(0.9);
             display: block;
         }
-        /* Vignette: darken TOP and BOTTOM bands (behind text), keep CENTER bright (cat). */
+        /* Vignette: darken TOP and BOTTOM bands (behind text), keep CENTER bright (cat).
+           A radial layer also darkens the LEFT/RIGHT edges where the dogs sit, drawing
+           the eye to the centred cat. Linear band (text legibility) is layered on top. */
         #main-menu .mm-hero-vignette {
             position: absolute;
             inset: 0;
             z-index: 1;
             pointer-events: none;
-            background: linear-gradient(180deg,
-                rgba(10,16,14,0.85) 0%,
-                rgba(10,16,14,0.45) 14%,
-                rgba(10,16,14,0)    32%,
-                rgba(10,16,14,0)    60%,
-                rgba(10,16,14,0.55) 78%,
-                rgba(10,16,14,0.90) 100%);
+            background:
+                linear-gradient(180deg,
+                    rgba(10,16,14,0.85) 0%,
+                    rgba(10,16,14,0.45) 14%,
+                    rgba(10,16,14,0)    32%,
+                    rgba(10,16,14,0)    60%,
+                    rgba(10,16,14,0.55) 78%,
+                    rgba(10,16,14,0.90) 100%),
+                radial-gradient(ellipse 58% 70% at 50% 46%,
+                    rgba(10,16,14,0)    0%,
+                    rgba(10,16,14,0)    45%,
+                    rgba(10,16,14,0.45) 100%);
         }
         /* All content groups sit above cover + vignette */
         #main-menu .mm-hero > .mm-hero-top,
@@ -3178,7 +3188,7 @@
         const INITIAL_BOSS_DELAY = 60;
         const BOSS_RESPAWN_AFTER_KILL = 90;
         const BOSS_TIMEOUT = 120;
-        const GAME_VERSION = '1.8.6';
+        const GAME_VERSION = '1.8.7';
 
         const CHEST_TYPES = { 
             wood: { hp: 500, gems: [3, 6], color: '#6b4423', metal: '#7f8c8d', weight: 0.70, size: 130 }, 
@@ -3499,6 +3509,22 @@
         // GLOBAL SCOPE DECLARATIONS (FIX PRO OFFLINE GUEST CHYBU)
         var defaultProg = { nickname: '', globalLevel: 1, globalXp: 0, maxCatLevel: 1, totalKills: 0, gems: 0, dogKills: {}, weaponUpgrades: {}, helmetUpgrades: {}, unlockedLegendaries: {}, equippedLegendary: {}, bestCombo: 0, tutorialDone: false, inGameTipsDone: false, questDate: '', quests: [], bestTimes: { solo: null, hardcore: null, team: null }, boosts: {}, equippedBoosts: [null, null, null], lastDailySpinAt: 0, dailyStreak: 0, lastAdBoostAt: 0, lastSavedAt: 0 };
         window.defaultProg = defaultProg;
+        // Safe localStorage save parser. Corrupted / hand-edited / partially-written
+        // saves used to crash the whole startup on an unguarded JSON.parse. This returns
+        // a plain object on success, or null on any failure (and clears the bad key so
+        // the next boot is clean). Callers merge it over defaultProg themselves.
+        window.safeParseSave = function(key) {
+            try {
+                var raw = localStorage.getItem(key);
+                if (!raw) return null;
+                var parsed = JSON.parse(raw);
+                return (parsed && typeof parsed === 'object') ? parsed : null;
+            } catch (e) {
+                console.warn('[CatWars] Corrupted save in "' + key + '", ignoring it:', e);
+                try { localStorage.removeItem(key); } catch (_) {}
+                return null;
+            }
+        };
         // Timestamp kdy jsme načetli prog z cloudu — slouží jako "věk" lokálního snapshotu
         window._progLoadedAt = 0;
         var prog = { ...defaultProg };
@@ -8666,10 +8692,9 @@
                 window._sessionStarted = true;
                 window.currentUserUid = 'cg_guest';
 
-                let local = localStorage.getItem('catwars_save_cg_guest');
+                let local = window.safeParseSave('catwars_save_cg_guest');
                 if (local) {
-                    try { window.prog = { ...window.defaultProg, ...JSON.parse(local) }; }
-                    catch (e) { window.prog = { ...window.defaultProg }; }
+                    window.prog = { ...window.defaultProg, ...local };
                 } else {
                     window.prog = { ...window.defaultProg };
                 }
@@ -8826,8 +8851,8 @@
                 window._freshGuestAfterLogout = false;
                 if (typeof window.applyFreshGuestProg === 'function') window.applyFreshGuestProg();
             } else {
-                let local = localStorage.getItem('catwars_save_offline_guest');
-                if (local) window.prog = { ...window.defaultProg, ...JSON.parse(local) };
+                let local = window.safeParseSave('catwars_save_offline_guest');
+                if (local) window.prog = { ...window.defaultProg, ...local };
             }
             
             rollDailyQuestsIfNeeded();
@@ -8997,8 +9022,8 @@
         };
 
         window.loadCloudProgress = async (uid) => {
-            let local = localStorage.getItem('catwars_save_' + uid);
-            let localProg = local ? { ...window.defaultProg, ...JSON.parse(local) } : null;
+            let local = window.safeParseSave('catwars_save_' + uid);
+            let localProg = local ? { ...window.defaultProg, ...local } : null;
             let cloudLoaded = false;
             let cloudFetchAttempted = false;
             let cloudFetchFailed = false;
