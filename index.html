@@ -1898,12 +1898,15 @@
         }
         #main-menu .mm-bot-links a:hover { color: #ddd; }
         #main-menu .mm-bot-version {
+            margin-left: auto;
             color: #555;
             font-size: clamp(9px, 1vw, 11px);
         }
         #main-menu .mm-gfx {
+            position: absolute; left: 50%; transform: translateX(-50%);
             display: flex; align-items: center; gap: 6px;
             font-size: clamp(9px, 1vw, 11px); color: #777;
+            pointer-events: auto; z-index: 2;
         }
         #main-menu .mm-gfx-lbl { color: #888; white-space: nowrap; }
         #main-menu .mm-gfx-seg {
@@ -1917,7 +1920,26 @@
         }
         #main-menu .mm-gfx-seg button.active { background: #2a3a48; color: #e8c97a; }
         #main-menu .mm-gfx-seg button:not(.active):hover { color: #ccc; }
-        #main-menu .mm-gfx-help { color: #555; cursor: help; }
+        #main-menu .mm-gfx-help-wrap { position: relative; display: inline-flex; }
+        #main-menu .mm-gfx-help {
+            color: #666; cursor: pointer; background: none; border: none;
+            font-size: clamp(11px, 1.2vw, 13px); padding: 0 2px; line-height: 1;
+            font-family: inherit;
+        }
+        #main-menu .mm-gfx-help:hover { color: #bbb; }
+        #main-menu .mm-gfx-pop {
+            display: none; position: absolute; bottom: calc(100% + 10px); right: 0;
+            width: min(280px, 72vw); padding: 10px 12px;
+            background: rgba(16, 24, 32, 0.96); border: 1px solid #3d4f5f;
+            border-radius: 8px; color: #b8c4ce; font-size: clamp(10px, 1.05vw, 12px);
+            line-height: 1.45; text-align: left; box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+            z-index: 30; pointer-events: auto;
+        }
+        #main-menu .mm-gfx-pop.show { display: block; }
+        #main-menu .mm-gfx-pop::after {
+            content: ''; position: absolute; top: 100%; right: 10px;
+            border: 6px solid transparent; border-top-color: #3d4f5f;
+        }
 
         /* ── HARDCORE OVERLAY (centred modal inside #main-menu) ── */
         #main-menu .mm-hc-overlay {
@@ -2972,15 +2994,21 @@
                     <a href="#" onclick="window.openPrivacy('cookies'); return false;">Cookies &amp; Ads</a>
                 </div>
                 <div class="mm-bot-spacer"></div>
-                <div class="mm-gfx" title="Lower this if the game feels laggy. Affects visual effects only — not gameplay, scores or speed.">
+                <div class="mm-gfx">
                     <span class="mm-gfx-lbl">Graphics Quality</span>
                     <span class="mm-gfx-seg">
                         <button type="button" id="gfx-opt-high" class="active" onclick="window.setGraphicsQuality(false)">High</button>
                         <button type="button" id="gfx-opt-low" onclick="window.setGraphicsQuality(true)">Low</button>
                     </span>
-                    <span class="mm-gfx-help" title="High = full visual effects. Low = fewer particles and no glow, for smoother play on weak devices or slow connections. Gameplay is identical either way.">ⓘ</span>
+                    <span class="mm-gfx-help-wrap" id="gfx-help-wrap">
+                        <button type="button" id="gfx-help-btn" class="mm-gfx-help" aria-expanded="false" aria-controls="gfx-help-pop" onclick="window.toggleGfxHelp(event)">ⓘ</button>
+                        <div class="mm-gfx-pop" id="gfx-help-pop" role="dialog" aria-labelledby="gfx-help-btn">
+                            Lower this if the game feels laggy. Affects visual effects only — not gameplay, scores or speed.<br><br>
+                            <b style="color:#e8c97a;">High</b> — full glow and particles.<br>
+                            <b style="color:#e8c97a;">Low</b> — fewer particles, no glow; smoother on weak devices.
+                        </div>
+                    </span>
                 </div>
-                <div class="mm-bot-spacer"></div>
                 <div class="mm-bot-version js-game-version"></div>
             </div>
 
@@ -3228,7 +3256,7 @@
         const INITIAL_BOSS_DELAY = 60;
         const BOSS_RESPAWN_AFTER_KILL = 90;
         const BOSS_TIMEOUT = 120;
-        const GAME_VERSION = '1.8.10';
+        const GAME_VERSION = '1.8.11';
 
         const CHEST_TYPES = { 
             wood: { hp: 500, gems: [3, 6], color: '#6b4423', metal: '#7f8c8d', weight: 0.70, size: 130 }, 
@@ -3743,6 +3771,27 @@
             if (hi) hi.classList.toggle('active', !low);
             if (lo) lo.classList.toggle('active', low);
         };
+        window.closeGfxHelp = function() {
+            let pop = document.getElementById('gfx-help-pop');
+            let btn = document.getElementById('gfx-help-btn');
+            if (pop) pop.classList.remove('show');
+            if (btn) btn.setAttribute('aria-expanded', 'false');
+        };
+        window.toggleGfxHelp = function(e) {
+            if (e) e.stopPropagation();
+            let pop = document.getElementById('gfx-help-pop');
+            let btn = document.getElementById('gfx-help-btn');
+            if (!pop) return;
+            let open = !pop.classList.contains('show');
+            pop.classList.toggle('show', open);
+            if (btn) btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        };
+        if (!window._gfxHelpOutsideBound) {
+            window._gfxHelpOutsideBound = true;
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('#gfx-help-wrap')) window.closeGfxHelp();
+            });
+        }
 
         let saveTimeout = null;
         // debouncedForceSaveNow = jen lokální save, žádný cloud (šetříme Firestore quota).
