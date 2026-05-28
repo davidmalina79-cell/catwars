@@ -1745,10 +1745,8 @@
             font-weight: 900;
             border: none;
             border-radius: 14px;
-            background: linear-gradient(180deg, #2ecc71 0%, #27ae60 100%);
             color: #fff;
             cursor: pointer;
-            box-shadow: 0 8px 0 #1e8449, 0 12px 30px rgba(46,204,113,0.4);
             text-transform: uppercase;
             letter-spacing: 2px;
             z-index: 1;
@@ -1757,14 +1755,57 @@
             margin: 0;
             max-height: none;
         }
-        #main-menu .mm-hero #btn-start-game.btn-main:hover {
+        #main-menu .mm-hero #btn-start-game.btn-main.play-mode-solo {
+            background: linear-gradient(180deg, #2ecc71 0%, #27ae60 100%);
+            box-shadow: 0 8px 0 #1e8449, 0 12px 30px rgba(46,204,113,0.4);
+        }
+        #main-menu .mm-hero #btn-start-game.btn-main.play-mode-hardcore {
+            background: linear-gradient(180deg, #e74c3c 0%, #c0392b 100%);
+            box-shadow: 0 8px 0 #922b21, 0 12px 30px rgba(231,76,60,0.35);
+        }
+        #main-menu .mm-hero #btn-start-game.btn-main.play-mode-team {
+            background: linear-gradient(180deg, #5dade2 0%, #3498db 100%);
+            box-shadow: 0 8px 0 #2980b9, 0 12px 30px rgba(52,152,219,0.35);
+        }
+        #main-menu .mm-hero #btn-start-game.btn-main.play-mode-ffa {
+            background: linear-gradient(180deg, #ec7063 0%, #e74c3c 100%);
+            box-shadow: 0 8px 0 #c0392b, 0 12px 30px rgba(231,76,60,0.35);
+        }
+        #main-menu .mm-hero #btn-start-game.btn-main.play-mode-solo:hover {
             transform: translateY(-2px);
             box-shadow: 0 10px 0 #1e8449, 0 14px 36px rgba(46,204,113,0.5);
             filter: none;
         }
-        #main-menu .mm-hero #btn-start-game.btn-main:active {
+        #main-menu .mm-hero #btn-start-game.btn-main.play-mode-hardcore:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 0 #922b21, 0 14px 36px rgba(231,76,60,0.45);
+            filter: none;
+        }
+        #main-menu .mm-hero #btn-start-game.btn-main.play-mode-team:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 0 #2980b9, 0 14px 36px rgba(52,152,219,0.45);
+            filter: none;
+        }
+        #main-menu .mm-hero #btn-start-game.btn-main.play-mode-ffa:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 0 #c0392b, 0 14px 36px rgba(231,76,60,0.45);
+            filter: none;
+        }
+        #main-menu .mm-hero #btn-start-game.btn-main.play-mode-solo:active {
             transform: translateY(4px);
             box-shadow: 0 2px 0 #1e8449;
+        }
+        #main-menu .mm-hero #btn-start-game.btn-main.play-mode-hardcore:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #922b21;
+        }
+        #main-menu .mm-hero #btn-start-game.btn-main.play-mode-team:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #2980b9;
+        }
+        #main-menu .mm-hero #btn-start-game.btn-main.play-mode-ffa:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #c0392b;
         }
         /* Mode pill row */
         #main-menu .mm-modes-row {
@@ -2428,7 +2469,7 @@
                            box-shadow: 0 8px 0 #27ae60, 0 0 40px rgba(46,204,113,0.35);
                            letter-spacing: 2px; text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
                            transition: transform 0.1s, box-shadow 0.1s;">
-                🗡️ PLAY
+                PLAY
             </button>
             <p style="margin: 18px 0 0; color: #ddd; font-size: 15px; line-height: 1.45; font-weight: bold;">
                 Eat food. Evolve fast. Scratch through endless dog hordes.
@@ -2460,7 +2501,7 @@
             <p class="cg-landing-tagline">
                 Stack <b>Hardcore</b> modifiers for a 5× gem multiplier · Cats vs Dogs with 8 AI cats · Deathmatch PvP · Legendary Forge
             </p>
-            <button id="cg-play-btn" onclick="window.startGameFromCgLanding()">🗡️ PLAY</button>
+            <button id="cg-play-btn" onclick="window.startGameFromCgLanding()">PLAY</button>
             <div class="cg-landing-hint">
                 Move with mouse · Left click to attack · Space / Right click to dash
             </div>
@@ -2831,7 +2872,7 @@
                         <button id="btn-save-nick" title="Save name" onclick="window.commitPlayerNickname()">✓</button>
                     </div>
 
-                    <button class="btn-main" id="btn-start-game" onclick="window.mmPlayClick()">🗡️ PLAY</button>
+                    <button class="btn-main play-mode-solo" id="btn-start-game" onclick="window.mmPlayClick()">PLAY</button>
 
                     <div class="mm-modes-row">
                         <div class="mode-card active" id="mode-solo" onclick="selectMode('solo')">
@@ -2916,7 +2957,7 @@
                         <input type="checkbox" id="mod-comp-hardcore" onchange="toggleCompetitiveHardcore()">
                         <span>🏆 COMPETITIVE HARDCORE</span>
                     </label>
-                    <button type="button" class="mm-hc-confirm" onclick="window.startHardcoreRun()">💀 Start Hardcore Run</button>
+                    <button type="button" class="mm-hc-confirm" onclick="window.startHardcoreRun()">PLAY</button>
                 </div>
             </div>
         </div>
@@ -3137,7 +3178,7 @@
         const INITIAL_BOSS_DELAY = 60;
         const BOSS_RESPAWN_AFTER_KILL = 90;
         const BOSS_TIMEOUT = 120;
-        const GAME_VERSION = '1.8.5';
+        const GAME_VERSION = '1.8.6';
 
         const CHEST_TYPES = { 
             wood: { hp: 500, gems: [3, 6], color: '#6b4423', metal: '#7f8c8d', weight: 0.70, size: 130 }, 
@@ -3744,27 +3785,19 @@
             if (soloPanel) soloPanel.style.display = 'none';
             if (teamPanel) teamPanel.style.display = 'none';
 
-            // Zobrazíme jen ten správný
+            if (startBtn) {
+                startBtn.classList.remove('play-mode-solo', 'play-mode-hardcore', 'play-mode-team', 'play-mode-ffa');
+                startBtn.classList.add('play-mode-' + mode);
+            }
+
             if (mode === 'solo') {
                 if (soloPanel) soloPanel.style.display = 'flex';
-                startBtn.innerHTML = '🗡️ PLAY SOLO';
-                startBtn.style.background = 'var(--success)';
-                startBtn.style.boxShadow = '0 6px 0 #27ae60';
             } else if (mode === 'hardcore') {
                 if (modPanel) modPanel.style.display = 'flex';
-                startBtn.innerHTML = '💀 PLAY HARDCORE';
-                startBtn.style.background = '#e74c3c';
-                startBtn.style.boxShadow = '0 6px 0 #c0392b';
             } else if (mode === 'team') {
                 if (teamPanel) teamPanel.style.display = 'flex';
-                startBtn.innerHTML = '<span style="font-size: 0.82em; letter-spacing: -0.06em; white-space: nowrap; vertical-align: middle;">🐱⚔️🐺</span> PLAY CATS VS DOGS';
-                startBtn.style.background = 'var(--info)';
-                startBtn.style.boxShadow = '0 6px 0 #2980b9';
             } else if (mode === 'ffa') {
                 if (soloPanel) soloPanel.style.display = 'flex';
-                startBtn.innerHTML = '<span style="font-size: 0.82em; letter-spacing: -0.06em; white-space: nowrap; vertical-align: middle;">🐱⚔️🐱</span> PLAY DEATHMATCH';
-                startBtn.style.background = 'var(--danger)';
-                startBtn.style.boxShadow = '0 6px 0 #c0392b';
             }
         }
         window.selectMode = selectMode;
