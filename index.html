@@ -1585,6 +1585,28 @@
             /* display toggled by updateBoostEquipBadge() */
         }
 
+        /* "You can afford an upgrade" affordance — green pulsing dot on the
+           UPGRADES dock button. Toggled by updateUpgradeReadyDot(). */
+        #main-menu .mm-dock-btn #upgrade-ready-dot {
+            position: absolute;
+            top: 3px; right: 3px;
+            width: 10px; height: 10px;
+            border-radius: 50%;
+            background: var(--success);
+            border: 1.5px solid var(--bg, #0a1219);
+            box-shadow: 0 0 6px var(--success);
+            animation: upgradeReadyPulse 1.4s ease-in-out infinite;
+        }
+        @keyframes upgradeReadyPulse {
+            0%, 100% { transform: scale(1);   opacity: 1; }
+            50%      { transform: scale(1.35); opacity: 0.7; }
+        }
+        /* Per-button pulse inside the Encyclopedia cats tab for affordable upgrades. */
+        .upgrade-btn.affordable-pulse:not(:disabled) {
+            animation: upgradeReadyPulse 1.4s ease-in-out infinite;
+            box-shadow: 0 0 8px var(--success);
+        }
+
         /* ── HERO CENTRE ── */
         #main-menu .mm-hero {
             position: absolute;
@@ -2963,6 +2985,7 @@
                 <button type="button" class="mm-dock-btn" onclick="openEncyclopedia('cats')">
                     <div class="mm-dock-icon">🐱</div>
                     <div class="mm-dock-lbl">UPGRADES</div>
+                    <div id="upgrade-ready-dot" style="display: none;"></div>
                 </button>
                 <button type="button" class="mm-dock-btn" onclick="openEncyclopedia('dogs')">
                     <div class="mm-dock-icon">🐺</div>
@@ -3828,6 +3851,7 @@
             if (DEV_MODE && prog.gems < 1000000) prog.gems = 1000000;
             normalizeProg();
             updateBoostEquipBadge();
+            updateUpgradeReadyDot();
             refreshDailySpinButton();
             if (typeof window.refreshGfxToggle === 'function') window.refreshGfxToggle();
 
@@ -4153,6 +4177,25 @@
             badge.innerText = `${n}/${EQUIP_SLOTS}`;
             badge.style.display = n > 0 ? 'block' : 'none';
             badge.style.background = n === EQUIP_SLOTS ? 'var(--success)' : 'var(--info)';
+        }
+
+        // True if the player can afford ANY weapon or helmet upgrade on an
+        // unlocked cat level. Mirrors the cost math in switchTab('cats').
+        function hasAffordableCatUpgrade() {
+            normalizeProg();
+            for (let i = 1; i <= prog.maxCatLevel && i <= 50; i++) {
+                let wTier = Number(prog.weaponUpgrades[i] || 0);
+                let hTier = Number(prog.helmetUpgrades[i] || 0);
+                if (wTier < 4 && prog.gems >= i * UPGRADE_COSTS[wTier]) return true;
+                if (hTier < 5 && prog.gems >= i * HELMET_UPGRADE_COSTS[hTier]) return true;
+            }
+            return false;
+        }
+
+        function updateUpgradeReadyDot() {
+            let dot = document.getElementById('upgrade-ready-dot');
+            if (!dot) return;
+            dot.style.display = hasAffordableCatUpgrade() ? 'block' : 'none';
         }
 
         function equipBoost(id) {
@@ -6575,6 +6618,7 @@
                             let wCost = i * UPGRADE_COSTS[wTier]; 
                             wBtn.innerHTML = `<strong>Weapon: ${WEAPON_TIERS[wTier + 1]}</strong><br><span style="font-size:13px; color:#111; font-weight:900;">💎 ${wCost}</span>`; 
                             if (prog.gems < wCost) wBtn.disabled = true; 
+                            else wBtn.classList.add('affordable-pulse'); 
                             wBtn.onclick = () => buyUpgrade('weapon', i, wCost, wTier + 1); 
                         }
                         card.appendChild(wBtn);
@@ -6587,6 +6631,7 @@
                             let hCost = i * HELMET_UPGRADE_COSTS[hTier]; 
                             hBtn.innerHTML = `<strong>Helmet: ${HELMET_TIERS[hTier + 1]}</strong><br><span style="font-size:13px; color:#111; font-weight:900;">💎 ${hCost}</span>`; 
                             if (prog.gems < hCost) hBtn.disabled = true; 
+                            else hBtn.classList.add('affordable-pulse'); 
                             hBtn.onclick = () => buyUpgrade('helmet', i, hCost, hTier + 1); 
                         }
                         card.appendChild(hBtn);
