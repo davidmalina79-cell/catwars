@@ -1601,11 +1601,6 @@
             0%, 100% { transform: scale(1);   opacity: 1; }
             50%      { transform: scale(1.35); opacity: 0.7; }
         }
-        /* Per-button pulse inside the Encyclopedia cats tab for affordable upgrades. */
-        .upgrade-btn.affordable-pulse:not(:disabled) {
-            animation: upgradeReadyPulse 1.4s ease-in-out infinite;
-            box-shadow: 0 0 8px var(--success);
-        }
 
         /* ── HERO CENTRE ── */
         #main-menu .mm-hero {
@@ -3279,7 +3274,7 @@
         const INITIAL_BOSS_DELAY = 60;
         const BOSS_RESPAWN_AFTER_KILL = 90;
         const BOSS_TIMEOUT = 120;
-        const GAME_VERSION = '1.8.13';
+        const GAME_VERSION = '1.8.14';
 
         const CHEST_TYPES = { 
             wood: { hp: 500, gems: [3, 6], color: '#6b4423', metal: '#7f8c8d', weight: 0.70, size: 130 }, 
@@ -6618,7 +6613,6 @@
                             let wCost = i * UPGRADE_COSTS[wTier]; 
                             wBtn.innerHTML = `<strong>Weapon: ${WEAPON_TIERS[wTier + 1]}</strong><br><span style="font-size:13px; color:#111; font-weight:900;">💎 ${wCost}</span>`; 
                             if (prog.gems < wCost) wBtn.disabled = true; 
-                            else wBtn.classList.add('affordable-pulse'); 
                             wBtn.onclick = () => buyUpgrade('weapon', i, wCost, wTier + 1); 
                         }
                         card.appendChild(wBtn);
@@ -6631,7 +6625,6 @@
                             let hCost = i * HELMET_UPGRADE_COSTS[hTier]; 
                             hBtn.innerHTML = `<strong>Helmet: ${HELMET_TIERS[hTier + 1]}</strong><br><span style="font-size:13px; color:#111; font-weight:900;">💎 ${hCost}</span>`; 
                             if (prog.gems < hCost) hBtn.disabled = true; 
-                            else hBtn.classList.add('affordable-pulse'); 
                             hBtn.onclick = () => buyUpgrade('helmet', i, hCost, hTier + 1); 
                         }
                         card.appendChild(hBtn);
