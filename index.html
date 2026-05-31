@@ -391,6 +391,23 @@
         
         .top-bar { display: flex; flex-direction: column; align-items: center; width: 100%; }
         .stats-bar { position: absolute; top: 20px; left: 20px; display: flex; gap: 15px; flex-wrap: wrap;}
+
+        /* Active pre-game boosts — floating icons, top-left, stacked vertically.
+           No panel: the container is empty (and so invisible) when nothing is active. */
+        #active-boosts {
+            position: absolute; top: 84px; left: 20px;
+            display: flex; flex-direction: column; gap: 8px;
+            pointer-events: none; z-index: 21;
+        }
+        #active-boosts .boost-chip {
+            width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
+            font-size: 22px; line-height: 1;
+            background: rgba(0,0,0,0.55); border: 2px solid rgba(241,196,15,0.7);
+            border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+            backdrop-filter: blur(3px);
+            text-shadow: 1px 1px 2px #000;
+            pointer-events: auto;
+        }
         
         .stat-box { 
             background: rgba(0,0,0,0.7); border: 2px solid #555; padding: 8px 15px; 
@@ -871,6 +888,12 @@
             .stat-box { font-size: 12px; padding: 4px 8px; border-width: 1px; }
             #ui-global-rank { display: none !important; }
             #game-ui { padding: 10px; }
+            #active-boosts {
+                top: 48px; left: 8px; gap: 6px;
+            }
+            #active-boosts .boost-chip {
+                width: 32px; height: 32px; font-size: 18px;
+            }
             .top-bar { margin-top: 56px; }
             #level-text.text-info { font-size: 18px; margin-bottom: 3px; }
             #xp-bar-container { height: 18px; max-width: 92vw; }
@@ -921,6 +944,12 @@
                menu screen and it was crowding the centered XP/HP bars. */
             #ui-global-rank { display: none !important; }
             #game-ui { padding: 6px 8px; }
+            #active-boosts {
+                top: 48px; left: 6px; gap: 6px;
+            }
+            #active-boosts .boost-chip {
+                width: 32px; height: 32px; font-size: 18px;
+            }
             /* Top-bar sits up at the top in line with the stats row — short
                bars, centered horizontally between the stats and the buttons. */
             .top-bar { margin-top: 0; gap: 1px; }
@@ -3181,6 +3210,9 @@
             <div class="stat-box gem-text">💎 <span id="ui-gems">0</span></div>
             <div class="stat-box" style="color: #e74c3c; border-color: #e74c3c; box-shadow: 0 0 10px rgba(231, 76, 60, 0.4);">⏱️ <span id="ui-timer">00:00</span></div>
         </div>
+
+        <!-- Active pre-game boosts (icons only, populated by renderActiveBoosts() on run start) -->
+        <div id="active-boosts"></div>
         
         <div class="top-bar">
             <div id="level-text" class="text-info">Level 1: Kitten</div>
@@ -3290,7 +3322,7 @@
         const INITIAL_BOSS_DELAY = 60;
         const BOSS_RESPAWN_AFTER_KILL = 90;
         const BOSS_TIMEOUT = 120;
-        const GAME_VERSION = '1.8.17';
+        const GAME_VERSION = '1.8.18';
 
         const CHEST_TYPES = { 
             wood: { hp: 500, gems: [3, 6], color: '#6b4423', metal: '#7f8c8d', weight: 0.70, size: 130 }, 
@@ -4264,6 +4296,21 @@
             switchTab('boosts');
         }
         window.buyBoost = buyBoost;
+
+        // Render the floating active-boost icons (top-left) for the current run.
+        // Icons only, vertical stack. Empty container => nothing shown (no panel).
+        function renderActiveBoosts(activeBoosts) {
+            let el = document.getElementById('active-boosts');
+            if (!el) return;
+            let html = '';
+            for (let i = 0; i < BOOST_IDS.length; i++) {
+                let id = BOOST_IDS[i];
+                if (activeBoosts && activeBoosts[id] && BOOSTS[id]) {
+                    html += '<div class="boost-chip" title="' + BOOSTS[id].name + '">' + BOOSTS[id].icon + '</div>';
+                }
+            }
+            el.innerHTML = html;
+        }
 
         function grantRandomBoost(amount = 1) {
             let id = BOOST_IDS[Math.floor(Math.random() * BOOST_IDS.length)];
@@ -7134,6 +7181,7 @@
                 regenRate: activeBoosts.regen ? 0.015 : 0,
                 activeBoosts: activeBoosts
             };
+            renderActiveBoosts(activeBoosts);
             playerRunData = { kills: 0, teamKills: 0, gems: 0, totalRunGems: 0, chestsOpened: 0, bestCombo: 0, bossKills: 0 }; combo = 0; comboTimer = 0;
             gameStartTime = performance.now(); pauseStartTime = 0; finalBossSpawned = false; window.finalBossWarningActive = false; gameWon = false;
             
