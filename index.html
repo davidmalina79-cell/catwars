@@ -4716,6 +4716,15 @@
             }, {passive: false});
         })();
 
+        // --- Dash button (own touch listener so multi-touch doesn't swallow the click) ---
+        (function() {
+            const db = document.getElementById('dash-container');
+            if (!db) return;
+            db.addEventListener('touchstart', (e) => {
+                triggerDash(e);
+            }, {passive: false});
+        })();
+
         // --- Global multi-touch handlers ---
         window.addEventListener('touchstart', (e) => {
             initAudio();
@@ -7535,9 +7544,16 @@
             updateDOM('ui-team-kills', 'text', playerRunData.teamKills);
             updateDOM('ui-gems', 'text', prog.gems + playerRunData.gems); 
             
-            let dashPct = Math.min(100, (1 - player.dashTimer / player.dashCooldown) * 100); 
-            updateDOM('dash-fill', 'height', dashPct + '%'); 
-            updateDOM('dash-container', 'borderColor', dashPct === 100 ? '#00d4ff' : '#555');
+            updateDashUI();
+        }
+
+        // Dash cooldown indicator — called every frame from gameLoop so the fill
+        // and border reflect the real dashTimer (updateUI() only runs on events).
+        function updateDashUI() {
+            if (!player) return;
+            let dashPct = Math.min(100, (1 - player.dashTimer / player.dashCooldown) * 100);
+            updateDOM('dash-fill', 'height', dashPct + '%');
+            updateDOM('dash-container', 'borderColor', dashPct >= 100 ? '#00d4ff' : '#555');
         }
 
         let comboPopupTimeoutId = null;
@@ -8054,6 +8070,7 @@
 
                 if (player.dashTimer > 0) player.dashTimer -= dt;
                 if (player.dashActive > 0) player.dashActive -= dt;
+                updateDashUI();
                 
                 // LEGENDARY OVERRIDE — when equipped, archetype/stats follow the legendary
                 // weapon instead of the level's default. The tier is forced to 5 below
@@ -8102,7 +8119,7 @@
                 }
                 
                 if (dashRequested && player.dashTimer <= 0 && !activeMods.noDash) {
-                    player.dashActive = 0.18; player.dashTimer = 3.0; playSound('dash');
+                    player.dashActive = 0.18; player.dashTimer = player.dashCooldown; playSound('dash');
                     if (distToMouse <= pSize * 0.5) { player.dashForceX = Math.cos(player.angle); player.dashForceY = Math.sin(player.angle); }
                     else { player.dashForceX = dx/distToMouse; player.dashForceY = dy/distToMouse; }
                 }
