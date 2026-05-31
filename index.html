@@ -741,6 +741,8 @@
         @keyframes legendaryPulse { 0%, 100% { box-shadow: 0 0 8px rgba(253, 224, 71, 0.5), inset 0 0 4px rgba(255,255,255,0.4); } 50% { box-shadow: 0 0 18px rgba(253, 224, 71, 0.95), inset 0 0 6px rgba(255,255,255,0.7); } }
         /* Fully equipped boosts (equipment tab only). */
         .card.boost-equipped { border-color: #f1c40f; box-shadow: inset 0 0 15px rgba(241, 196, 15, 0.3); }
+        .card.boost-affordable { border-color: #2ecc71; box-shadow: 0 0 12px rgba(46, 204, 113, 0.45); }
+        .card.boost-affordable.boost-equipped { border-color: #f1c40f; box-shadow: inset 0 0 15px rgba(241, 196, 15, 0.3); }
         /* Cats tab: Forge is unlocked (Diamond weapon+) — visually distinct from full loadout accent. */
         .card.legendary-eligible {
             border-color: rgba(253, 224, 71, 0.92);
@@ -3274,7 +3276,7 @@
         const INITIAL_BOSS_DELAY = 60;
         const BOSS_RESPAWN_AFTER_KILL = 90;
         const BOSS_TIMEOUT = 120;
-        const GAME_VERSION = '1.8.14';
+        const GAME_VERSION = '1.8.15';
 
         const CHEST_TYPES = { 
             wood: { hp: 500, gems: [3, 6], color: '#6b4423', metal: '#7f8c8d', weight: 0.70, size: 130 }, 
@@ -3593,7 +3595,7 @@
     <!-- ================================================================================================= -->
     <script>
         // GLOBAL SCOPE DECLARATIONS (FIX PRO OFFLINE GUEST CHYBU)
-        var defaultProg = { nickname: '', globalLevel: 1, globalXp: 0, maxCatLevel: 1, totalKills: 0, gems: 0, dogKills: {}, weaponUpgrades: {}, helmetUpgrades: {}, unlockedLegendaries: {}, equippedLegendary: {}, bestCombo: 0, tutorialDone: false, inGameTipsDone: false, questDate: '', quests: [], bestTimes: { solo: null, hardcore: null, team: null }, boosts: {}, equippedBoosts: [null, null, null], lastDailySpinAt: 0, dailyStreak: 0, lastAdBoostAt: 0, lastSavedAt: 0, schemaVersion: 2, gfxLow: false };
+        var defaultProg = { nickname: '', globalLevel: 1, globalXp: 0, maxCatLevel: 1, totalKills: 0, gems: 100, dogKills: {}, weaponUpgrades: {}, helmetUpgrades: {}, unlockedLegendaries: {}, equippedLegendary: {}, bestCombo: 0, tutorialDone: false, inGameTipsDone: false, questDate: '', quests: [], bestTimes: { solo: null, hardcore: null, team: null }, boosts: {}, equippedBoosts: [null, null, null], lastDailySpinAt: 0, dailyStreak: 0, lastAdBoostAt: 0, lastSavedAt: 0, schemaVersion: 2, gfxLow: false };
         window.defaultProg = defaultProg;
         // Safe localStorage save parser. Corrupted / hand-edited / partially-written
         // saves used to crash the whole startup on an unguarded JSON.parse. This returns
@@ -4457,8 +4459,9 @@
                 let owned = ownedBoostCount(id);
                 let isEquipped = prog.equippedBoosts.includes(id);
                 let canAfford = prog.gems >= b.cost;
+                let showAffordCue = canAfford && !isEquipped;
                 let card = document.createElement('div');
-                card.className = 'card' + (isEquipped ? ' boost-equipped' : '');
+                card.className = 'card' + (isEquipped ? ' boost-equipped' : '') + (showAffordCue ? ' boost-affordable' : '');
                 card.innerHTML = `
                     <div style="font-size:50px; line-height:1; margin: 6px 0 10px 0; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5));">${b.icon}</div>
                     <h3 style="margin: 0 0 6px 0; font-size: 16px;">${b.name}</h3>
