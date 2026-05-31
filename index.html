@@ -408,6 +408,25 @@
             text-shadow: 1px 1px 2px #000;
             pointer-events: auto;
         }
+
+        /* Combo tier perks — same column, directly under the active boosts.
+           Empty container => nothing shown. Chips reuse boost-chip sizing. */
+        #combo-tiers {
+            position: absolute; top: 84px; left: 20px;
+            display: flex; flex-direction: column; gap: 8px;
+            pointer-events: none; z-index: 21;
+        }
+        #combo-tiers .combo-chip {
+            width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
+            font-size: 22px; line-height: 1;
+            background: rgba(0,0,0,0.55); border: 2px solid rgba(230,126,34,0.8);
+            border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+            backdrop-filter: blur(3px);
+            text-shadow: 1px 1px 2px #000;
+        }
+        /* Warning blink in the last ~1s before the combo resets. */
+        #combo-tiers.combo-expiring .combo-chip { animation: comboBlink 0.35s steps(1) infinite; }
+        @keyframes comboBlink { 0%,100% { opacity: 1; } 50% { opacity: 0.25; } }
         
         .stat-box { 
             background: rgba(0,0,0,0.7); border: 2px solid #555; padding: 8px 15px; 
@@ -894,6 +913,8 @@
             #active-boosts .boost-chip {
                 width: 32px; height: 32px; font-size: 18px;
             }
+            #combo-tiers { left: 8px; gap: 6px; }
+            #combo-tiers .combo-chip { width: 32px; height: 32px; font-size: 18px; }
             .top-bar { margin-top: 56px; }
             #level-text.text-info { font-size: 18px; margin-bottom: 3px; }
             #xp-bar-container { height: 18px; max-width: 92vw; }
@@ -950,6 +971,8 @@
             #active-boosts .boost-chip {
                 width: 32px; height: 32px; font-size: 18px;
             }
+            #combo-tiers { left: 6px; gap: 6px; }
+            #combo-tiers .combo-chip { width: 32px; height: 32px; font-size: 18px; }
             /* Top-bar sits up at the top in line with the stats row — short
                bars, centered horizontally between the stats and the buttons. */
             .top-bar { margin-top: 0; gap: 1px; }
@@ -3213,6 +3236,9 @@
 
         <!-- Active pre-game boosts (icons only, populated by renderActiveBoosts() on run start) -->
         <div id="active-boosts"></div>
+
+        <!-- Combo tier perks (icons only, populated each frame by renderComboTiers()) -->
+        <div id="combo-tiers"></div>
         
         <div class="top-bar">
             <div id="level-text" class="text-info">Level 1: Kitten</div>
@@ -3322,7 +3348,7 @@
         const INITIAL_BOSS_DELAY = 60;
         const BOSS_RESPAWN_AFTER_KILL = 90;
         const BOSS_TIMEOUT = 120;
-        const GAME_VERSION = '1.8.18';
+        const GAME_VERSION = '1.8.19';
 
         const CHEST_TYPES = { 
             wood: { hp: 500, gems: [3, 6], color: '#6b4423', metal: '#7f8c8d', weight: 0.70, size: 130 }, 
@@ -7182,6 +7208,8 @@
                 activeBoosts: activeBoosts
             };
             renderActiveBoosts(activeBoosts);
+            _comboTiersState = { mask: -1, expiring: null };
+            { let _ct = document.getElementById('combo-tiers'); if (_ct) { _ct.innerHTML = ''; _ct.classList.remove('combo-expiring'); } }
             playerRunData = { kills: 0, teamKills: 0, gems: 0, totalRunGems: 0, chestsOpened: 0, bestCombo: 0, bossKills: 0 }; combo = 0; comboTimer = 0;
             gameStartTime = performance.now(); pauseStartTime = 0; finalBossSpawned = false; window.finalBossWarningActive = false; gameWon = false;
             
@@ -7534,6 +7562,46 @@
             return null;
         }
 
+        // Combo tier perk icons (top-left, under the active boosts). Called every frame
+        // from the game loop. Only touches the DOM when the visible state changes, so the
+        // per-frame cost is a couple of cheap comparisons. No grid lookups, no allocations.
+        let _comboTiersState = { mask: -1, expiring: null };
+        function renderComboTiers() {
+            let el = document.getElementById('combo-tiers');
+            if (!el) return;
+            // Position the column directly under however many boost chips are active.
+            let boostsEl = document.getElementById('active-boosts');
+            let boostCount = boostsEl ? boostsEl.childElementCount : 0;
+            let baseTop = boostsEl ? parseFloat(getComputedStyle(boostsEl).top) || 84 : 84;
+            let rowH = document.body.classList.contains('touch-device') ? 38 : 48;
+            el.style.top = (baseTop + boostCount * rowH) + 'px';
+
+            // Build a bitmask of which tiers are active so we only rewrite icons on change.
+            let mask = 0;
+            if (combo >= COMBO_BUFF_THRESHOLD)        mask |= 1; // 💨 speed
+            if (combo >= BALANCE.COMBO_TIER_CRIT)     mask |= 2; // 💥 crit
+            if (combo >= BALANCE.COMBO_TIER_AOE)      mask |= 4; // 💢 aoe
+            if (combo >= BALANCE.COMBO_TIER_PIERCE)   mask |= 8; // ⚔️ pierce
+
+            if (mask !== _comboTiersState.mask) {
+                let html = '';
+                if (mask & 1) html += '<div class="combo-chip" title="5× combo: +25% movement">💨</div>';
+                if (mask & 2) html += '<div class="combo-chip" title="10× combo: +15% crit chance">💥</div>';
+                if (mask & 4) html += '<div class="combo-chip" title="20× combo: splash damage">💢</div>';
+                if (mask & 8) html += '<div class="combo-chip" title="30× combo: unstoppable swings">⚔️</div>';
+                el.innerHTML = html;
+                _comboTiersState.mask = mask;
+            }
+
+            // Blink warning in the final ~1s before the combo window expires.
+            let expiring = mask > 0 && combo > 0 && comboTimer > 0 && comboTimer < 1.0;
+            if (expiring !== _comboTiersState.expiring) {
+                if (expiring) el.classList.add('combo-expiring');
+                else el.classList.remove('combo-expiring');
+                _comboTiersState.expiring = expiring;
+            }
+        }
+
         /** Full kill rewards + removal when the player (direct hit or combo AoE) brings an enemy to 0 HP. Uses indexOf so splices stay correct if the array shifted mid-frame. */
         function finalizePlayerDogKill(enemy) {
             if (!enemy || enemy.hp > 0) return;
@@ -7621,6 +7689,7 @@
                 
                 if (tutorialActive) { tutorialTimer -= dt; if (tutorialTimer <= 0) { tutorialIdx++; showTutorial(); } }
                 if (combo > 0) { comboTimer -= dt; if (comboTimer <= 0) { combo = 0; updateUI(); } }
+                renderComboTiers();
 
                 let elapsedMs = currentTime - gameStartTime;
                 let uiM = Math.floor(elapsedMs / 60000);
