@@ -3276,7 +3276,7 @@
         const INITIAL_BOSS_DELAY = 60;
         const BOSS_RESPAWN_AFTER_KILL = 90;
         const BOSS_TIMEOUT = 120;
-        const GAME_VERSION = '1.8.17';
+        const GAME_VERSION = '1.8.16';
 
         const CHEST_TYPES = { 
             wood: { hp: 500, gems: [3, 6], color: '#6b4423', metal: '#7f8c8d', weight: 0.70, size: 130 }, 
@@ -8280,21 +8280,26 @@
         }
 
         function draw(playerStats) {
-            ctx.fillStyle = '#2c6044'; ctx.fillRect(0, 0, width, height); ctx.save(); ctx.translate(width / 2, height / 2); ctx.scale(currentZoom, currentZoom); ctx.translate(-player.x, -player.y);
+            ctx.fillStyle = '#24513a'; ctx.fillRect(0, 0, width, height); ctx.save(); ctx.translate(width / 2, height / 2); ctx.scale(currentZoom, currentZoom); ctx.translate(-player.x, -player.y);
             let camL = player.x - (width/2)/currentZoom, camR = player.x + (width/2)/currentZoom, camT = player.y - (height/2)/currentZoom, camB = player.y + (height/2)/currentZoom;
-            // ── Variant B background: checkerboard tiles (camera-bounded) ──
-            let tileS = 200;
-            ctx.fillStyle = '#266038';
-            let tx0 = Math.floor(camL / tileS), tx1 = Math.ceil(camR / tileS), ty0 = Math.floor(camT / tileS), ty1 = Math.ceil(camB / tileS);
-            for (let tx = tx0; tx <= tx1; tx++) {
-                for (let ty = ty0; ty <= ty1; ty++) {
-                    if (((tx + ty) & 1) === 0) continue;
-                    let rx = Math.max(tx * tileS, 0), ry = Math.max(ty * tileS, 0);
-                    let rw = Math.min((tx + 1) * tileS, WORLD_SIZE) - rx, rh = Math.min((ty + 1) * tileS, WORLD_SIZE) - ry;
-                    if (rw > 0 && rh > 0) ctx.fillRect(rx, ry, rw, rh);
+            // ── Variant A background: soft grass patches (deterministic, camera-bounded) ──
+            let patchS = 600;
+            for (let px = Math.floor((camL - patchS) / patchS) * patchS; px <= camR + patchS; px += patchS) {
+                for (let py = Math.floor((camT - patchS) / patchS) * patchS; py <= camB + patchS; py += patchS) {
+                    let h = (Math.sin(px * 0.013 + py * 0.007) + Math.cos(px * 0.005 - py * 0.011)) * 0.5;
+                    ctx.fillStyle = h > 0 ? 'rgba(44,96,68,0.55)' : 'rgba(29,69,48,0.55)';
+                    let cx = px + patchS / 2, cy = py + patchS / 2;
+                    ctx.beginPath(); ctx.ellipse(cx, cy, patchS * 0.62, patchS * 0.42, h, 0, Math.PI * 2); ctx.fill();
                 }
             }
+            // ── Edge vignette: darken toward the world border ──
+            let vCx = player.x, vCy = player.y, vR = Math.hypot(width, height) / currentZoom;
+            let vg = ctx.createRadialGradient(vCx, vCy, vR * 0.45, vCx, vCy, vR * 0.9);
+            vg.addColorStop(0, 'rgba(13,31,23,0)'); vg.addColorStop(1, 'rgba(13,31,23,0.55)');
+            ctx.fillStyle = vg; ctx.fillRect(camL, camT, camR - camL, camB - camT);
             ctx.strokeStyle = '#000000'; ctx.lineWidth = 15; ctx.strokeRect(0, 0, WORLD_SIZE, WORLD_SIZE);
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)'; ctx.lineWidth = 2; let gS = 200;
+            ctx.beginPath(); for (let x = Math.max(0, Math.floor(camL/gS)*gS); x <= Math.min(WORLD_SIZE, camR+gS); x += gS) { ctx.moveTo(x, Math.max(0, camT)); ctx.lineTo(x, Math.min(WORLD_SIZE, camB)); } for (let y = Math.max(0, Math.floor(camT/gS)*gS); y <= Math.min(WORLD_SIZE, camB+gS); y += gS) { ctx.moveTo(Math.max(0, camL), y); ctx.lineTo(Math.min(WORLD_SIZE, camR), y); } ctx.stroke();
             
             decorations.forEach(d => { 
                 if (d.x < camL - 150 || d.x > camR + 150 || d.y < camT - 150 || d.y > camB + 150) return; 
