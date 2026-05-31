@@ -3348,7 +3348,7 @@
         const INITIAL_BOSS_DELAY = 60;
         const BOSS_RESPAWN_AFTER_KILL = 90;
         const BOSS_TIMEOUT = 120;
-        const GAME_VERSION = '1.8.20';
+        const GAME_VERSION = '1.8.21';
 
         const CHEST_TYPES = { 
             wood: { hp: 500, gems: [3, 6], color: '#6b4423', metal: '#7f8c8d', weight: 0.70, size: 130 }, 
@@ -7594,14 +7594,14 @@
 
             // Build a bitmask of which tiers are active so we only rewrite icons on change.
             let mask = 0;
-            if (combo >= COMBO_BUFF_THRESHOLD)        mask |= 1; // 💨 speed
+            if (combo >= COMBO_BUFF_THRESHOLD)        mask |= 1; // 🐾 speed
             if (combo >= BALANCE.COMBO_TIER_CRIT)     mask |= 2; // 💥 crit
             if (combo >= BALANCE.COMBO_TIER_AOE)      mask |= 4; // 💢 aoe
             if (combo >= BALANCE.COMBO_TIER_PIERCE)   mask |= 8; // ⚔️ pierce
 
             if (mask !== _comboTiersState.mask) {
                 let html = '';
-                if (mask & 1) html += '<div class="combo-chip" title="5× combo: +25% movement">💨</div>';
+                if (mask & 1) html += '<div class="combo-chip" title="5× combo: +25% movement">🐾</div>';
                 if (mask & 2) html += '<div class="combo-chip" title="10× combo: +15% crit chance">💥</div>';
                 if (mask & 4) html += '<div class="combo-chip" title="20× combo: splash damage">💢</div>';
                 if (mask & 8) html += '<div class="combo-chip" title="30× combo: unstoppable swings">⚔️</div>';
