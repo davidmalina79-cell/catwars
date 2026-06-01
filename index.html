@@ -3139,6 +3139,15 @@
                 <div class="lb-top-spacer"></div>
             </div>
 
+            <!-- CrazyGames-only banner: global board is not wired on CG (Firebase
+                 blocked in iframe + official CG leaderboard is invite-only MVP).
+                 Hidden by default so catwars.io is unaffected; openLeaderboard()
+                 reveals + fills it when IS_CRAZYGAMES. v1.8.21 -->
+            <div id="lb-cg-banner" style="display:none; margin: 0 0 12px 0; padding: 10px 14px; background: rgba(243,156,18,0.12); border: 1px solid rgba(243,156,18,0.5); border-radius: 10px; text-align: center;">
+                <div style="color: var(--primary); font-weight: bold; font-size: 15px; letter-spacing: 0.5px;">🔜 GLOBAL LEADERBOARD — COMING SOON</div>
+                <div style="color: #bbb; font-size: 12px; margin-top: 4px;">Beta build — for now you can track your own best runs below.</div>
+            </div>
+
             <!-- Body: tab rail (left on mobile, top on desktop) + table area -->
             <div class="lb-body">
 
@@ -6281,6 +6290,9 @@
         window.openLeaderboard = async () => {
             document.getElementById('main-menu').style.display = 'none';
             document.getElementById('leaderboard-screen').style.display = 'flex';
+            // CrazyGames: show the "coming soon" banner (global board not wired there). v1.8.21
+            let cgBanner = document.getElementById('lb-cg-banner');
+            if (cgBanner) cgBanner.style.display = window.IS_CRAZYGAMES ? 'block' : 'none';
             document.getElementById('lb-table-body').innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px; color: #aaa;">Loading data from satellite...</td></tr>';
             
             // Asynchronně stáhneme reálná data z Firebase
@@ -6387,6 +6399,12 @@
                 <td style="width: 15%; color:#aaa;">Lv. ${prog.maxCatLevel || 1}</td>
                 <td style="width: 20%; font-weight:bold; color: #fff; font-size: 16px;">${myScore}</td>
             </tr>`;
+
+            // CrazyGames: the player already appears as the only row in the table
+            // above (self-row from fetchLeaderboard), so hide the duplicate sticky
+            // row. On catwars.io it stays visible as before. v1.8.21
+            let stickyWrap = currentBody.closest('div');
+            if (stickyWrap) stickyWrap.style.display = window.IS_CRAZYGAMES ? 'none' : '';
         };
 
         function goToMenu() {
@@ -9073,7 +9091,21 @@
             window.loadCloudProgress  = async () => {};
             window.fetchFromFirestore = null;
             window.saveToFirestore    = null;
-            window.fetchLeaderboard   = async () => [];
+            // Return the player's own progress as a single self-row so the table
+            // shows real stats (kills + best times per tab) instead of an empty
+            // "No data available" board. The #lb-cg-banner explains the global
+            // board is coming soon. v1.8.21
+            window.fetchLeaderboard   = async () => {
+                let p = window.prog || {};
+                return [{
+                    uid: window.currentUserUid || 'cg_guest',
+                    nickname: (p.nickname && p.nickname.trim()) || 'Player',
+                    globalLevel: p.globalLevel || 1,
+                    maxLevel: p.maxCatLevel || 1,
+                    kills: p.totalKills || 0,
+                    bestTimes: p.bestTimes || { solo: null, hardcore: null, team: null, ffa: null }
+                }];
+            };
             window.updateAuthUI       = () => {};
 
             window.startLocalSession = () => {
