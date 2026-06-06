@@ -3357,7 +3357,7 @@
         const INITIAL_BOSS_DELAY = 60;
         const BOSS_RESPAWN_AFTER_KILL = 90;
         const BOSS_TIMEOUT = 120;
-        const GAME_VERSION = '1.9.1';
+        const GAME_VERSION = '1.9.2';
 
         const CHEST_TYPES = { 
             wood: { hp: 500, gems: [3, 6], color: '#6b4423', metal: '#7f8c8d', weight: 0.70, size: 130 }, 
@@ -7115,12 +7115,13 @@
         // ── END ONBOARDING ──────────────────────────────────────────────────
 
         async function startGame() {
-            // Show onboarding tutorial for first-time players. Onboarding calls
-            // startGame() again when complete/skipped (tutorialDone will be true).
-            if (!prog.tutorialDone) {
-                window.showOnboarding(() => startGame());
-                return;
-            }
+            // Onboarding is now in-gameplay (CrazyGames quality guideline: land players
+            // directly in gameplay, prioritise visuals, keep it skippable). The blocking
+            // 6-panel overlay is bypassed — the in-game toast tips (showTutorial, gated on
+            // inGameTipsDone further down) teach controls during the first run instead.
+            // The overlay code + OB_STEPS stay in the DOM; to re-enable the modal, restore:
+            //   if (!prog.tutorialDone) { window.showOnboarding(() => startGame()); return; }
+            if (!prog.tutorialDone) { prog.tutorialDone = true; saveProgress(); }
 
             // Browser back-gesture / Esc always drops fullscreen. The Play click
             // is a fresh user gesture so we can re-request fullscreen + landscape
@@ -7518,8 +7519,13 @@
         }
         function updateLevel() {
             let currentStats = evolutions[Math.min(player.level - 1, 49)]; let leveledUp = false;
-            while (player.level < 50 && player.xp >= currentStats.nextXp) { 
-                player.xp -= currentStats.nextXp; player.level++; 
+            // Solo onboarding: halve the XP needed for the first few levels so a new player
+            // (who doesn't yet know to hunt milk) still gets the "I'm growing!" reward fast.
+            // Read-only helper — never mutate evolutions[].nextXp (the XP bar + AI cats read it).
+            let _xpNeed = () => (selectedGameMode === 'solo' && player.level < 5)
+                ? Math.ceil(currentStats.nextXp * 0.5) : currentStats.nextXp;
+            while (player.level < 50 && player.xp >= _xpNeed()) { 
+                player.xp -= _xpNeed(); player.level++; 
                 currentStats = evolutions[Math.min(player.level - 1, 49)]; 
                 
                 let pHpMult = HELMET_HP_MULT[prog.helmetUpgrades[player.level] || 0];
@@ -7563,8 +7569,11 @@
 
             let archIcon = { fast:'⚡', heavy:'🔨', wide:'🌀', reach:'➡️', balanced:'⚔️' }[getWeaponArchetype(stats.weaponType)] || '⚔️';
             updateDOM('level-text', 'text', `${archIcon} Level ${player.level}: ${stats.catName}`); 
-            updateDOM('xp-bar', 'width', (player.level >= 50 ? 100 : (player.xp / stats.nextXp) * 100) + '%'); 
-            updateDOM('xp-text', 'text', player.level >= 50 ? `MAX LEVEL` : `${player.xp} / ${stats.nextXp} XP`); 
+            // Mirror the Solo early-level XP discount (updateLevel) so the bar fills to 100%
+            // and the text shows the real threshold instead of the full evolutions[] value.
+            let _uiXpNeed = (selectedGameMode === 'solo' && player.level < 5) ? Math.ceil(stats.nextXp * 0.5) : stats.nextXp;
+            updateDOM('xp-bar', 'width', (player.level >= 50 ? 100 : (player.xp / _uiXpNeed) * 100) + '%'); 
+            updateDOM('xp-text', 'text', player.level >= 50 ? `MAX LEVEL` : `${player.xp} / ${_uiXpNeed} XP`); 
             
             let hpPct = Math.max(0, (player.hp / player.maxHp));
             updateDOM('hp-bar', 'width', (hpPct * 100) + '%'); 
