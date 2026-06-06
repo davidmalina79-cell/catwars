@@ -7473,6 +7473,10 @@
             } else {
                 if (rand < 0.3) enemyLevel = Math.max(1, baseLevel - 2);
                 else if (rand < 0.7) enemyLevel = baseLevel;
+                // Solo caps the over-level at +1..+2 so the late game (lvl 46+) doesn't
+                // spawn full-power lvl-50 dogs against you and erase your last evolutions.
+                // Other modes keep the original +2..+4 spread (that's where hard belongs).
+                else if (selectedGameMode === 'solo') enemyLevel = Math.min(50, baseLevel + 1 + Math.floor(Math.random()*2));
                 else enemyLevel = Math.min(50, baseLevel + 2 + Math.floor(Math.random()*3));
             }
             
