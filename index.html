@@ -3638,6 +3638,7 @@
             SOLO_BOSS_DELAY: 120,        // first boss after 120s (vs 60s default)
             SOLO_MINIBOSS_DELAY: 75,     // first miniboss after 75s (vs 30s default)
             SOLO_ELITE_MIN_LEVEL: 22,    // elites start later in Solo (vs 15)
+            SOLO_ATTACK_SLOW: 0.70,      // attacking slows player to ×0.70 in Solo (vs ×0.55) — stay mobile while striking in a crowd
             DAILY_SPIN_COOLDOWN_MS: 22 * 60 * 60 * 1000,
             DAILY_STREAK_RESET_MS: 48 * 60 * 60 * 1000,
             AD_BOOST_COOLDOWN_MS: 4 * 60 * 60 * 1000
@@ -6983,8 +6984,8 @@
         let tutorialSteps = [
             { text: "🖱️ Move your mouse to steer — your cat always faces your cursor!", textMobile: "🕹️ Use the joystick to steer — your cat faces the direction you push!", duration: 6 },
             { text: "⚔️ Point cursor AT the dog, then Left Click! You only hit what you're FACING.", textMobile: "⚔️ Face the dog with the joystick, then tap ⚔️! You only hit what you're FACING.", duration: 7 },
-            { text: "🐟🐭🥛 Collect fish, mice and milk for XP and a health boost. Eat often to stay alive!", duration: 6 },
             { text: "⚡ Space or Right Click to dash out of danger.", textMobile: "⚡ Tap the ⚡ dash button to escape danger!", duration: 5 },
+            { text: "🐟🐭🥛 Collect fish, mice and milk for XP and a health boost. Eat often to stay alive!", duration: 6 },
             { text: "💎 Break chests to collect Gem diamonds! Spend them on permanent weapon &amp; helmet upgrades in the menu.", duration: 7 }
         ];
         let tutorialIdx = 0, tutorialTimer = 0, tutorialActive = false;
@@ -8140,7 +8141,7 @@
                 let dx = (mouseX - width / 2) / currentZoom; let dy = (mouseY - height / 2) / currentZoom; 
                 let distToMouse = Math.hypot(dx, dy);
                 
-                let pCurrentSpeed = player.attackTimer > 0 ? stats.speed * 0.55 : stats.speed;
+                let pCurrentSpeed = player.attackTimer > 0 ? stats.speed * (selectedGameMode === 'solo' ? BALANCE.SOLO_ATTACK_SLOW : 0.55) : stats.speed;
                 if (combo >= COMBO_BUFF_THRESHOLD) {
                     pCurrentSpeed *= 1.25;
                     // Trail particle throttled to ~4/s
