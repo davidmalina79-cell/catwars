@@ -3357,7 +3357,7 @@
         const INITIAL_BOSS_DELAY = 60;
         const BOSS_RESPAWN_AFTER_KILL = 90;
         const BOSS_TIMEOUT = 120;
-        const GAME_VERSION = '1.8.21';
+        const GAME_VERSION = '1.9.0';
 
         const CHEST_TYPES = { 
             wood: { hp: 500, gems: [3, 6], color: '#6b4423', metal: '#7f8c8d', weight: 0.70, size: 130 }, 
@@ -3629,6 +3629,15 @@
             ELITE_HP_MULT: 1.5,
             ELITE_DMG_MULT: 1.3,
             ELITE_GEM_BONUS: 3,
+            // SOLO onboarding ramp — Solo Survival is the entry mode and must be
+            // realistically completable WITHOUT gem upgrades. The hard original
+            // design (buy weapons → get stronger) lives in Hardcore / Cats vs Dogs
+            // / Deathmatch instead. These knobs only apply when selectedGameMode === 'solo'.
+            SOLO_ENEMY_DMG_MULT: 0.75,   // incoming dog damage ×0.75 (a hit hurts, isn't lethal)
+            SOLO_REGEN_RATE: 0.010,      // passive 1.0% max HP/sec recovery loop
+            SOLO_BOSS_DELAY: 120,        // first boss after 120s (vs 60s default)
+            SOLO_MINIBOSS_DELAY: 75,     // first miniboss after 75s (vs 30s default)
+            SOLO_ELITE_MIN_LEVEL: 22,    // elites start later in Solo (vs 15)
             DAILY_SPIN_COOLDOWN_MS: 22 * 60 * 60 * 1000,
             DAILY_STREAK_RESET_MS: 48 * 60 * 60 * 1000,
             AD_BOOST_COOLDOWN_MS: 4 * 60 * 60 * 1000
@@ -7231,7 +7240,7 @@
                 pickupRadius: activeBoosts.magnet ? BALANCE.GEM_PICKUP_RADIUS * 2.4 : BALANCE.GEM_PICKUP_RADIUS,
                 extraLives: activeBoosts.nine ? 1 : 0,
                 huntersEye: !!activeBoosts.hunter,
-                regenRate: activeBoosts.regen ? 0.015 : 0,
+                regenRate: Math.max(activeBoosts.regen ? 0.015 : 0, (selectedGameMode === 'solo') ? BALANCE.SOLO_REGEN_RATE : 0),
                 activeBoosts: activeBoosts
             };
             renderActiveBoosts(activeBoosts);
@@ -7243,7 +7252,8 @@
             for(let p of particles) releaseParticle(p); particles = [];
             for(let d of damageNumbers) releaseDmgNumber(d); damageNumbers = [];
             
-            foods = []; enemies = []; decorations = []; chests = []; droppedGems = []; aiCats = []; hitStop = 0; bossSpawnTimer = INITIAL_BOSS_DELAY; miniBossSpawnTimer = 30; 
+            let _isSolo = (selectedGameMode === 'solo');
+            foods = []; enemies = []; decorations = []; chests = []; droppedGems = []; aiCats = []; hitStop = 0; bossSpawnTimer = _isSolo ? BALANCE.SOLO_BOSS_DELAY : INITIAL_BOSS_DELAY; miniBossSpawnTimer = _isSolo ? BALANCE.SOLO_MINIBOSS_DELAY : 30; 
             mouseX = width/2; mouseY = height/2; isMouseDown = false; dashRequested = false;
             availableBotNames = [...BOT_NAMES];
             window._botPoolGeneration = 1;
@@ -7473,12 +7483,15 @@
             let eSpeed = stats.speed * 0.82;
             if (activeMods.fast) eSpeed *= 1.5; 
 
-            // Elite enemies: rare purple-tinted variants in Solo/Cats vs Dogs once player reaches mid-game
+            // Elite enemies: rare purple-tinted variants in Solo/Cats vs Dogs once player reaches mid-game.
+            // In Solo the elite floor is raised so the mid-game (lvl 18-20) isn't a wall.
+            let _soloMode = (selectedGameMode === 'solo');
+            let _eliteMinLvl = _soloMode ? BALANCE.SOLO_ELITE_MIN_LEVEL : BALANCE.ELITE_MIN_LEVEL;
             let isElite = !isInitial && !isHardcoreMode 
-                && player && player.level >= BALANCE.ELITE_MIN_LEVEL 
+                && player && player.level >= _eliteMinLvl 
                 && Math.random() < BALANCE.ELITE_CHANCE;
             let eHp = stats.maxHp * (isElite ? BALANCE.ELITE_HP_MULT : 1);
-            let eDmg = stats.enemyDamage * archStats.dmgMult * (isElite ? BALANCE.ELITE_DMG_MULT : 1);
+            let eDmg = stats.enemyDamage * archStats.dmgMult * (isElite ? BALANCE.ELITE_DMG_MULT : 1) * (_soloMode ? BALANCE.SOLO_ENEMY_DMG_MULT : 1);
             let eSize = stats.baseSize * (isElite ? 1.15 : 1);
             let eColor = isElite ? '#9b59b6' : stats.dogColor;
             let eAccent = isElite ? '#f1c40f' : stats.accent;
