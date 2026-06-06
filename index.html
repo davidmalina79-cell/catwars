@@ -3318,7 +3318,7 @@
 
             <div id="death-buttons" style="opacity: 0; pointer-events: none; transition: opacity 0.35s ease; width: 100%;">
                 <button id="btn-revive-gem" class="btn-main" onclick="reviveWithGems()" style="background: #00d4ff; box-shadow: 0 4px 0 #0099cc; width: 100%; margin: 8px 0;">
-                    💎 Revive (Cost: <span id="revive-cost">0</span>)
+                    ❤️ Keep Playing · 💎 <span id="revive-cost">0</span>
                 </button>
                 <button id="btn-revive-ad" class="btn-main" onclick="reviveWithAd()" style="display:none; background: #f1c40f; color: #1a1a1a; box-shadow: 0 4px 0 #c29d0b; width: 100%; margin: 8px 0;">
                     📺 Watch Ad to Revive (FREE)
@@ -3357,7 +3357,7 @@
         const INITIAL_BOSS_DELAY = 60;
         const BOSS_RESPAWN_AFTER_KILL = 90;
         const BOSS_TIMEOUT = 120;
-        const GAME_VERSION = '1.9.0';
+        const GAME_VERSION = '1.9.1';
 
         const CHEST_TYPES = { 
             wood: { hp: 500, gems: [3, 6], color: '#6b4423', metal: '#7f8c8d', weight: 0.70, size: 130 }, 
@@ -3634,7 +3634,7 @@
             // design (buy weapons → get stronger) lives in Hardcore / Cats vs Dogs
             // / Deathmatch instead. These knobs only apply when selectedGameMode === 'solo'.
             SOLO_ENEMY_DMG_MULT: 0.75,   // incoming dog damage ×0.75 (a hit hurts, isn't lethal)
-            SOLO_REGEN_RATE: 0.010,      // passive 1.0% max HP/sec recovery loop
+            SOLO_REGEN_RATE: 0.020,      // passive 2.0% max HP/sec recovery loop (was 1.0% — too weak to feel in the short lulls between waves)
             SOLO_BOSS_DELAY: 120,        // first boss after 120s (vs 60s default)
             SOLO_MINIBOSS_DELAY: 75,     // first miniboss after 75s (vs 30s default)
             SOLO_ELITE_MIN_LEVEL: 22,    // elites start later in Solo (vs 15)
@@ -8842,7 +8842,10 @@
             // Scale revive cost by the hardcore gem multiplier — otherwise revives
             // become trivial when running e.g. 5× hardcore (gems flow in 5× faster
             // but revive stays at base cost).
-            currentReviveCost = Math.ceil((player.level * 10 + 20) * (currentGemMultiplier || 1.0));
+            // Solo is the onboarding ramp — keep revive affordable so a kid who can't yet
+            // farm gems isn't punished. Other modes keep the standard ×10+20.
+            let _reviveBase = (selectedGameMode === 'solo') ? (player.level * 5 + 20) : (player.level * 10 + 20);
+            currentReviveCost = Math.ceil(_reviveBase * (currentGemMultiplier || 1.0));
             
             let panel = document.getElementById('ds-panel');
             let title = document.getElementById('ds-title');
@@ -8912,10 +8915,10 @@
             if (totalGems < currentReviveCost) { 
                 gemBtn.disabled = true; 
                 let missing = currentReviveCost - totalGems;
-                gemBtn.innerHTML = `💎 Need ${missing} more gems`; 
+                gemBtn.innerHTML = `❤️ 🔒 💎 <span style="color:#ff6b6b">${totalGems}</span>/${currentReviveCost}`; 
             } else { 
                 gemBtn.disabled = false; 
-                gemBtn.innerHTML = `💎 Revive (Cost: ${currentReviveCost})`;
+                gemBtn.innerHTML = `❤️ Keep Playing · 💎 ${currentReviveCost}`;
             } 
             
             document.getElementById('dash-container').style.display = 'none'; document.getElementById('joystick-zone').style.display = 'none'; document.getElementById('attack-btn').style.display = 'none'; document.getElementById('minimap').style.display = 'none'; 
