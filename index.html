@@ -3357,7 +3357,7 @@
         const INITIAL_BOSS_DELAY = 60;
         const BOSS_RESPAWN_AFTER_KILL = 90;
         const BOSS_TIMEOUT = 120;
-        const GAME_VERSION = '1.9.2';
+        const GAME_VERSION = '1.9.3';
 
         const CHEST_TYPES = { 
             wood: { hp: 500, gems: [3, 6], color: '#6b4423', metal: '#7f8c8d', weight: 0.70, size: 130 }, 
@@ -3686,7 +3686,7 @@
     <!-- ================================================================================================= -->
     <script>
         // GLOBAL SCOPE DECLARATIONS (FIX PRO OFFLINE GUEST CHYBU)
-        var defaultProg = { nickname: '', globalLevel: 1, globalXp: 0, maxCatLevel: 1, totalKills: 0, gems: 100, dogKills: {}, weaponUpgrades: {}, helmetUpgrades: {}, unlockedLegendaries: {}, equippedLegendary: {}, bestCombo: 0, tutorialDone: false, inGameTipsDone: false, questDate: '', quests: [], bestTimes: { solo: null, hardcore: null, team: null }, boosts: {}, equippedBoosts: [null, null, null], lastDailySpinAt: 0, dailyStreak: 0, lastAdBoostAt: 0, lastSavedAt: 0, schemaVersion: 2, gfxLow: false };
+        var defaultProg = { nickname: '', globalLevel: 1, globalXp: 0, maxCatLevel: 1, totalKills: 0, gems: 100, dogKills: {}, weaponUpgrades: {}, helmetUpgrades: {}, unlockedLegendaries: {}, equippedLegendary: {}, bestCombo: 0, tutorialDone: false, tutorialRunsSeen: 0, questDate: '', quests: [], bestTimes: { solo: null, hardcore: null, team: null }, boosts: {}, equippedBoosts: [null, null, null], lastDailySpinAt: 0, dailyStreak: 0, lastAdBoostAt: 0, lastSavedAt: 0, schemaVersion: 2, gfxLow: false };
         window.defaultProg = defaultProg;
         // Safe localStorage save parser. Corrupted / hand-edited / partially-written
         // saves used to crash the whole startup on an unguarded JSON.parse. This returns
@@ -3723,6 +3723,10 @@
         // fields) and add a matching migration step in migrateProg(). Plain additive fields
         // (new optional keys) do NOT need a bump — defaultProg spread covers them.
         const CURRENT_SCHEMA_VERSION = 2;
+        // How many runs show the in-game toast tutorial. While variant-1 (text toasts) is the
+        // only guidance, repeat it for the first few runs. When the interactive variant-2 prompt
+        // lands, drop this to 1 — that's the whole switch, no other logic changes.
+        const TUTORIAL_MAX_RUNS = 3;
         // True when Low graphics quality is selected.
         function gfxIsLow() { return !!(prog && prog.gfxLow); }
 
@@ -6982,11 +6986,11 @@
         let lastTime = 0; 
         
         let tutorialSteps = [
-            { text: "🖱️ Move your mouse to steer — your cat always faces your cursor!", textMobile: "🕹️ Use the joystick to steer — your cat faces the direction you push!", duration: 6 },
-            { text: "⚔️ Point cursor AT the dog, then Left Click! You only hit what you're FACING.", textMobile: "⚔️ Face the dog with the joystick, then tap ⚔️! You only hit what you're FACING.", duration: 7 },
-            { text: "⚡ Space or Right Click to dash out of danger.", textMobile: "⚡ Tap the ⚡ dash button to escape danger!", duration: 5 },
-            { text: "🐟🐭🥛 Collect fish, mice and milk for XP and a health boost. Eat often to stay alive!", duration: 6 },
-            { text: "💎 Break chests to collect Gem diamonds! Spend them on permanent weapon &amp; helmet upgrades in the menu.", duration: 7 }
+            { text: "🖱️ Move mouse — your cat follows!", textMobile: "🕹️ Push to move!", duration: 7 },
+            { text: "🐶 Aim at the dog → 🖱️ Click to attack!", textMobile: "🐶 Aim → tap ⚔️ to attack!", duration: 9 },
+            { text: "⚡ Space = dash! Escape danger.", textMobile: "⚡ Tap ⚡ to dash away!", duration: 7 },
+            { text: "🐟🥛 Eat food → grow + heal!", textMobile: "🐟🥛 Eat food → grow + heal!", duration: 7 },
+            { text: "💎 Break chests → get gems → upgrade!", textMobile: "💎 Break chests → get gems → upgrade!", duration: 7 }
         ];
         let tutorialIdx = 0, tutorialTimer = 0, tutorialActive = false;
 
@@ -7288,7 +7292,7 @@
             
             document.getElementById('tutorial').style.display = 'none';
             tutorialActive = false;
-            if (!prog.inGameTipsDone) { tutorialActive = true; tutorialIdx = 0; showTutorial(); prog.inGameTipsDone = true; saveProgress(); }
+            if (prog.tutorialRunsSeen < TUTORIAL_MAX_RUNS) { tutorialActive = true; tutorialIdx = 0; showTutorial(); prog.tutorialRunsSeen++; saveProgress(); }
             
             gameState = 'playing'; updateUI(); lastTime = performance.now();
             if (window.notifyGameplayStart) window.notifyGameplayStart();
