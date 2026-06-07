@@ -3357,7 +3357,7 @@
         const INITIAL_BOSS_DELAY = 60;
         const BOSS_RESPAWN_AFTER_KILL = 90;
         const BOSS_TIMEOUT = 120;
-        const GAME_VERSION = '1.9.3';
+        const GAME_VERSION = '1.9.4';
 
         const CHEST_TYPES = { 
             wood: { hp: 500, gems: [3, 6], color: '#6b4423', metal: '#7f8c8d', weight: 0.70, size: 130 }, 
@@ -3723,9 +3723,9 @@
         // fields) and add a matching migration step in migrateProg(). Plain additive fields
         // (new optional keys) do NOT need a bump — defaultProg spread covers them.
         const CURRENT_SCHEMA_VERSION = 2;
-        // How many runs show the in-game toast tutorial. While variant-1 (text toasts) is the
-        // only guidance, repeat it for the first few runs. When the interactive variant-2 prompt
-        // lands, drop this to 1 — that's the whole switch, no other logic changes.
+        // How many runs show the onboarding (text toasts + interactive prompt). Both run
+        // together for the first few games. No game-loop slowdown is involved, so repeating
+        // them is harmless. Drop to 1 if it ever feels like too much hand-holding.
         const TUTORIAL_MAX_RUNS = 3;
         // True when Low graphics quality is selected.
         function gfxIsLow() { return !!(prog && prog.gfxLow); }
@@ -6993,6 +6993,13 @@
             { text: "💎 Break chests → get gems → upgrade!", textMobile: "💎 Break chests → get gems → upgrade!", duration: 7 }
         ];
         let tutorialIdx = 0, tutorialTimer = 0, tutorialActive = false;
+        // ── Interactive contextual prompt (variant 2) — runs alongside the text toasts for
+        // the first TUTORIAL_MAX_RUNS games. Phase 1: pulse a "click!" marker on the nearest
+        // dog until the player attacks. Phase 2: pulse a "dash!" marker while surrounded until
+        // the player dashes. Phase 0 = inactive, 3 = done. Pure overlay — no game-loop/update
+        // changes, so it can't soft-lock the player and is trivial to disable (set phase 0).
+        let tutPromptPhase = 0;      // 0 inactive · 1 await first attack · 2 await first dash · 3 done
+        let tutPromptElapsed = 0;    // real seconds since the current phase began (auto-timeout guard)
 
         function showTutorial() {
             let el = document.getElementById('tutorial');
@@ -7122,7 +7129,7 @@
             // Onboarding is now in-gameplay (CrazyGames quality guideline: land players
             // directly in gameplay, prioritise visuals, keep it skippable). The blocking
             // 6-panel overlay is bypassed — the in-game toast tips (showTutorial, gated on
-            // inGameTipsDone further down) teach controls during the first run instead.
+            // tutorialRunsSeen further down) teach controls during the first few runs instead.
             // The overlay code + OB_STEPS stay in the DOM; to re-enable the modal, restore:
             //   if (!prog.tutorialDone) { window.showOnboarding(() => startGame()); return; }
             if (!prog.tutorialDone) { prog.tutorialDone = true; saveProgress(); }
@@ -7292,7 +7299,8 @@
             
             document.getElementById('tutorial').style.display = 'none';
             tutorialActive = false;
-            if (prog.tutorialRunsSeen < TUTORIAL_MAX_RUNS) { tutorialActive = true; tutorialIdx = 0; showTutorial(); prog.tutorialRunsSeen++; saveProgress(); }
+            if (prog.tutorialRunsSeen < TUTORIAL_MAX_RUNS) { tutorialActive = true; tutorialIdx = 0; showTutorial(); tutPromptPhase = 1; tutPromptElapsed = 0; prog.tutorialRunsSeen++; saveProgress(); }
+            else { tutPromptPhase = 0; }
             
             gameState = 'playing'; updateUI(); lastTime = performance.now();
             if (window.notifyGameplayStart) window.notifyGameplayStart();
@@ -7753,6 +7761,12 @@
                 }
                 
                 if (tutorialActive) { tutorialTimer -= dt; if (tutorialTimer <= 0) { tutorialIdx++; showTutorial(); } }
+                // Interactive prompt auto-timeout: if the player ignores phase 1 for 10s or
+                // phase 2 for 8s, give up silently so it never blocks the experience.
+                if (tutPromptPhase === 1 || tutPromptPhase === 2) {
+                    tutPromptElapsed += dt;
+                    if ((tutPromptPhase === 1 && tutPromptElapsed > 10) || (tutPromptPhase === 2 && tutPromptElapsed > 8)) tutPromptPhase = 3;
+                }
                 if (combo > 0) { comboTimer -= dt; if (comboTimer <= 0) { combo = 0; updateUI(); } }
                 renderComboTiers();
 
@@ -8150,6 +8164,7 @@
                 if (isMouseDown && player.attackTimer <= 0) { 
                     player.attackTimer = stats.attackCooldown || (0.66 * archStats.cdMult); player.attackCooldown = player.attackTimer;
                     player.hasAttacked = false; playSound('swing'); 
+                    if (tutPromptPhase === 1) { tutPromptPhase = 2; tutPromptElapsed = 0; } // first attack done → teach dash next
                 }
                 
                 let pDealDamage = false;
@@ -8171,6 +8186,7 @@
                     player.dashActive = 0.18; player.dashTimer = player.dashCooldown; playSound('dash');
                     if (distToMouse <= pSize * 0.5) { player.dashForceX = Math.cos(player.angle); player.dashForceY = Math.sin(player.angle); }
                     else { player.dashForceX = dx/distToMouse; player.dashForceY = dy/distToMouse; }
+                    if (tutPromptPhase === 2) tutPromptPhase = 3; // first dash done → interactive prompt complete
                 }
                 dashRequested = false;
                 
@@ -8768,6 +8784,44 @@
 
             particles.forEach(p => { if (p.x < camL || p.x > camR || p.y < camT || p.y > camB) return; ctx.globalAlpha = Math.max(0, p.life); ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill(); });
             damageNumbers.forEach(n => { if (n.x < camL || n.x > camR || n.y < camT || n.y > camB) return; ctx.globalAlpha = Math.max(0, n.life); ctx.fillStyle = n.color; ctx.strokeStyle = '#000000'; ctx.lineWidth = 3.5; ctx.font = 'bold 24px Arial'; ctx.textAlign = 'center'; ctx.strokeText(n.val, n.x, n.y); ctx.fillText(n.val, n.x, n.y); });
+            // ── Interactive onboarding prompt (variant 2) — world-space overlay, drawn last.
+            // Phase 1: pulsing ring + 🖱️ on the nearest on-screen dog until the player attacks.
+            // Phase 2: pulsing ⚡ on the player while surrounded until the player dashes.
+            if (tutPromptPhase === 1 || tutPromptPhase === 2) {
+                let pulse = 0.5 + 0.5 * Math.sin(performance.now() / 200); // 0..1 breathing
+                let vR = (Math.min(width, height) / currentZoom) * 0.6; // viewRadius is gameLoop-local; recompute here
+                ctx.save();
+                if (tutPromptPhase === 1) {
+                    // nearest dog via spatial grid (no per-frame forEach — see §5.2)
+                    let near = queryGridMap(gridEnemies, player.x, player.y, vR);
+                    let target = null, bestD = Infinity;
+                    for (let k = 0; k < near.length; k++) {
+                        let e = near[k];
+                        let d = Math.hypot(e.x - player.x, e.y - player.y);
+                        if (d < bestD) { bestD = d; target = e; }
+                    }
+                    if (target) {
+                        let r = (target.size || 24) + 26 + pulse * 10;
+                        ctx.strokeStyle = 'rgba(255,255,255,' + (0.55 + pulse * 0.4) + ')';
+                        ctx.lineWidth = 4;
+                        ctx.beginPath(); ctx.arc(target.x, target.y, r, 0, Math.PI * 2); ctx.stroke();
+                        ctx.font = (34 + pulse * 6) + 'px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                        ctx.fillText('🖱️', target.x, target.y - r - 22);
+                    }
+                } else if (tutPromptPhase === 2) {
+                    // only nudge dash when there's an actual crowd to escape (2+ dogs near)
+                    let near = queryGridMap(gridEnemies, player.x, player.y, vR * 0.6);
+                    if (near.length >= 2) {
+                        let y0 = player.y - (playerStats.baseSize) - 60;
+                        ctx.font = (32 + pulse * 6) + 'px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                        ctx.globalAlpha = 0.6 + pulse * 0.4;
+                        ctx.fillText('⚡', player.x, y0);
+                        ctx.globalAlpha = 1;
+                    }
+                }
+                ctx.restore();
+            }
+
             ctx.globalAlpha = 1; ctx.restore();
 
             drawMinimap();
