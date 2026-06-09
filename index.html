@@ -3318,7 +3318,7 @@
 
             <div id="death-buttons" style="opacity: 0; pointer-events: none; transition: opacity 0.35s ease; width: 100%;">
                 <button id="btn-revive-gem" class="btn-main" onclick="reviveWithGems()" style="background: #00d4ff; box-shadow: 0 4px 0 #0099cc; width: 100%; margin: 8px 0;">
-                    ❤️ Keep Playing · 💎 <span id="revive-cost">0</span>
+                    ❤️ Revive & Continue · 💎 <span id="revive-cost">0</span>
                 </button>
                 <button id="btn-revive-ad" class="btn-main" onclick="reviveWithAd()" style="display:none; background: #f1c40f; color: #1a1a1a; box-shadow: 0 4px 0 #c29d0b; width: 100%; margin: 8px 0;">
                     📺 Watch Ad to Revive (FREE)
@@ -3357,7 +3357,7 @@
         const INITIAL_BOSS_DELAY = 60;
         const BOSS_RESPAWN_AFTER_KILL = 90;
         const BOSS_TIMEOUT = 120;
-        const GAME_VERSION = '1.9.7';
+        const GAME_VERSION = '1.9.8';
 
         const CHEST_TYPES = { 
             wood: { hp: 500, gems: [3, 6], color: '#6b4423', metal: '#7f8c8d', weight: 0.70, size: 130 }, 
@@ -9000,7 +9000,7 @@
                 gemBtn.innerHTML = `❤️ 🔒 💎 <span style="color:#ff6b6b">${totalGems}</span>/${currentReviveCost}`; 
             } else { 
                 gemBtn.disabled = false; 
-                gemBtn.innerHTML = `❤️ Keep Playing · 💎 ${currentReviveCost}`;
+                gemBtn.innerHTML = `❤️ Revive & Continue · 💎 ${currentReviveCost}`;
             } 
             
             document.getElementById('dash-container').style.display = 'none'; document.getElementById('joystick-zone').style.display = 'none'; document.getElementById('attack-btn').style.display = 'none'; document.getElementById('minimap').style.display = 'none'; 
