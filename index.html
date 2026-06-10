@@ -3357,7 +3357,7 @@
         const INITIAL_BOSS_DELAY = 60;
         const BOSS_RESPAWN_AFTER_KILL = 90;
         const BOSS_TIMEOUT = 120;
-        const GAME_VERSION = '1.9.8';
+        const GAME_VERSION = '1.9.9';
 
         const CHEST_TYPES = { 
             wood: { hp: 500, gems: [3, 6], color: '#6b4423', metal: '#7f8c8d', weight: 0.70, size: 130 }, 
@@ -3864,10 +3864,15 @@
             }
         }
 
+        function safeLocalSave(key, value) {
+            try { localStorage.setItem(key, value); }
+            catch (e) { console.warn('[CatWars] localStorage save failed:', e); }
+        }
+
         function saveProgress() { 
             normalizeProg();
             if (window.currentUserUid) {
-                localStorage.setItem('catwars_save_' + window.currentUserUid, JSON.stringify(prog)); 
+                safeLocalSave('catwars_save_' + window.currentUserUid, JSON.stringify(prog)); 
             }
             updateMenuStats(); 
         }
@@ -3926,7 +3931,7 @@
         // Bez opts.cloud (nebo opts.cloud = false) jen lokální save = zdarma, neutrácíme quotu.
         async function forceSaveNow(opts = {}) {
             if (window.currentUserUid) {
-                localStorage.setItem('catwars_save_' + window.currentUserUid, JSON.stringify(prog)); 
+                safeLocalSave('catwars_save_' + window.currentUserUid, JSON.stringify(prog)); 
             }
             updateMenuStats();
             if (opts.cloud && window.saveToFirestore) {
@@ -6955,6 +6960,7 @@
         window.unequipLegendary = unequipLegendary;
 
         let pauseStartTime = 0;
+        let deathScreenStartTime = 0;
 
         function togglePause() {
             if (gameState === 'playing') {
@@ -7260,7 +7266,7 @@
             _comboTiersState = { mask: -1, expiring: null };
             { let _ct = document.getElementById('combo-tiers'); if (_ct) { _ct.innerHTML = ''; _ct.classList.remove('combo-expiring'); } }
             playerRunData = { kills: 0, teamKills: 0, gems: 0, totalRunGems: 0, chestsOpened: 0, bestCombo: 0, bossKills: 0 }; combo = 0; comboTimer = 0;
-            gameStartTime = performance.now(); pauseStartTime = 0; finalBossSpawned = false; window.finalBossWarningActive = false; gameWon = false;
+            gameStartTime = performance.now(); pauseStartTime = 0; deathScreenStartTime = 0; finalBossSpawned = false; window.finalBossWarningActive = false; gameWon = false;
             
             for(let p of particles) releaseParticle(p); particles = [];
             for(let d of damageNumbers) releaseDmgNumber(d); damageNumbers = [];
@@ -7402,7 +7408,7 @@
             if (activeMods.fast) eSpeed *= 1.5; 
             
             // Zvětšeno o 60% (* 1.6)
-            enemies.push({ x: ex, y: ey, level: bossLvl, name: variant.name, size: pStats.baseSize * variant.sizeMult * 1.6, speed: eSpeed, weaponLength: pStats.weaponLength * 1.2, angle: Math.random() * Math.PI * 2, attackTimer: 0, attackCooldown: 1.0 * variant.cdMult, windup: variant.windupMs / 1000, hasAttacked: false, state: 'chase', stateTimer: 9999, color: variant.color, accent: variant.accent, pattern: variant.pattern, aura: variant.aura, weaponType: variant.weapon, hp: bossHp, maxHp: bossHp, damage: bossDmg, isBoss: true, knockbackVx: 0, knockbackVy: 0, archetype: getWeaponArchetype(variant.weapon), ability: variant.ability, specialTimer: 5.0, specialPhase: 0, playerDamaged: false });
+            enemies.push({ x: ex, y: ey, level: bossLvl, name: variant.name, size: pStats.baseSize * variant.sizeMult * 1.6, speed: eSpeed, weaponLength: pStats.weaponLength * 1.2, angle: Math.random() * Math.PI * 2, attackTimer: 0, attackCooldown: 1.0 * variant.cdMult, windup: variant.windupMs / 1000, hasAttacked: false, state: 'chase', stateTimer: 9999, color: variant.color, accent: variant.accent, pattern: variant.pattern, aura: variant.aura, weaponType: variant.weapon, hp: bossHp, maxHp: bossHp, damage: bossDmg, isBoss: true, knockbackVx: 0, knockbackVy: 0, archetype: getWeaponArchetype(variant.weapon), ability: variant.ability, specialTimer: 5.0, specialPhase: 0, playerDamaged: false, invuln: 0 });
             playSound('boss'); let alert = document.getElementById('boss-alert'); alert.innerText = variant.alert; alert.style.display = 'block'; setTimeout(() => alert.style.display = 'none', 3500);
         }
 
@@ -8920,6 +8926,7 @@
             }
 
             gameState = 'death_menu'; document.body.classList.remove('low-hp'); setHeartbeat(false);
+            deathScreenStartTime = performance.now();
             if (window.notifyGameplayStop) window.notifyGameplayStop();
             // Scale revive cost by the hardcore gem multiplier — otherwise revives
             // become trivial when running e.g. 5× hardcore (gems flow in 5× faster
@@ -9036,8 +9043,12 @@
             
             document.getElementById('death-screen').style.display = 'none'; document.getElementById('dash-container').style.display = 'flex'; document.getElementById('minimap').style.display = 'block'; document.getElementById('pause-btn').style.display = 'flex';
             if (IS_TOUCH_DEV) { document.getElementById('joystick-zone').style.display = 'flex'; document.getElementById('attack-btn').style.display = 'flex'; }
+            if (deathScreenStartTime > 0) {
+                gameStartTime += (performance.now() - deathScreenStartTime);
+                deathScreenStartTime = 0;
+            }
             lastTime = performance.now(); 
-            gameState = 'playing'; 
+            gameState = 'playing';
             updateUI(); 
             if (window.notifyGameplayStart) window.notifyGameplayStart();
         }
